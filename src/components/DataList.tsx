@@ -63,8 +63,10 @@ export const DataList = (props: DataListProps) => {
     <div
       style={{
         width: '100%',
-        height: '900px',
+        height: '600px',
         overflow: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Table responsive bordered striped size="sm">
