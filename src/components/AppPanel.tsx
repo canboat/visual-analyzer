@@ -169,7 +169,7 @@ function requestMetaData(src: number) {
       body: JSON.stringify(body),
     }).then((response) => response.json())
       .then((data) => {
-        console.log(`Metadata for PGN ${num} received:`, data)
+        //console.log(`Metadata for PGN ${num} received:`, data)
         if (data.error) {
           console.error(`Error requesting metadata for PGN ${num}:`, data.error)
         }
