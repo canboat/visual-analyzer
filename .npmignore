@@ -1,0 +1,9 @@
+public_src/
+src/
+ts-build/
+webpack.config.js
+signalk-n2k-debug-*.tgz
+.github
+.eslintrc.js
+.prettierrc.js
+tsconfig.json
