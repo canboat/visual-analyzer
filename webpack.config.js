@@ -10,11 +10,21 @@ const packageJson = require('./package')
 module.exports = {
   entry: './src/index',
   mode: 'development',
+  devtool: 'source-map',
+  optimization: {
+    minimize: false,
+    usedExports: false,
+    sideEffects: false
+  },
   output: {
     path: path.resolve(__dirname, 'public'),
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
+    alias: {
+      'react': path.resolve(__dirname, 'node_modules/react/cjs/react.development.js'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom/cjs/react-dom.development.js')
+    },
     fallback: {
       buffer: require.resolve('buffer/'),
     },
@@ -48,10 +58,6 @@ module.exports = {
     ],
   },
   plugins: [
-    // Force development mode for React
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify('development'),
-    }),
     // Use Plugin
     new ModuleFederationPlugin({
       name: 'Addon Demo',
@@ -60,7 +66,18 @@ module.exports = {
       exposes: {
         './AppPanel': './src/components/AppPanel',
       },
-      shared: [{ react: { singleton: true } }, 'react-dom'],
+      shared: {
+        react: { 
+          singleton: true,
+          requiredVersion: require('./package.json').devDependencies.react,
+          eager: true
+        }, 
+        'react-dom': {
+          singleton: true,
+          requiredVersion: require('./package.json').devDependencies['react-dom'],
+          eager: true
+        }
+      },
     }),
     new WatchIgnorePlugin({
       paths: [path.resolve(__dirname, 'public/')],
