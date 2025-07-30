@@ -15,7 +15,8 @@
     "format": "npm run lint:fix && npm run prettier"
   },
   "keywords": [
-    "signalk-embeddable-webapp"
+    "signalk-embeddable-webapp",
+    "signalk-category-nmea-2000"
   ],
   "author": "teppo.kurki@iki.fi",
   "license": "Apache-2.0",
