@@ -4,14 +4,13 @@ export type Brand<K, T> = K & { __brand: T }
 
 export type PgnNumber = Brand<number, 'PgnNumber'>
 
-
 export type PGNDataMap = {
   [key: string]: PGN
 }
 
 export type DeviceInformation = {
-  src: number,
-  info: {[key: PgnNumber]: any}
+  src: number
+  info: { [key: PgnNumber]: any }
 }
 
 export type DeviceMap = {

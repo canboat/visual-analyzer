@@ -23,7 +23,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
 
   // Log React mode for debugging
   console.log('React development mode:', process.env.NODE_ENV !== 'production')
-  
+
   if (pgnData === undefined || pgnData === null) {
     return <div>Select a PGN to view its data</div>
   }
@@ -38,13 +38,13 @@ export const SentencePanel = (props: SentencePanelProps) => {
           </NavLink>
         </NavItem>
         <NavItem>
-          <NavLink className={activeTab === PGNDEF_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(PGNDEF_TAB_ID)}>
-            PGN Definition
+          <NavLink className={activeTab === DEVICE_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(DEVICE_TAB_ID)}>
+            Device Information
           </NavLink>
         </NavItem>
         <NavItem>
-          <NavLink className={activeTab === DEVICE_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(DEVICE_TAB_ID)}>
-            Device Information
+          <NavLink className={activeTab === PGNDEF_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(PGNDEF_TAB_ID)}>
+            PGN Definition
           </NavLink>
         </NavItem>
       </Nav>

@@ -21,16 +21,27 @@ interface DataListProps {
   doFiltering: Subject<boolean>
 }
 
-const filterFor = (doFiltering: boolean | undefined, pgns: number[] | undefined, src: number[] | undefined, dst: number[] | undefined, manufacturer: string[] | undefined, javaScript: string | undefined) => {
-  if (!doFiltering )
-    return () => true
-  return (pgn: PGN) => { return filterPGN(pgn, setupFilters({
-    pgn: pgns,
-    src: src,
-    dst: dst,
-    manufacturer: manufacturer,
-    filter: javaScript
-  })) }
+const filterFor = (
+  doFiltering: boolean | undefined,
+  pgns: number[] | undefined,
+  src: number[] | undefined,
+  dst: number[] | undefined,
+  manufacturer: string[] | undefined,
+  javaScript: string | undefined,
+) => {
+  if (!doFiltering) return () => true
+  return (pgn: PGN) => {
+    return filterPGN(
+      pgn,
+      setupFilters({
+        pgn: pgns,
+        src: src,
+        dst: dst,
+        manufacturer: manufacturer,
+        filter: javaScript,
+      }),
+    )
+  }
 }
 
 export const DataList = (props: DataListProps) => {
@@ -41,7 +52,6 @@ export const DataList = (props: DataListProps) => {
   const filterDsts = useObservableState(props.filterDsts)
   const filterManufacturers = useObservableState(props.filterManufacturers)
   const javaScriptFilter = useObservableState(props.filterJavaScript)
-
 
   const addToFilteredPgns = (i: PgnNumber) => {
     const safeFilteredPgns = filterPgns || []
@@ -151,7 +161,6 @@ const toManufacturerOption = (i: string) => ({
   label: i,
 })
 
-
 export interface PgnOption {
   value: number
   label: string
@@ -178,7 +187,9 @@ export const FilterPanel = (props: FilterPanelProps) => {
   return (
     <Card>
       <CardHeader className="d-flex justify-content-between align-items-center py-2">
-        <h6 className="mb-0" style={{ fontWeight: 'bold' }}>Filters</h6>
+        <h6 className="mb-0" style={{ fontWeight: 'bold' }}>
+          Filters
+        </h6>
         <Button
           color="outline-primary"
           size="sm"
@@ -192,7 +203,9 @@ export const FilterPanel = (props: FilterPanelProps) => {
         <CardBody>
           <Row className="mb-4">
             <Col xs="12" md="4" className="mb-3">
-              <Label htmlFor="pgns" style={{ fontWeight: 'bold', marginBottom: '8px' }}>PGNs</Label>
+              <Label htmlFor="pgns" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+                PGNs
+              </Label>
               <Creatable
                 value={selectedPGNs?.map(toPgnOption)}
                 isMulti
@@ -204,7 +217,9 @@ export const FilterPanel = (props: FilterPanelProps) => {
               />
             </Col>
             <Col xs="12" md="4" className="mb-3">
-              <Label htmlFor="srcs" style={{ fontWeight: 'bold', marginBottom: '8px' }}>Sources</Label>
+              <Label htmlFor="srcs" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+                Sources
+              </Label>
               <Creatable
                 value={selectedSrcs?.map(toSrcOption)}
                 isMulti
@@ -216,7 +231,9 @@ export const FilterPanel = (props: FilterPanelProps) => {
               />
             </Col>
             <Col xs="12" md="4" className="mb-3">
-              <Label htmlFor="dsts" style={{ fontWeight: 'bold', marginBottom: '8px' }}>Destinations</Label>
+              <Label htmlFor="dsts" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+                Destinations
+              </Label>
               <Creatable
                 value={selectedDsts?.map(toDstOption)}
                 isMulti
@@ -230,7 +247,9 @@ export const FilterPanel = (props: FilterPanelProps) => {
           </Row>
           <Row className="mb-4">
             <Col xs="12" md="6" className="mb-3">
-              <Label htmlFor="manufacturers" style={{ fontWeight: 'bold', marginBottom: '8px' }}>Manufacturers</Label>
+              <Label htmlFor="manufacturers" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+                Manufacturers
+              </Label>
               <Creatable
                 value={selectedManufacturers?.map(toManufacturerOption)}
                 isMulti
@@ -242,7 +261,9 @@ export const FilterPanel = (props: FilterPanelProps) => {
               />
             </Col>
             <Col xs="12" md="6" className="mb-3">
-              <Label htmlFor="javascriptFilter" style={{ fontWeight: 'bold', marginBottom: '8px' }}>JavaScript Filter</Label>
+              <Label htmlFor="javascriptFilter" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+                JavaScript Filter
+              </Label>
               <Input
                 type="textarea"
                 id="javascriptFilter"

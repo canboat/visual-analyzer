@@ -50,7 +50,7 @@ module.exports = {
   plugins: [
     // Force development mode for React
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify('development')
+      'process.env.NODE_ENV': JSON.stringify('development'),
     }),
     // Use Plugin
     new ModuleFederationPlugin({

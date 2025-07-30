@@ -6,7 +6,7 @@ import { PGNDataMap, PgnNumber, DeviceInformation, DeviceMap } from '../types'
 import { DataList, FilterPanel, PgnOption } from './DataList'
 import { SentencePanel } from './SentencePanel'
 import { FromPgn } from '@canboat/canboatjs'
-import { PGN } from '@canboat/ts-pgns'
+import { PGN, createNmeaGroupFunction, PGN_59904 } from '@canboat/ts-pgns'
 import { useObservableState } from 'observable-hooks'
 
 // const SAFEPLUGINID = pkg.name.replace(/[-@/]/g, '_')
@@ -20,7 +20,7 @@ import { useObservableState } from 'observable-hooks'
 //   window.localStorage.setItem(SAFEPLUGINID, JSON.stringify({ ...settings, ...items }))
 // }
 
-const infoPGNS: number[] = [ 60928, 126998, 126996 ]
+const infoPGNS: number[] = [60928, 126998, 126996]
 
 const AppPanel = (props: any) => {
   const [ws, setWs] = useState(null)
@@ -37,7 +37,7 @@ const AppPanel = (props: any) => {
   const [currentSrcs, setCurrentSrcs] = useState<number[]>([])
   const [deviceInfo] = useState(new ReplaySubject<DeviceMap>())
   const [currentInfo, setCurrentInfo] = useState<DeviceMap>({})
-
+  const sentInfoReq : number[] = []
 
   const parser = new FromPgn({
     returnNulls: true,
@@ -90,11 +90,16 @@ const AppPanel = (props: any) => {
             prev[pgn!.src!] = prev[pgn!.src!] || { src: pgn!.src!, info: {} }
             prev[pgn!.src!].info[pgn!.pgn! as PgnNumber] = {
               description: pgn!.description,
-              ...pgn!.fields
+              ...pgn!.fields,
             }
             deviceInfo.next({ ...prev })
             return prev
           })
+        }
+
+        if ( sentInfoReq.indexOf(pgn!.src!) === -1 ) {
+          sentInfoReq.push(pgn!.src!)
+          requestMetaData(pgn!.src!)
         }
       }
     }
@@ -148,6 +153,31 @@ const AppPanel = (props: any) => {
       </CardBody>
     </Card>
   )
+}
+
+function requestMetaData(src: number) {
+  infoPGNS.forEach((num) => {
+    const pgn = new PGN_59904({ pgn: num })
+
+    const body = { value: JSON.stringify(pgn), sendToN2K: true }
+    fetch(`/skServer/inputTest`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    }).then((response) => response.json())
+      .then((data) => {
+        console.log(`Metadata for PGN ${num} received:`, data)
+        if (data.error) {
+          console.error(`Error requesting metadata for PGN ${num}:`, data.error)
+        }
+      })
+      .catch((error) => {
+        console.error(`Error requesting metadata for PGN ${num}:`, error)
+      })
+  })
 }
 
 export default AppPanel
