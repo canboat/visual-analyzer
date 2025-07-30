@@ -8,7 +8,7 @@
     "watch": "webpack --watch --mode development",
     "build": "webpack --mode=production",
     "clean": "rimraf ./public",
-    "ci": "npm run lint && prettier --check './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc.js",
+    "ci-test": "npm run build && npm run lint && prettier --check './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc.js",
     "lint": "eslint .",
     "lint:fix": "eslint --fix",
     "prettier": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc.js",
