@@ -1,7 +1,7 @@
 {
-  "name": "@signalk/n2k-debug",
-  "version": "2.0.0",
-  "description": "NMEA 2000 debugging utility",
+  "name": "@canboat/visual-analyzer",
+  "version": "1.0.0",
+  "description": "NMEA 2000 data visualization utility",
   "main": "index.js",
   "scripts": {
     "prepublishOnly": "npm run clean && npm run build",

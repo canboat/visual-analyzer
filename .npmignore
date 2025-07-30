@@ -2,7 +2,7 @@ public_src/
 src/
 ts-build/
 webpack.config.js
-signalk-n2k-debug-*.tgz
+*.tgz
 .github
 .eslintrc.js
 .prettierrc.js

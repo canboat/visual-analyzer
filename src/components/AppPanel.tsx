@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { Card, CardBody, CardHeader, Col, Row } from 'reactstrap'
 import { ReplaySubject } from 'rxjs'
 // import * as pkg from '../../package.json'
-import { EventData, PGNDataMap, PgnNumber } from '../types'
+import { PGNDataMap, PgnNumber, DeviceInformation, DeviceMap } from '../types'
 import { DataList, FilterPanel, PgnOption } from './DataList'
 import { SentencePanel } from './SentencePanel'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN } from '@canboat/ts-pgns'
+import { useObservableState } from 'observable-hooks'
 
 // const SAFEPLUGINID = pkg.name.replace(/[-@/]/g, '_')
 // const saveSettingsItems = (items: any) => {
@@ -18,6 +19,8 @@ import { PGN } from '@canboat/ts-pgns'
 //   }
 //   window.localStorage.setItem(SAFEPLUGINID, JSON.stringify({ ...settings, ...items }))
 // }
+
+const infoPGNS: number[] = [ 60928, 126998, 126996 ]
 
 const AppPanel = (props: any) => {
   const [ws, setWs] = useState(null)
@@ -32,6 +35,9 @@ const AppPanel = (props: any) => {
   const [filterJavaScript] = useState(new ReplaySubject<string>())
   const [availableSrcs] = useState(new ReplaySubject<number[]>())
   const [currentSrcs, setCurrentSrcs] = useState<number[]>([])
+  const [deviceInfo] = useState(new ReplaySubject<DeviceMap>())
+  const [currentInfo, setCurrentInfo] = useState<DeviceMap>({})
+
 
   const parser = new FromPgn({
     returnNulls: true,
@@ -71,22 +77,39 @@ const AppPanel = (props: any) => {
           return prev
         })
 
-        // Update available sources
         if (!currentSrcs.includes(pgn.src!)) {
           setCurrentSrcs((prev) => {
             prev.push(pgn!.src!)
             availableSrcs.next([...prev])
             return prev
           })
-        } 
+        }
+
+        if (infoPGNS.indexOf(pgn!.pgn) !== -1) {
+          setCurrentInfo((prev) => {
+            prev[pgn!.src!] = prev[pgn!.src!] || { src: pgn!.src!, info: {} }
+            prev[pgn!.src!].info[pgn!.pgn! as PgnNumber] = {
+              description: pgn!.description,
+              ...pgn!.fields
+            }
+            deviceInfo.next({ ...prev })
+            return prev
+          })
+        }
       }
     }
     setWs(ws)
   }, [])
 
+  /*
+  const dinfo = useObservableState<DeviceMap>(deviceInfo, {})
+  const selectedPgnValue = useObservableState<PGN | undefined>(selectedPgn, undefined)
+  const info = selectedPgnValue ? dinfo[selectedPgnValue.src!] : { src: 0, info: {} }
+*/
+
   return (
     <Card>
-      <CardHeader>NMEA 2000 Debugging Utility</CardHeader>
+      <CardHeader>NMEA 2000 Debugging Utility</CardHeader>``
       <CardBody>
         <div id="content">
           <Row>
@@ -118,7 +141,7 @@ const AppPanel = (props: any) => {
               />
             </Col>
             <Col xs="12" md="6">
-              <SentencePanel selectedPgn={selectedPgn}></SentencePanel>
+              <SentencePanel selectedPgn={selectedPgn} info={deviceInfo}></SentencePanel>
             </Col>
           </Row>
         </div>

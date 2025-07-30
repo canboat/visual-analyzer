@@ -3,6 +3,7 @@ const path = require('path')
 
 const { ModuleFederationPlugin } = require('webpack').container
 const { WatchIgnorePlugin, ProvidePlugin } = require('webpack')
+const webpack = require('webpack')
 
 const packageJson = require('./package')
 
@@ -47,6 +48,10 @@ module.exports = {
     ],
   },
   plugins: [
+    // Force development mode for React
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify('development')
+    }),
     // Use Plugin
     new ModuleFederationPlugin({
       name: 'Addon Demo',
