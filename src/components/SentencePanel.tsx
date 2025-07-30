@@ -30,7 +30,15 @@ export const SentencePanel = (props: SentencePanelProps) => {
   let definition: Definition = pgnData.getDefinition()
   //console.log('pgnData', pgnData)
   return (
-    <>
+    <div
+      style={{
+        width: '100%',
+        height: '600px',
+        overflow: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <Nav tabs>
         <NavItem>
           <NavLink className={activeTab === DATA_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(DATA_TAB_ID)}>
@@ -48,7 +56,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
           </NavLink>
         </NavItem>
       </Nav>
-      <TabContent activeTab={activeTab}>
+      <TabContent activeTab={activeTab} style={{ flex: 1, overflow: 'auto' }}>
         <TabPane tabId={DATA_TAB_ID}>
           <h5>{definition?.Description}</h5>
           <pre>{JSON.stringify(pgnData, null, 2)}</pre>
@@ -62,6 +70,6 @@ export const SentencePanel = (props: SentencePanelProps) => {
           <pre>{JSON.stringify(info[pgnData.src!]?.info, null, 2)}</pre>
         </TabPane>
       </TabContent>
-    </>
+    </div>
   )
 }
