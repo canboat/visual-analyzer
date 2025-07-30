@@ -37,7 +37,7 @@ const AppPanel = (props: any) => {
   const [currentSrcs, setCurrentSrcs] = useState<number[]>([])
   const [deviceInfo] = useState(new ReplaySubject<DeviceMap>())
   const [currentInfo, setCurrentInfo] = useState<DeviceMap>({})
-  const sentInfoReq : number[] = []
+  const sentInfoReq: number[] = []
 
   const parser = new FromPgn({
     returnNulls: true,
@@ -97,7 +97,7 @@ const AppPanel = (props: any) => {
           })
         }
 
-        if ( sentInfoReq.indexOf(pgn!.src!) === -1 ) {
+        if (sentInfoReq.indexOf(pgn!.src!) === -1) {
           sentInfoReq.push(pgn!.src!)
           requestMetaData(pgn!.src!)
         }
@@ -167,7 +167,8 @@ function requestMetaData(src: number) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
-    }).then((response) => response.json())
+    })
+      .then((response) => response.json())
       .then((data) => {
         //console.log(`Metadata for PGN ${num} received:`, data)
         if (data.error) {

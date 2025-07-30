@@ -3,7 +3,6 @@ const path = require('path')
 
 const { ModuleFederationPlugin } = require('webpack').container
 const { WatchIgnorePlugin, ProvidePlugin } = require('webpack')
-const webpack = require('webpack')
 
 const packageJson = require('./package')
 

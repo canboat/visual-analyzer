@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { PGN } from '@canboat/ts-pgns'
 
 export type Brand<K, T> = K & { __brand: T }

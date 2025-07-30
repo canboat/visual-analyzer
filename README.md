@@ -4,20 +4,18 @@ A powerful web-based tool for visually analyzing and debugging NMEA 2000 data st
 
 <img width="1368" height="815" alt="Visual Analyzer Screenshot" src="https://github.com/user-attachments/assets/060c30c2-51b7-462d-87ea-9deb56981971" />
 
-
 ## Features
 
 - **Real-time NMEA 2000 data visualization** - Live monitoring of PGN messages
 - **Advanced filtering capabilities**:
   - Filter by PGN numbers
   - Filter by source addresses
-  - Filter by destination addresses  
+  - Filter by destination addresses
   - Filter by manufacturer
   - Custom JavaScript filtering
 - **Device information display** - Automatic detection and display of device metadata
 - **Interactive data exploration** - Click on messages to view detailed information
 - **Signal K integration** - Seamlessly integrates with Signal K Server as an embeddable webapp
-
 
 ### Standalone Development
 
@@ -67,15 +65,19 @@ The analyzer automatically configures itself by:
 ## Filtering Options
 
 ### PGN Filtering
+
 Filter messages by specific Parameter Group Numbers to focus on particular message types.
 
-### Source/Destination Filtering  
+### Source/Destination Filtering
+
 Filter by device source addresses or destination addresses to monitor specific devices.
 
 ### Manufacturer Filtering
+
 Filter messages by device manufacturer to focus on equipment from specific vendors.
 
 ### JavaScript Filtering
+
 Advanced users can write custom JavaScript expressions for complex filtering logic.
 
 ## Development
