@@ -56,7 +56,18 @@ module.exports = {
       exposes: {
         './AppPanel': './src/components/AppPanel',
       },
-      shared: [{ react: { singleton: true } }, 'react-dom'],
+      shared: {
+        react: { 
+          singleton: true,
+          eager: false,
+          requiredVersion: '^16.13.1'
+        },
+        'react-dom': {
+          singleton: true,
+          eager: false,
+          requiredVersion: '^16.13.1'
+        }
+      },
     }),
     new WatchIgnorePlugin({
       paths: [path.resolve(__dirname, 'public/')],
