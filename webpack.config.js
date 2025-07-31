@@ -9,6 +9,7 @@ const packageJson = require('./package')
 module.exports = {
   entry: './src/index',
   mode: 'development',
+  devtool: 'source-map',
   output: {
     path: path.resolve(__dirname, 'public'),
   },

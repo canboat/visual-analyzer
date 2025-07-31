@@ -5,8 +5,7 @@ import { PGN } from '@canboat/ts-pgns'
 
 import { Subject } from 'rxjs'
 import { PgnNumber, PGNDataMap } from '../types'
-import { setupFilters, filterPGN } from '@canboat/canboatjs'
-import { Filter } from './Filters'
+import { Filter, filterFor, getFilterConfig } from './Filters'
 
 interface DataListProps {
   data: Subject<PGNDataMap>
@@ -15,28 +14,14 @@ interface DataListProps {
   doFiltering: Subject<boolean>
 }
 
-const filterFor = (doFiltering: boolean | undefined, filter?: Filter) => {
-  if (!doFiltering || filter === undefined) return () => true
-  return (pgn: PGN) => {
-    return filterPGN(
-      pgn,
-      setupFilters({
-        pgn: filter.pgn,
-        src: filter.src,
-        dst: filter.dst,
-        manufacturer: filter.manufacturer,
-        filter: filter.javaScript,
-      }),
-    )
-  }
-}
-
 export const DataList = (props: DataListProps) => {
   const data = useObservableState<PGNDataMap>(props.data)
   const filter = useObservableState(props.filter)
   const doFiltering = useObservableState(props.doFiltering)
 
-  const addToFilteredPgns = (i: PgnNumber) => {
+  const filterConfig = getFilterConfig(filter)
+
+  const addToFilteredPgns = (i: string) => {
     const safeFilteredPgns = filter?.pgn || []
     if (safeFilteredPgns.indexOf(i) === -1) {
       props.filter.next({ ...filter, pgn: [...safeFilteredPgns, i] })
@@ -64,13 +49,13 @@ export const DataList = (props: DataListProps) => {
         </thead>
         <tbody>
           {(data != undefined ? Object.values(data) : [])
-            .filter(filterFor(doFiltering, filter))
+            .filter(filterFor(doFiltering, filterConfig))
             .sort((a, b) => a.src! - b.src!)
             .map((row: PGN, i: number) => {
               return (
                 <tr key={row.timestamp! + i}>
                   <td>{row.timestamp!.split('T')[1]}</td>
-                  <td onClick={() => addToFilteredPgns(row.pgn as PgnNumber)}>{row.pgn}</td>
+                  <td style={{ color: 'red' }} onClick={() => addToFilteredPgns(row.pgn.toString())}>{row.pgn}</td>
                   <td>{row.src}</td>
                   <td>{row.dst}</td>
                   <td
@@ -89,22 +74,3 @@ export const DataList = (props: DataListProps) => {
   )
 }
 
-const pgnRow = (
-  i: number,
-  timestamp: string,
-  pgn: string,
-  src: string,
-  input: string[],
-  onClick: React.MouseEventHandler,
-) => (
-  <tr key={i}>
-    <td>{timestamp.split('T')[1]}</td>
-    <td style={{ color: 'red' }} onClick={onClick}>
-      {pgn}
-    </td>
-    <td>{src}</td>
-    <td>
-      <span style={{ fontFamily: 'monospace' }}>{input.join(' ')}</span>
-    </td>
-  </tr>
-)
