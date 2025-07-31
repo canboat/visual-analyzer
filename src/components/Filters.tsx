@@ -2,27 +2,53 @@ import React, { useState } from 'react'
 import { Col, Input, Label, Row, Table, Button, Collapse, Card, CardBody, CardHeader } from 'reactstrap'
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
-import { PGN, getAllPGNs, ManufacturerCode } from '@canboat/ts-pgns'
 import Creatable from 'react-select/creatable'
+import { PGN, getAllPGNs, ManufacturerCode } from '@canboat/ts-pgns'
+import { setupFilters, filterPGN, FilterConfig } from '@canboat/canboatjs'
 
 import { PgnNumber } from '../types'
 
 export type Filter = {
-  pgn?: PgnNumber[]
+  pgn?: string[]
   src?: number[]
   dst?: number[]
   manufacturer?: string[]
   javaScript?: string
 }
 
-const pgnOptions = getAllPGNs().map((pgn) => ({ value: pgn.PGN, label: `${pgn.PGN} ${pgn.Description}` }))
+export const getFilterConfig = (filter?: Filter): FilterConfig => {
+  const pgs: number[] | undefined = filter?.pgn?.map((p) => !isNaN(Number(p)) ? Number(p) : null).filter((p) => p !== null) as number[]
+  const pgn_ids: string[] | undefined = filter?.pgn?.map((p) => isNaN(Number(p)) ? p : null).filter((p) => p !== null) as string[]
+
+  return setupFilters({
+    pgn: pgs,
+    id: pgn_ids,
+    src: filter?.src,
+    dst: filter?.dst,
+    manufacturer: filter?.manufacturer,
+    filter: filter?.javaScript,
+  })
+}
+
+export const filterFor = (doFiltering: boolean | undefined, filter?: FilterConfig) => {
+  if (!doFiltering || filter === undefined) return () => true
+  return (pgn: PGN) => {
+    return filterPGN(
+      pgn,
+      filter,
+    )
+  }
+}
+
+const pgnOptions = getAllPGNs().map((pgn) => ({ value: pgn.Id, label: `${pgn.PGN} ${pgn.Description}` }))
+
 const pgnOptionsByPgn = pgnOptions.reduce<{
-  [pgnNumber: PgnNumber]: {
-    value: number
+  [id: string]: {
+    value: string
     label: string
   }
 }>((acc, pgnOption) => {
-  acc[pgnOption.value as PgnNumber] = pgnOption
+  acc[pgnOption.value] = pgnOption
   return acc
 }, {})
 
@@ -33,10 +59,10 @@ const manufacturerCodeOptions = Object.values(ManufacturerCode)
     label: name,
   }))
 
-const toPgnOption = (i: PgnNumber) =>
+const toPgnOption = (i: string) =>
   pgnOptionsByPgn[i] || {
     value: i,
-    label: `${i}`,
+    label: i,
   }
 
 const toSrcOption = (i: number) => ({
@@ -99,7 +125,7 @@ export const FilterPanel = (props: FilterPanelProps) => {
                 className="basic-multi-select"
                 classNamePrefix="select"
                 onChange={(values) => {
-                  props.filter.next({ ...filter, pgn: values.map((v) => v.value as PgnNumber) })
+                  props.filter.next({ ...filter, pgn: values.map((v) => v.value) })
                   props.doFiltering.next(true)
                 }}
               />
