@@ -5,8 +5,7 @@ import { useObservableState } from 'observable-hooks'
 import Creatable from 'react-select/creatable'
 import { PGN, getAllPGNs, ManufacturerCode } from '@canboat/ts-pgns'
 import { setupFilters, filterPGN, FilterConfig } from '@canboat/canboatjs'
-
-import { PgnNumber } from '../types'
+import { DeviceMap, PgnNumber } from '../types'
 
 export type Filter = {
   pgn?: string[]
@@ -66,14 +65,14 @@ const toPgnOption = (i: string) =>
     label: i,
   }
 
-const toSrcOption = (i: number) => ({
+const toSrcOption = (i: number, devices?: DeviceMap) => ({
   value: i,
-  label: `${i}`,
+  label: `${i} ${devices?.[i]?.info[126996 as PgnNumber]?.modelId || ''}`,
 })
 
-const toDstOption = (i: number) => ({
+const toDstOption = (i: number, devices?: DeviceMap) => ({
   value: i,
-  label: `${i}`,
+  label: `${i} ${devices?.[i]?.info[126996 as PgnNumber]?.modelId || ''}`,
 })
 
 const toManufacturerOption = (i: string) => ({
@@ -81,19 +80,18 @@ const toManufacturerOption = (i: string) => ({
   label: i,
 })
 
-export interface PgnOption {
-  value: number
-  label: string
-}
+
 interface FilterPanelProps {
   filter: Subject<Filter>
   availableSrcs: Subject<number[]>
+  deviceInfo: Subject<DeviceMap>
   doFiltering: Subject<boolean>
 }
 export const FilterPanel = (props: FilterPanelProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const filter = useObservableState(props.filter)
   const availableSrcs = useObservableState(props.availableSrcs)
+  const deviceInfo = useObservableState(props.deviceInfo)
   const doFiltering = useObservableState(props.doFiltering)
 
   return (
@@ -142,7 +140,7 @@ export const FilterPanel = (props: FilterPanelProps) => {
                 value={filter?.src?.map(toSrcOption)}
                 isMulti
                 name="srcs"
-                options={availableSrcs?.map(toSrcOption)}
+                options={availableSrcs?.map((s) => toSrcOption(s, deviceInfo))}
                 className="basic-multi-select"
                 classNamePrefix="select"
                 onChange={(values) => {
@@ -159,7 +157,7 @@ export const FilterPanel = (props: FilterPanelProps) => {
                 value={filter?.dst?.map(toDstOption)}
                 isMulti
                 name="dsts"
-                options={availableSrcs?.map(toDstOption)}
+                options={availableSrcs?.map((s) => toDstOption(s, deviceInfo))}
                 className="basic-multi-select"
                 classNamePrefix="select"
                 onChange={(values) => {

@@ -162,7 +162,7 @@ const AppPanel = (props: any) => {
               <div id="content">
                 <Row>
                   <Col xs="24" md="12">
-                    <FilterPanel doFiltering={doFiltering} filter={filter} availableSrcs={availableSrcs} />
+                    <FilterPanel doFiltering={doFiltering} filter={filter} availableSrcs={availableSrcs} deviceInfo={deviceInfo} />
                   </Col>
                 </Row>
                 <Row>
