@@ -73,10 +73,11 @@ export const SentencePanel = (props: SentencePanelProps) => {
           <pre>{JSON.stringify(info[pgnData.src!]?.info, null, 2)}</pre>
         </TabPane>
         <TabPane tabId={INPUT_TAB_ID}>
-          <pre>{(pgnData.input || [])
-          .map((input) => {
-            return (`${input}\n`)
-          })}</pre>
+          <pre>
+            {(pgnData.input || []).map((input) => {
+              return `${input}\n`
+            })}
+          </pre>
         </TabPane>
       </TabContent>
     </div>

@@ -8,7 +8,6 @@ import { SentencePanel } from './SentencePanel'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, createNmeaGroupFunction, PGN_59904 } from '@canboat/ts-pgns'
 
-
 // const SAFEPLUGINID = pkg.name.replace(/[-@/]/g, '_')
 // const saveSettingsItems = (items: any) => {
 //   let settings
