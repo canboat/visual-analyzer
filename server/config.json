@@ -7,8 +7,9 @@
     "signalkUrl": null,
     "serialPort": null,
     "baudRate": 115200,
-    "networkHost": null,
-    "networkPort": 2000,
+    "deviceType": "Actisense",
+    "networkHost": "ydwg",
+    "networkPort": 1457,
     "networkProtocol": "tcp"
   },
   "logging": {

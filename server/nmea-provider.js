@@ -107,21 +107,28 @@ class NMEADataProvider extends EventEmitter {
       const SerialPort = require('serialport')
       const { ReadlineParser } = require('@serialport/parser-readline')
       
-      console.log(`Connecting to serial port: ${this.options.serialPort}`)
+      const deviceType = this.options.deviceType || 'Actisense'
+      console.log(`Connecting to serial port: ${this.options.serialPort} (${deviceType})`)
       
       this.serialPort = new SerialPort({
         path: this.options.serialPort,
         baudRate: this.options.baudRate || 115200
       })
 
-      const parser = this.serialPort.pipe(new ReadlineParser({ delimiter: '\n' }))
+      // Configure parser based on device type
+      const delimiter = this.getDelimiterForDevice(deviceType)
+      const parser = this.serialPort.pipe(new ReadlineParser({ delimiter }))
       
       parser.on('data', (line) => {
         const trimmed = line.trim()
         if (trimmed) {
-          // Process NMEA 2000 data with canboatjs (when enabled)
-          // this.canboat.parseString(trimmed)
-          this.emit('raw-nmea', trimmed)
+          // Process data based on device type
+          const processedData = this.processSerialData(trimmed, deviceType)
+          if (processedData) {
+            // Process NMEA 2000 data with canboatjs (when enabled)
+            // this.canboat.parseString(processedData)
+            this.emit('raw-nmea', processedData)
+          }
         }
       })
 
@@ -237,6 +244,60 @@ class NMEADataProvider extends EventEmitter {
     }
     
     this.emit('disconnected')
+  }
+
+  getDelimiterForDevice(deviceType) {
+    switch (deviceType) {
+      case 'Actisense':
+        return '\n'  // Actisense uses newline
+      case 'iKonvert':
+        return '\r\n'  // iKonvert typically uses CRLF
+      case 'Yacht Devices':
+        return '\n'  // Yacht Devices uses newline
+      default:
+        return '\n'
+    }
+  }
+
+  processSerialData(data, deviceType) {
+    switch (deviceType) {
+      case 'Actisense':
+        return this.processActisenseData(data)
+      case 'iKonvert':
+        return this.processIKonvertData(data)
+      case 'Yacht Devices':
+        return this.processYachtDevicesData(data)
+      default:
+        return data
+    }
+  }
+
+  processActisenseData(data) {
+    // Actisense NGT-1 formats:
+    // - ASCII format: timestamp,priority,pgn,src,dst,len,data
+    // - Some variations may include additional fields
+    if (data.includes(',')) {
+      return data  // Already in canboat format
+    }
+    return null  // Skip invalid data
+  }
+
+  processIKonvertData(data) {
+    // iKonvert format processing
+    // Typically outputs in standard NMEA 2000 format
+    if (data.includes(',')) {
+      return data
+    }
+    return null
+  }
+
+  processYachtDevicesData(data) {
+    // Yacht Devices format processing
+    // YDWG-02 and similar devices
+    if (data.includes(',')) {
+      return data
+    }
+    return null
   }
 
   isConnectionActive() {

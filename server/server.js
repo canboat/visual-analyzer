@@ -13,12 +13,39 @@ class VisualAnalyzerServer {
     this.server = http.createServer(this.app)
     this.wss = new WebSocket.Server({ server: this.server })
     this.nmeaProvider = null
+    this.currentConfig = options
     
     this.setupRoutes()
     this.setupWebSocket()
   }
 
   setupRoutes() {
+    // Add JSON parsing middleware
+    this.app.use(express.json())
+    
+    // API routes for configuration
+    this.app.get('/api/config', (req, res) => {
+      res.json(this.getConfiguration())
+    })
+    
+    this.app.post('/api/config', (req, res) => {
+      try {
+        this.updateConfiguration(req.body)
+        res.json({ success: true, message: 'Configuration updated successfully' })
+      } catch (error) {
+        res.status(400).json({ success: false, error: error.message })
+      }
+    })
+    
+    this.app.post('/api/restart-connection', (req, res) => {
+      try {
+        this.restartNMEAConnection()
+        res.json({ success: true, message: 'Connection restart initiated' })
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message })
+      }
+    })
+    
     // Serve static files from public directory
     this.app.use(express.static(this.publicDir))
     
@@ -209,6 +236,114 @@ class VisualAnalyzerServer {
         client.send(JSON.stringify(message))
       }
     })
+  }
+
+  getConfiguration() {
+    return {
+      server: {
+        port: this.port,
+        publicDir: this.publicDir
+      },
+      nmea: this.currentConfig.nmea || {},
+      connection: {
+        isConnected: this.nmeaProvider ? this.nmeaProvider.isConnectionActive() : false,
+        connectedSources: this.getConnectedSources()
+      }
+    }
+  }
+
+  updateConfiguration(newConfig) {
+    if (newConfig.server) {
+      if (newConfig.server.port && newConfig.server.port !== this.port) {
+        throw new Error('Port changes require a server restart')
+      }
+    }
+
+    if (newConfig.nmea) {
+      this.currentConfig.nmea = { ...this.currentConfig.nmea, ...newConfig.nmea }
+      
+      // Validate configuration
+      this.validateNMEAConfig(this.currentConfig.nmea)
+      
+      // Save to config file
+      this.saveConfigToFile()
+      
+      // Restart NMEA connection if configuration changed
+      if (this.nmeaProvider) {
+        this.restartNMEAConnection()
+      }
+    }
+  }
+
+  validateNMEAConfig(config) {
+    if (config.serialPort && !config.baudRate) {
+      throw new Error('Baud rate is required for serial port connection')
+    }
+    
+    if (config.serialPort && !config.deviceType) {
+      throw new Error('Device type is required for serial port connection')
+    }
+    
+    if (config.networkHost && !config.networkPort) {
+      throw new Error('Network port is required for network connection')
+    }
+    
+    if (config.networkProtocol && !['tcp', 'udp'].includes(config.networkProtocol)) {
+      throw new Error('Network protocol must be tcp or udp')
+    }
+    
+    if (config.deviceType && !['Actisense', 'iKonvert', 'Yacht Devices'].includes(config.deviceType)) {
+      throw new Error('Device type must be Actisense, iKonvert, or Yacht Devices')
+    }
+  }
+
+  saveConfigToFile() {
+    try {
+      const configPath = path.join(__dirname, 'config.json')
+      const configData = {
+        server: {
+          port: this.port,
+          publicDir: this.publicDir
+        },
+        nmea: this.currentConfig.nmea,
+        logging: { level: 'info' }
+      }
+      fs.writeFileSync(configPath, JSON.stringify(configData, null, 2))
+      console.log('Configuration saved to config.json')
+    } catch (error) {
+      console.error('Failed to save configuration:', error)
+    }
+  }
+
+  getConnectedSources() {
+    const sources = []
+    if (this.currentConfig.nmea?.signalkUrl) sources.push('SignalK')
+    if (this.currentConfig.nmea?.serialPort) sources.push('Serial')
+    if (this.currentConfig.nmea?.networkHost) sources.push('Network')
+    return sources
+  }
+
+  restartNMEAConnection() {
+    console.log('Restarting NMEA connection...')
+    
+    // Disconnect existing connection
+    if (this.nmeaProvider) {
+      this.nmeaProvider.disconnect()
+      this.nmeaProvider = null
+    }
+    
+    // Broadcast disconnection status
+    this.broadcast({
+      event: 'nmea:disconnected',
+      timestamp: new Date().toISOString()
+    })
+    
+    // Restart with new configuration
+    if (this.currentConfig.nmea && Object.keys(this.currentConfig.nmea).length > 0) {
+      setTimeout(() => {
+        this.connectToNMEASource(this.currentConfig.nmea)
+      }, 1000) // Wait 1 second before reconnecting
+    }
   }
 
   start() {

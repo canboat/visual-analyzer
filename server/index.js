@@ -29,6 +29,7 @@ const config = {
     // Serial port configuration
     serialPort: process.env.SERIAL_PORT || fileConfig.nmea?.serialPort,
     baudRate: parseInt(process.env.BAUD_RATE) || fileConfig.nmea?.baudRate || 115200,
+    deviceType: process.env.DEVICE_TYPE || fileConfig.nmea?.deviceType || 'Actisense',
     
     // Network source (TCP/UDP)
     networkHost: process.env.NETWORK_HOST || fileConfig.nmea?.networkHost,

@@ -6,6 +6,7 @@ import { PGNDataMap, PgnNumber, DeviceMap } from '../types'
 import { DataList } from './DataList'
 import { FilterPanel, Filter } from './Filters'
 import { SentencePanel } from './SentencePanel'
+import { SettingsPanel } from './SettingsPanel'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
 
@@ -262,72 +263,7 @@ const AppPanel = (props: any) => {
           </Card>
         </TabPane>
         <TabPane tabId={SETTINGS_TAB_ID}>
-          <Card>
-            <CardBody>
-              <h4 className="text-sk-primary">Configuration Settings</h4>
-              <p className="mb-3">Configure the visual analyzer behavior and display preferences.</p>
-
-              <div className="alert alert-info" role="alert">
-                <strong>Coming Soon:</strong> Advanced configuration options and customization features will be
-                available in a future version. These are fake and do not work.
-              </div>
-
-              <div className="row">
-                <div className="col-md-6">
-                  <div className="card">
-                    <div className="card-header">
-                      <strong>Display Options</strong>
-                    </div>
-                    <div className="card-body">
-                      <div className="form-group">
-                        <label>Refresh Rate</label>
-                        <select className="form-control" defaultValue="1000">
-                          <option value="500">500ms</option>
-                          <option value="1000">1 second</option>
-                          <option value="2000">2 seconds</option>
-                          <option value="5000">5 seconds</option>
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <div className="form-check">
-                          <input className="form-check-input" type="checkbox" id="autoScroll" defaultChecked />
-                          <label className="form-check-label" htmlFor="autoScroll">
-                            Auto-scroll to new messages
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="card">
-                    <div className="card-header">
-                      <strong>Data Options</strong>
-                    </div>
-                    <div className="card-body">
-                      <div className="form-group">
-                        <label>Maximum Messages</label>
-                        <select className="form-control" defaultValue="1000">
-                          <option value="100">100</option>
-                          <option value="500">500</option>
-                          <option value="1000">1000</option>
-                          <option value="5000">5000</option>
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <div className="form-check">
-                          <input className="form-check-input" type="checkbox" id="showRaw" />
-                          <label className="form-check-label" htmlFor="showRaw">
-                            Show raw data
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
+          <SettingsPanel />
         </TabPane>
       </TabContent>
     </div>
