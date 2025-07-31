@@ -71,11 +71,13 @@ const AppPanel = (props: any) => {
       pgn = parser.parse(parsed.data)
       if (pgn !== undefined) {
         //console.log('pgn', pgn)
-        setList((prev: any) => {
-          prev[`${pgn!.getDefinition().Id}-${pgn!.src}`] = pgn
-          data.next({ ...prev })
-          return prev
-        })
+        if (infoPGNS.indexOf(pgn!.pgn) === -1) {
+          setList((prev: any) => {
+            prev[`${pgn!.getDefinition().Id}-${pgn!.src}`] = pgn
+            data.next({ ...prev })
+            return prev
+          })
+        }
 
         if (!currentSrcs.includes(pgn.src!)) {
           setCurrentSrcs((prev) => {
