@@ -1,0 +1,17 @@
+{
+  "server": {
+    "port": 8080,
+    "publicDir": "./public"
+  },
+  "nmea": {
+    "signalkUrl": null,
+    "serialPort": null,
+    "baudRate": 115200,
+    "networkHost": null,
+    "networkPort": 2000,
+    "networkProtocol": "tcp"
+  },
+  "logging": {
+    "level": "info"
+  }
+}
