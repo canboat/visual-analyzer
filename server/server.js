@@ -9,14 +9,58 @@ class VisualAnalyzerServer {
   constructor(options = {}) {
     this.port = options.port || 8080
     this.publicDir = options.publicDir || path.join(__dirname, '../public')
+    this.configFile = path.join(__dirname, 'config.json')
     this.app = express()
     this.server = http.createServer(this.app)
     this.wss = new WebSocket.Server({ server: this.server })
     this.nmeaProvider = null
-    this.currentConfig = options
+    this.currentConfig = { connections: { activeConnection: null, profiles: {} } }
+    
+    // Load configuration on startup
+    this.loadConfiguration()
     
     this.setupRoutes()
     this.setupWebSocket()
+  }
+
+  // Load configuration when server starts
+  loadConfiguration() {
+    try {
+      if (fs.existsSync(this.configFile)) {
+        const data = fs.readFileSync(this.configFile, 'utf8')
+        const config = JSON.parse(data)
+        
+        // Merge with defaults
+        this.currentConfig = {
+          connections: {
+            activeConnection: null,
+            profiles: {}
+          },
+          ...config
+        }
+        
+        console.log('Configuration loaded from', this.configFile)
+        
+        // Auto-connect to active connection if specified
+        if (this.currentConfig.connections.activeConnection) {
+          setTimeout(() => {
+            this.connectToActiveProfile()
+          }, 2000) // Wait 2 seconds after server startup
+        }
+      } else {
+        console.log('No configuration file found, using defaults')
+      }
+    } catch (error) {
+      console.error('Error loading configuration:', error)
+    }
+  }
+
+  connectToActiveProfile() {
+    const activeProfile = this.getActiveConnectionProfile()
+    if (activeProfile) {
+      console.log(`Auto-connecting to active profile: ${activeProfile.name}`)
+      this.connectToNMEASource(activeProfile)
+    }
   }
 
   setupRoutes() {
@@ -32,6 +76,37 @@ class VisualAnalyzerServer {
       try {
         this.updateConfiguration(req.body)
         res.json({ success: true, message: 'Configuration updated successfully' })
+      } catch (error) {
+        res.status(400).json({ success: false, error: error.message })
+      }
+    })
+    
+    this.app.get('/api/connections', (req, res) => {
+      res.json(this.getConnectionProfiles())
+    })
+    
+    this.app.post('/api/connections', (req, res) => {
+      try {
+        this.saveConnectionProfile(req.body)
+        res.json({ success: true, message: 'Connection profile saved successfully' })
+      } catch (error) {
+        res.status(400).json({ success: false, error: error.message })
+      }
+    })
+    
+    this.app.delete('/api/connections/:profileId', (req, res) => {
+      try {
+        this.deleteConnectionProfile(req.params.profileId)
+        res.json({ success: true, message: 'Connection profile deleted successfully' })
+      } catch (error) {
+        res.status(400).json({ success: false, error: error.message })
+      }
+    })
+    
+    this.app.post('/api/connections/:profileId/activate', (req, res) => {
+      try {
+        this.activateConnectionProfile(req.params.profileId)
+        res.json({ success: true, message: 'Connection profile activated successfully' })
       } catch (error) {
         res.status(400).json({ success: false, error: error.message })
       }
@@ -244,11 +319,93 @@ class VisualAnalyzerServer {
         port: this.port,
         publicDir: this.publicDir
       },
-      nmea: this.currentConfig.nmea || {},
+      connections: this.currentConfig.connections || { activeConnection: null, profiles: {} },
       connection: {
         isConnected: this.nmeaProvider ? this.nmeaProvider.isConnectionActive() : false,
-        connectedSources: this.getConnectedSources()
+        activeProfile: this.getActiveConnectionProfile()
       }
+    }
+  }
+
+  getConnectionProfiles() {
+    return this.currentConfig.connections || { activeConnection: null, profiles: {} }
+  }
+
+  getActiveConnectionProfile() {
+    const connections = this.currentConfig.connections
+    if (!connections || !connections.activeConnection) return null
+    
+    const profile = connections.profiles[connections.activeConnection]
+    return profile ? { id: connections.activeConnection, ...profile } : null
+  }
+
+  saveConnectionProfile(profileData) {
+    if (!profileData.id || !profileData.name || !profileData.type) {
+      throw new Error('Profile ID, name, and type are required')
+    }
+
+    // Validate profile data
+    this.validateConnectionProfile(profileData)
+
+    // Initialize connections if not exists
+    if (!this.currentConfig.connections) {
+      this.currentConfig.connections = { activeConnection: null, profiles: {} }
+    }
+
+    // Save the profile
+    const { id, ...profile } = profileData
+    this.currentConfig.connections.profiles[id] = profile
+
+    // Save to config file
+    this.saveConfigToFile()
+  }
+
+  deleteConnectionProfile(profileId) {
+    if (!this.currentConfig.connections || !this.currentConfig.connections.profiles[profileId]) {
+      throw new Error('Connection profile not found')
+    }
+
+    // Don't delete if it's the active connection
+    if (this.currentConfig.connections.activeConnection === profileId) {
+      throw new Error('Cannot delete the active connection profile')
+    }
+
+    delete this.currentConfig.connections.profiles[profileId]
+    this.saveConfigToFile()
+  }
+
+  activateConnectionProfile(profileId) {
+    if (!this.currentConfig.connections || !this.currentConfig.connections.profiles[profileId]) {
+      throw new Error('Connection profile not found')
+    }
+
+    this.currentConfig.connections.activeConnection = profileId
+    this.saveConfigToFile()
+    this.restartNMEAConnection()
+  }
+
+  validateConnectionProfile(profile) {
+    switch (profile.type) {
+      case 'serial':
+        if (!profile.serialPort) throw new Error('Serial port is required for serial connection')
+        if (!profile.baudRate) throw new Error('Baud rate is required for serial connection')
+        if (!profile.deviceType) throw new Error('Device type is required for serial connection')
+        break
+      
+      case 'network':
+        if (!profile.networkHost) throw new Error('Network host is required for network connection')
+        if (!profile.networkPort) throw new Error('Network port is required for network connection')
+        if (!['tcp', 'udp'].includes(profile.networkProtocol)) {
+          throw new Error('Network protocol must be tcp or udp')
+        }
+        break
+      
+      case 'signalk':
+        if (!profile.signalkUrl) throw new Error('SignalK URL is required for SignalK connection')
+        break
+      
+      default:
+        throw new Error('Connection type must be serial, network, or signalk')
     }
   }
 
@@ -259,41 +416,9 @@ class VisualAnalyzerServer {
       }
     }
 
-    if (newConfig.nmea) {
-      this.currentConfig.nmea = { ...this.currentConfig.nmea, ...newConfig.nmea }
-      
-      // Validate configuration
-      this.validateNMEAConfig(this.currentConfig.nmea)
-      
-      // Save to config file
+    if (newConfig.connections) {
+      this.currentConfig.connections = { ...this.currentConfig.connections, ...newConfig.connections }
       this.saveConfigToFile()
-      
-      // Restart NMEA connection if configuration changed
-      if (this.nmeaProvider) {
-        this.restartNMEAConnection()
-      }
-    }
-  }
-
-  validateNMEAConfig(config) {
-    if (config.serialPort && !config.baudRate) {
-      throw new Error('Baud rate is required for serial port connection')
-    }
-    
-    if (config.serialPort && !config.deviceType) {
-      throw new Error('Device type is required for serial port connection')
-    }
-    
-    if (config.networkHost && !config.networkPort) {
-      throw new Error('Network port is required for network connection')
-    }
-    
-    if (config.networkProtocol && !['tcp', 'udp'].includes(config.networkProtocol)) {
-      throw new Error('Network protocol must be tcp or udp')
-    }
-    
-    if (config.deviceType && !['Actisense', 'iKonvert', 'Yacht Devices'].includes(config.deviceType)) {
-      throw new Error('Device type must be Actisense, iKonvert, or Yacht Devices')
     }
   }
 
@@ -305,7 +430,7 @@ class VisualAnalyzerServer {
           port: this.port,
           publicDir: this.publicDir
         },
-        nmea: this.currentConfig.nmea,
+        connections: this.currentConfig.connections,
         logging: { level: 'info' }
       }
       fs.writeFileSync(configPath, JSON.stringify(configData, null, 2))
@@ -313,14 +438,6 @@ class VisualAnalyzerServer {
     } catch (error) {
       console.error('Failed to save configuration:', error)
     }
-  }
-
-  getConnectedSources() {
-    const sources = []
-    if (this.currentConfig.nmea?.signalkUrl) sources.push('SignalK')
-    if (this.currentConfig.nmea?.serialPort) sources.push('Serial')
-    if (this.currentConfig.nmea?.networkHost) sources.push('Network')
-    return sources
   }
 
   restartNMEAConnection() {
@@ -338,10 +455,12 @@ class VisualAnalyzerServer {
       timestamp: new Date().toISOString()
     })
     
-    // Restart with new configuration
-    if (this.currentConfig.nmea && Object.keys(this.currentConfig.nmea).length > 0) {
+    // Connect to active profile
+    const activeProfile = this.getActiveConnectionProfile()
+    if (activeProfile) {
       setTimeout(() => {
-        this.connectToNMEASource(this.currentConfig.nmea)
+        console.log(`Connecting to: ${activeProfile.name}`)
+        this.connectToNMEASource(activeProfile)
       }, 1000) // Wait 1 second before reconnecting
     }
   }
@@ -373,12 +492,6 @@ if (require.main === module) {
   const server = new VisualAnalyzerServer({
     port: process.env.PORT || 8080
   })
-  
-  // Example: Connect to NMEA 2000 data sources
-  // server.connectToNMEASource({
-  //   signalkUrl: 'http://localhost:3000', // Connect to local SignalK
-  //   // serialPort: '/dev/ttyUSB0',        // Connect to serial gateway
-  // })
   
   server.start()
 

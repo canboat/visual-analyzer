@@ -6,18 +6,13 @@ interface ServerConfig {
     port: number
     publicDir: string
   }
-  nmea: {
-    signalkUrl?: string
-    serialPort?: string
-    baudRate?: number
-    deviceType?: 'Actisense' | 'iKonvert' | 'Yacht Devices'
-    networkHost?: string
-    networkPort?: number
-    networkProtocol?: 'tcp' | 'udp'
+  connections: {
+    activeConnection: string | null
+    profiles: { [key: string]: any }
   }
   connection: {
     isConnected: boolean
-    connectedSources: string[]
+    activeProfile: any | null
   }
 }
 
@@ -47,15 +42,20 @@ export const SettingsPanel: React.FC = () => {
       if (response.ok) {
         const data = await response.json()
         setConfig(data)
-        setFormData({
-          signalkUrl: data.nmea.signalkUrl || '',
-          serialPort: data.nmea.serialPort || '',
-          baudRate: data.nmea.baudRate || 115200,
-          deviceType: data.nmea.deviceType || 'Actisense',
-          networkHost: data.nmea.networkHost || '',
-          networkPort: data.nmea.networkPort || 2000,
-          networkProtocol: data.nmea.networkProtocol || 'tcp'
-        })
+        
+        // Get the active profile data to populate the form
+        const activeProfile = data.connection.activeProfile
+        if (activeProfile) {
+          setFormData({
+            signalkUrl: activeProfile.type === 'signalk' ? activeProfile.signalkUrl || '' : '',
+            serialPort: activeProfile.type === 'serial' ? activeProfile.serialPort || '' : '',
+            baudRate: activeProfile.type === 'serial' ? activeProfile.baudRate || 115200 : 115200,
+            deviceType: activeProfile.type === 'serial' ? activeProfile.deviceType || 'Actisense' : 'Actisense',
+            networkHost: activeProfile.type === 'network' ? activeProfile.networkHost || '' : '',
+            networkPort: activeProfile.type === 'network' ? activeProfile.networkPort || 2000 : 2000,
+            networkProtocol: activeProfile.type === 'network' ? activeProfile.networkProtocol || 'tcp' : 'tcp'
+          })
+        }
       } else {
         throw new Error('Failed to load configuration')
       }
@@ -71,32 +71,48 @@ export const SettingsPanel: React.FC = () => {
     setMessage(null)
     
     try {
-      const response = await fetch('/api/config', {
+      // Note: This now uses the connection profiles API
+      // Create a temporary profile for immediate use
+      const profileData = {
+        id: 'settings-temp',
+        name: 'Settings Panel Configuration',
+        type: formData.signalkUrl ? 'signalk' : 
+              formData.serialPort ? 'serial' : 
+              formData.networkHost ? 'network' : 'network',
+        signalkUrl: formData.signalkUrl || undefined,
+        serialPort: formData.serialPort || undefined,
+        baudRate: formData.baudRate,
+        deviceType: formData.deviceType,
+        networkHost: formData.networkHost || undefined,
+        networkPort: formData.networkPort,
+        networkProtocol: formData.networkProtocol
+      }
+
+      // Save as a connection profile
+      const response = await fetch('/api/connections', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          nmea: {
-            signalkUrl: formData.signalkUrl || null,
-            serialPort: formData.serialPort || null,
-            baudRate: formData.baudRate,
-            deviceType: formData.deviceType,
-            networkHost: formData.networkHost || null,
-            networkPort: formData.networkPort,
-            networkProtocol: formData.networkProtocol
-          }
-        }),
+        body: JSON.stringify(profileData),
       })
 
       const result = await response.json()
       
       if (response.ok && result.success) {
-        setMessage({ type: 'success', text: 'Configuration saved successfully!' })
-        // Reload configuration to reflect changes
-        setTimeout(() => {
-          loadConfiguration()
-        }, 1000)
+        // Activate the profile
+        const activateResponse = await fetch(`/api/connections/${profileData.id}/activate`, {
+          method: 'POST'
+        })
+        
+        if (activateResponse.ok) {
+          setMessage({ type: 'success', text: 'Configuration saved and activated successfully!' })
+          setTimeout(() => {
+            loadConfiguration()
+          }, 1000)
+        } else {
+          setMessage({ type: 'success', text: 'Configuration saved! Use the Connections tab to activate it.' })
+        }
       } else {
         throw new Error(result.error || 'Failed to save configuration')
       }
@@ -179,6 +195,10 @@ export const SettingsPanel: React.FC = () => {
         <h4 className="text-sk-primary">Server Configuration</h4>
         <p className="mb-3">Configure NMEA 2000 data sources and server settings.</p>
 
+        <div className="alert alert-info mb-3" role="alert">
+          <strong>💡 New!</strong> For better connection management, use the <strong>Connections</strong> tab to create and manage multiple named connection profiles.
+        </div>
+
         {message && (
           <Alert color={message.type === 'success' ? 'success' : 'danger'} className="mb-3">
             {message.text}
@@ -192,9 +212,9 @@ export const SettingsPanel: React.FC = () => {
               <span className={`badge ${config.connection.isConnected ? 'badge-success' : 'badge-secondary'} mr-2`}>
                 {config.connection.isConnected ? 'Connected' : 'Disconnected'}
               </span>
-              {config.connection.connectedSources.length > 0 && (
+              {config.connection.activeProfile && (
                 <span className="text-muted">
-                  Sources: {config.connection.connectedSources.join(', ')}
+                  Active: {config.connection.activeProfile.name} ({config.connection.activeProfile.type})
                 </span>
               )}
             </div>

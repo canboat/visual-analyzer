@@ -3,14 +3,29 @@
     "port": 8080,
     "publicDir": "./public"
   },
-  "nmea": {
-    "signalkUrl": null,
-    "serialPort": null,
-    "baudRate": 115200,
-    "deviceType": "Actisense",
-    "networkHost": "ydwg",
-    "networkPort": 1457,
-    "networkProtocol": "tcp"
+  "connections": {
+    "activeConnection": "yacht-devices-tcp",
+    "profiles": {
+      "yacht-devices-tcp": {
+        "name": "Yacht Devices TCP",
+        "type": "network",
+        "networkHost": "ydwg",
+        "networkPort": 1457,
+        "networkProtocol": "tcp"
+      },
+      "local-signalk": {
+        "name": "Local SignalK Server",
+        "type": "signalk",
+        "signalkUrl": "http://localhost:3000"
+      },
+      "actisense-usb": {
+        "name": "Actisense NGT-1 USB",
+        "type": "serial",
+        "serialPort": "/dev/ttyUSB0",
+        "baudRate": 115200,
+        "deviceType": "Actisense"
+      }
+    }
   },
   "logging": {
     "level": "info"

@@ -7,6 +7,7 @@ import { DataList } from './DataList'
 import { FilterPanel, Filter } from './Filters'
 import { SentencePanel } from './SentencePanel'
 import { SettingsPanel } from './SettingsPanel'
+import { ConnectionManagerPanel } from './ConnectionManagerPanel'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
 
@@ -25,6 +26,7 @@ const infoPGNS: number[] = [60928, 126998, 126996]
 const SEND_TAB_ID = 'send'
 const ANALYZER_TAB_ID = 'analyzer'
 const TRANSFORM_TAB_ID = 'transform'
+const CONNECTIONS_TAB_ID = 'connections'
 const SETTINGS_TAB_ID = 'settings'
 
 const AppPanel = (props: any) => {
@@ -103,7 +105,7 @@ const AppPanel = (props: any) => {
 
         if (sentInfoReq.indexOf(pgn!.src!) === -1) {
           sentInfoReq.push(pgn!.src!)
-          requestMetaData(pgn!.src!)
+          //requestMetaData(pgn!.src!)
         }
       }
     }
@@ -144,6 +146,15 @@ const AppPanel = (props: any) => {
             style={{ cursor: 'pointer' }}
           >
             Transform
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink
+            className={activeTab === CONNECTIONS_TAB_ID ? 'active' : ''}
+            onClick={() => setActiveTab(CONNECTIONS_TAB_ID)}
+            style={{ cursor: 'pointer' }}
+          >
+            Connections
           </NavLink>
         </NavItem>
         <NavItem>
@@ -261,6 +272,9 @@ const AppPanel = (props: any) => {
               </div>
             </CardBody>
           </Card>
+        </TabPane>
+        <TabPane tabId={CONNECTIONS_TAB_ID}>
+          <ConnectionManagerPanel />
         </TabPane>
         <TabPane tabId={SETTINGS_TAB_ID}>
           <SettingsPanel />

@@ -21,35 +21,31 @@ const config = {
   port: process.env.PORT || fileConfig.server?.port || 8080,
   publicDir: process.env.PUBLIC_DIR || fileConfig.server?.publicDir || path.join(__dirname, '../public'),
   
-  // NMEA 2000 data source options
-  nmea: {
-    // SignalK server connection
-    signalkUrl: process.env.SIGNALK_URL || fileConfig.nmea?.signalkUrl,
-    
-    // Serial port configuration
-    serialPort: process.env.SERIAL_PORT || fileConfig.nmea?.serialPort,
-    baudRate: parseInt(process.env.BAUD_RATE) || fileConfig.nmea?.baudRate || 115200,
-    deviceType: process.env.DEVICE_TYPE || fileConfig.nmea?.deviceType || 'Actisense',
-    
-    // Network source (TCP/UDP)
-    networkHost: process.env.NETWORK_HOST || fileConfig.nmea?.networkHost,
-    networkPort: parseInt(process.env.NETWORK_PORT) || fileConfig.nmea?.networkPort || 2000,
-    networkProtocol: process.env.NETWORK_PROTOCOL || fileConfig.nmea?.networkProtocol || 'tcp', // 'tcp' or 'udp'
+  // Connection profiles system
+  connections: fileConfig.connections || {
+    activeConnection: null,
+    profiles: {}
   }
 }
 
 console.log('Starting Visual Analyzer Server with configuration:')
 console.log(`  Port: ${config.port}`)
 console.log(`  Public Directory: ${config.publicDir}`)
-console.log(`  SignalK URL: ${config.nmea.signalkUrl || 'Not configured'}`)
-console.log(`  Serial Port: ${config.nmea.serialPort || 'Not configured'}`)
+console.log(`  Active Connection: ${config.connections.activeConnection || 'None configured'}`)
 
 // Create and start the server
 const server = new VisualAnalyzerServer(config)
 
-// Connect to NMEA 2000 data sources if configured
-if (config.nmea.signalkUrl || config.nmea.serialPort || config.nmea.networkHost) {
-  server.connectToNMEASource(config.nmea)
+// Connect to active connection profile if configured
+const activeProfile = config.connections.activeConnection 
+  ? config.connections.profiles[config.connections.activeConnection] 
+  : null
+
+if (activeProfile) {
+  console.log(`Connecting to: ${activeProfile.name}`)
+  server.connectToNMEASource(activeProfile)
+} else {
+  console.log('No active connection configured')
 }
 
 server.start()
