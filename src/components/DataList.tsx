@@ -132,7 +132,7 @@ const pgnOptionsByPgn = pgnOptions.reduce<{
   return acc
 }, {})
 
-const manufacturerCodeOptions = Object.values(ManufacturerCode).map((name) => ({
+const manufacturerCodeOptions = Object.values(ManufacturerCode).sort().map((name) => ({
   value: name,
   label: name,
 }))
