@@ -1,0 +1,307 @@
+/* SignalK Server-inspired styles for the NMEA 2000 Visual Analyzer */
+
+/* Color system matching SignalK Server */
+:root {
+  --sk-primary: #003399;
+  --sk-secondary: #a4b7c1;
+  --sk-success: #4dbd74;
+  --sk-info: #63c2de;
+  --sk-warning: #ffcc00;
+  --sk-danger: #f86c6b;
+  --sk-light: #f0f3f5;
+  --sk-dark: #29363d;
+
+  --sk-gray-100: #f0f3f5;
+  --sk-gray-200: #c2cfd6;
+  --sk-gray-300: #a4b7c1;
+  --sk-gray-400: #869fac;
+  --sk-gray-500: #678898;
+  --sk-gray-600: #536c79;
+  --sk-gray-700: #3e515b;
+  --sk-gray-800: #29363d;
+  --sk-gray-900: #151b1e;
+
+  --sk-body-bg: #e4e5e6;
+  --sk-card-border: #c2cfd6;
+  --sk-card-cap-bg: #f0f3f5;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  background-color: var(--sk-body-bg);
+  font-size: 0.875rem;
+}
+
+.container-fluid {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-top: 1rem;
+}
+
+/* SignalK-style Navigation Tabs */
+.nav-tabs {
+  border-bottom: 1px solid var(--sk-card-border);
+  margin-bottom: 1.5rem;
+}
+
+.nav-tabs .nav-link {
+  color: var(--sk-gray-500);
+  font-weight: 500;
+  border: 1px solid transparent;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  background-color: transparent;
+  padding: 0.75rem 1rem;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: var(--sk-gray-200);
+  background-color: var(--sk-gray-100);
+  color: var(--sk-gray-700);
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--sk-dark);
+  background-color: #fff;
+  border-color: var(--sk-card-border) var(--sk-card-border) #fff;
+  border-top: 3px solid var(--sk-primary);
+}
+
+/* SignalK-style Cards */
+.card {
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--sk-card-border);
+  border-radius: 0;
+  box-shadow: none;
+  background-color: #fff;
+}
+
+.card-header {
+  background-color: var(--sk-card-cap-bg);
+  border-bottom: 1px solid var(--sk-card-border);
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 0;
+  font-weight: 600;
+  color: var(--sk-gray-700);
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+/* Filter panel styling */
+.filter-panel {
+  background-color: #fff;
+  border: 1px solid var(--sk-card-border);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.filter-panel .form-group {
+  margin-bottom: 1rem;
+}
+
+.filter-panel label {
+  color: var(--sk-gray-700);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+/* Data list styling */
+.data-list {
+  background-color: #fff;
+  border: 1px solid var(--sk-card-border);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.data-list .table {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.data-list .table th {
+  border-top: none;
+  border-bottom: 1px solid var(--sk-card-border);
+  background-color: var(--sk-card-cap-bg);
+  color: var(--sk-gray-700);
+  font-weight: 600;
+  padding: 0.75rem;
+}
+
+.data-list .table td {
+  border-top: 1px solid var(--sk-gray-100);
+  padding: 0.75rem;
+  vertical-align: middle;
+}
+
+.data-list .table tbody tr:hover {
+  background-color: var(--sk-gray-100);
+  cursor: pointer;
+}
+
+.data-list .table tbody tr:nth-of-type(odd) {
+  background-color: var(--sk-gray-100);
+}
+
+.data-list .table tbody tr:nth-of-type(odd):hover {
+  background-color: var(--sk-gray-200);
+}
+
+/* Sentence panel styling */
+.sentence-panel {
+  background-color: #fff;
+  border: 1px solid var(--sk-card-border);
+  padding: 1rem;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.sentence-panel pre {
+  background-color: var(--sk-gray-100);
+  border: 1px solid var(--sk-card-border);
+  padding: 1rem;
+  font-size: 0.8rem;
+  color: var(--sk-gray-800);
+  border-radius: 0;
+}
+
+/* Buttons */
+.btn {
+  border-radius: 0;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background-color: var(--sk-primary);
+  border-color: var(--sk-primary);
+}
+
+.btn-primary:hover {
+  background-color: #002266;
+  border-color: #002266;
+}
+
+.btn-secondary {
+  background-color: var(--sk-secondary);
+  border-color: var(--sk-secondary);
+  color: var(--sk-dark);
+}
+
+.btn-secondary:hover {
+  background-color: var(--sk-gray-400);
+  border-color: var(--sk-gray-400);
+  color: var(--sk-dark);
+}
+
+/* Form controls */
+.form-control {
+  border-radius: 0;
+  border-color: var(--sk-card-border);
+  font-size: 0.875rem;
+}
+
+.form-control:focus {
+  border-color: var(--sk-primary);
+  box-shadow: 0 0 0 0.2rem rgba(0, 51, 153, 0.25);
+}
+
+.input-group-text {
+  background-color: var(--sk-gray-100);
+  border-color: var(--sk-card-border);
+  border-radius: 0;
+}
+
+/* Loading states */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  color: var(--sk-gray-500);
+  font-style: italic;
+}
+
+/* Alerts */
+.alert {
+  border-radius: 0;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+
+/* Tab content styling */
+.tab-content {
+  background-color: transparent;
+}
+
+.tab-pane {
+  padding: 0;
+}
+
+/* Special styling for placeholder content */
+.tab-pane h4 {
+  color: var(--sk-gray-700);
+  margin-bottom: 1rem;
+}
+
+.tab-pane p {
+  color: var(--sk-gray-600);
+  margin-bottom: 0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 767px) {
+  .container-fluid {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .nav-tabs .nav-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .data-list .table td,
+  .data-list .table th {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Additional SignalK-inspired utility classes */
+.text-sk-primary {
+  color: var(--sk-primary) !important;
+}
+.text-sk-secondary {
+  color: var(--sk-secondary) !important;
+}
+.text-sk-success {
+  color: var(--sk-success) !important;
+}
+.text-sk-info {
+  color: var(--sk-info) !important;
+}
+.text-sk-warning {
+  color: var(--sk-warning) !important;
+}
+.text-sk-danger {
+  color: var(--sk-danger) !important;
+}
+
+.bg-sk-primary {
+  background-color: var(--sk-primary) !important;
+}
+.bg-sk-light {
+  background-color: var(--sk-light) !important;
+}
+.bg-sk-dark {
+  background-color: var(--sk-dark) !important;
+}
