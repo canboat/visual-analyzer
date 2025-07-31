@@ -10,7 +10,7 @@
   --sk-danger: #f86c6b;
   --sk-light: #f0f3f5;
   --sk-dark: #29363d;
-  
+
   --sk-gray-100: #f0f3f5;
   --sk-gray-200: #c2cfd6;
   --sk-gray-300: #a4b7c1;
@@ -20,7 +20,7 @@
   --sk-gray-700: #3e515b;
   --sk-gray-800: #29363d;
   --sk-gray-900: #151b1e;
-  
+
   --sk-body-bg: #e4e5e6;
   --sk-card-border: #c2cfd6;
   --sk-card-cap-bg: #f0f3f5;
@@ -259,16 +259,16 @@ body {
     padding-left: 0.5rem;
     padding-right: 0.5rem;
   }
-  
+
   .card-body {
     padding: 1rem;
   }
-  
+
   .nav-tabs .nav-link {
     padding: 0.5rem 0.75rem;
     font-size: 0.8rem;
   }
-  
+
   .data-list .table td,
   .data-list .table th {
     padding: 0.5rem;
@@ -277,13 +277,31 @@ body {
 }
 
 /* Additional SignalK-inspired utility classes */
-.text-sk-primary { color: var(--sk-primary) !important; }
-.text-sk-secondary { color: var(--sk-secondary) !important; }
-.text-sk-success { color: var(--sk-success) !important; }
-.text-sk-info { color: var(--sk-info) !important; }
-.text-sk-warning { color: var(--sk-warning) !important; }
-.text-sk-danger { color: var(--sk-danger) !important; }
+.text-sk-primary {
+  color: var(--sk-primary) !important;
+}
+.text-sk-secondary {
+  color: var(--sk-secondary) !important;
+}
+.text-sk-success {
+  color: var(--sk-success) !important;
+}
+.text-sk-info {
+  color: var(--sk-info) !important;
+}
+.text-sk-warning {
+  color: var(--sk-warning) !important;
+}
+.text-sk-danger {
+  color: var(--sk-danger) !important;
+}
 
-.bg-sk-primary { background-color: var(--sk-primary) !important; }
-.bg-sk-light { background-color: var(--sk-light) !important; }
-.bg-sk-dark { background-color: var(--sk-dark) !important; }
+.bg-sk-primary {
+  background-color: var(--sk-primary) !important;
+}
+.bg-sk-light {
+  background-color: var(--sk-light) !important;
+}
+.bg-sk-dark {
+  background-color: var(--sk-dark) !important;
+}

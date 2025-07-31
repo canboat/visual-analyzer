@@ -57,16 +57,16 @@ module.exports = {
         './AppPanel': './src/components/AppPanel',
       },
       shared: {
-        react: { 
+        react: {
           singleton: true,
           eager: false,
-          requiredVersion: '^16.13.1'
+          requiredVersion: '^16.13.1',
         },
         'react-dom': {
           singleton: true,
           eager: false,
-          requiredVersion: '^16.13.1'
-        }
+          requiredVersion: '^16.13.1',
+        },
       },
     }),
     new WatchIgnorePlugin({

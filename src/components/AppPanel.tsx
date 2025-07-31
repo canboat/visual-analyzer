@@ -194,11 +194,12 @@ const AppPanel = (props: any) => {
             <CardBody>
               <h4 className="text-sk-primary">Send NMEA 2000 Messages</h4>
               <p className="mb-3">Send custom NMEA 2000 messages to the network for testing and debugging purposes.</p>
-              
+
               <div className="alert alert-info" role="alert">
-                <strong>Coming Soon:</strong> PGN composition and transmission interface will be available in a future version.
+                <strong>Coming Soon:</strong> PGN composition and transmission interface will be available in a future
+                version.
               </div>
-              
+
               <div className="row">
                 <div className="col-md-6">
                   <div className="card bg-sk-light">
@@ -225,11 +226,12 @@ const AppPanel = (props: any) => {
             <CardBody>
               <h4 className="text-sk-primary">Data Transformation</h4>
               <p className="mb-3">Transform and convert NMEA 2000 data between different formats and protocols.</p>
-              
+
               <div className="alert alert-info" role="alert">
-                <strong>Coming Soon:</strong> Data transformation tools and protocol converters will be available in a future version.
+                <strong>Coming Soon:</strong> Data transformation tools and protocol converters will be available in a
+                future version.
               </div>
-              
+
               <div className="row">
                 <div className="col-md-4">
                   <div className="card bg-sk-light">
@@ -264,11 +266,12 @@ const AppPanel = (props: any) => {
             <CardBody>
               <h4 className="text-sk-primary">Configuration Settings</h4>
               <p className="mb-3">Configure the visual analyzer behavior and display preferences.</p>
-              
+
               <div className="alert alert-info" role="alert">
-                <strong>Coming Soon:</strong> Advanced configuration options and customization features will be available in a future version. These are fake and do not work.
+                <strong>Coming Soon:</strong> Advanced configuration options and customization features will be
+                available in a future version. These are fake and do not work.
               </div>
-              
+
               <div className="row">
                 <div className="col-md-6">
                   <div className="card">
