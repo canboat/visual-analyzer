@@ -21,9 +21,6 @@ export const SentencePanel = (props: SentencePanelProps) => {
   const pgnData = useObservableState<PGN>(props.selectedPgn)
   const info = useObservableState<DeviceMap>(props.info, {})
 
-  // Log React mode for debugging
-  console.log('React development mode:', process.env.NODE_ENV !== 'production')
-
   if (pgnData === undefined || pgnData === null) {
     return <div>Select a PGN to view its data</div>
   }

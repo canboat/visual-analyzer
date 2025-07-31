@@ -73,7 +73,7 @@ const AppPanel = (props: any) => {
         //console.log('pgn', pgn)
         if (infoPGNS.indexOf(pgn!.pgn) === -1) {
           setList((prev: any) => {
-            prev[`${pgn!.getDefinition().Id}-${pgn!.src}`] = pgn
+            prev[`${pgn!.getDefinition().Id}-${pgn!.pgn}-${pgn!.src}`] = pgn
             data.next({ ...prev })
             return prev
           })
