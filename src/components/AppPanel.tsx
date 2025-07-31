@@ -78,7 +78,7 @@ const AppPanel = (props: any) => {
         if (!currentSrcs.includes(pgn.src!)) {
           setCurrentSrcs((prev) => {
             prev.push(pgn!.src!)
-            availableSrcs.next([...prev])
+            availableSrcs.next([...prev.sort((a, b) => a - b)])
             return prev
           })
         }
