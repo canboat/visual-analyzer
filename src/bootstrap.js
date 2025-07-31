@@ -52,7 +52,7 @@ ReactDOM.render(
             📡 NMEA 2000 Visual Analyzer
           </span>
           <span className="navbar-text" style={{ color: '#a4b7c1', fontSize: '0.875rem' }}>
-            Signal K Server Plugin
+            <a href="https://github.com/canboat" target="_blank" rel="noopener noreferrer" style={{ color: 'white' }}>Canboat</a>
           </span>
         </div>
       </nav>

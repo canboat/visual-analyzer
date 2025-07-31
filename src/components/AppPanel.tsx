@@ -234,8 +234,8 @@ const AppPanel = (props: any) => {
                 <div className="col-md-4">
                   <div className="card bg-sk-light">
                     <div className="card-body">
-                      <h6 className="card-title">N2K → NMEA 0183</h6>
-                      <p className="card-text small">Convert NMEA 2000 messages to NMEA 0183 format.</p>
+                      <h6 className="card-title">Actisense → YDRAW</h6>
+                      <p className="card-text small">Convert Actisense messages to YDRAW format.</p>
                     </div>
                   </div>
                 </div>
@@ -264,6 +264,10 @@ const AppPanel = (props: any) => {
             <CardBody>
               <h4 className="text-sk-primary">Configuration Settings</h4>
               <p className="mb-3">Configure the visual analyzer behavior and display preferences.</p>
+              
+              <div className="alert alert-info" role="alert">
+                <strong>Coming Soon:</strong> Advanced configuration options and customization features will be available in a future version. These are fake and do not work.
+              </div>
               
               <div className="row">
                 <div className="col-md-6">
