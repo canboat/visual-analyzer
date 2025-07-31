@@ -97,15 +97,18 @@ export const FilterPanel = (props: FilterPanelProps) => {
 
   return (
     <Card>
-      <CardHeader className="d-flex justify-content-between align-items-center py-2">
+      <CardHeader 
+        className="d-flex justify-content-between align-items-center py-2"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ cursor: 'pointer' }}
+      >
         <h6 className="mb-0" style={{ fontWeight: 'bold' }}>
           Filters
         </h6>
         <Button
           color="outline-primary"
           size="sm"
-          onClick={() => setIsOpen(!isOpen)}
-          style={{ border: 'none', fontSize: '16px', padding: '2px 6px' }}
+          style={{ border: 'none', fontSize: '16px', padding: '2px 6px', pointerEvents: 'none' }}
         >
           {isOpen ? '−' : '+'}
         </Button>
