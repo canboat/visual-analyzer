@@ -15,6 +15,7 @@ interface SentencePanelProps {
 const DATA_TAB_ID = 'data'
 const PGNDEF_TAB_ID = 'pgndef'
 const DEVICE_TAB_ID = 'device'
+const INPUT_TAB_ID = 'input'
 
 export const SentencePanel = (props: SentencePanelProps) => {
   const [activeTab, setActiveTab] = useState(DATA_TAB_ID)
@@ -43,6 +44,11 @@ export const SentencePanel = (props: SentencePanelProps) => {
           </NavLink>
         </NavItem>
         <NavItem>
+          <NavLink className={activeTab === INPUT_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(INPUT_TAB_ID)}>
+            Input
+          </NavLink>
+        </NavItem>
+        <NavItem>
           <NavLink className={activeTab === DEVICE_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(DEVICE_TAB_ID)}>
             Device Information
           </NavLink>
@@ -56,7 +62,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
       <TabContent activeTab={activeTab} style={{ flex: 1, overflow: 'auto' }}>
         <TabPane tabId={DATA_TAB_ID}>
           <h5>{definition?.Description}</h5>
-          <pre>{JSON.stringify(pgnData, null, 2)}</pre>
+          <pre>{JSON.stringify(pgnData, (key, value) => (key === 'input' ? undefined : value), 2)}</pre>
         </TabPane>
         {definition !== undefined && (
           <TabPane tabId={PGNDEF_TAB_ID}>
@@ -65,6 +71,12 @@ export const SentencePanel = (props: SentencePanelProps) => {
         )}
         <TabPane tabId={DEVICE_TAB_ID}>
           <pre>{JSON.stringify(info[pgnData.src!]?.info, null, 2)}</pre>
+        </TabPane>
+        <TabPane tabId={INPUT_TAB_ID}>
+          <pre>{(pgnData.input || [])
+          .map((input) => {
+            return (`${input}\n`)
+          })}</pre>
         </TabPane>
       </TabContent>
     </div>
