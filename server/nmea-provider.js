@@ -1,14 +1,18 @@
 const EventEmitter = require('events')
 const { CanboatJS } = require('@canboat/canboatjs')
+const net = require('net')
+const dgram = require('dgram')
+const WebSocket = require('ws')
 
 class NMEADataProvider extends EventEmitter {
   constructor(options = {}) {
     super()
     this.options = options
-    this.canboat = new CanboatJS()
+    //this.canboat = new CanboatJS()
     this.isConnected = false
     
     // Configure canboatjs
+    /*
     this.canboat.on('data', (data) => {
       this.emit('nmea-data', data)
     })
@@ -17,6 +21,7 @@ class NMEADataProvider extends EventEmitter {
       console.error('CanboatJS error:', error)
       this.emit('error', error)
     })
+      **/
   }
 
   async connect() {
@@ -42,7 +47,6 @@ class NMEADataProvider extends EventEmitter {
   }
 
   async connectToSignalK() {
-    const WebSocket = require('ws')
     const url = this.options.signalkUrl.replace('http', 'ws') + '/signalk/v1/stream'
     
     console.log('Connecting to SignalK WebSocket:', url)
@@ -115,8 +119,8 @@ class NMEADataProvider extends EventEmitter {
       parser.on('data', (line) => {
         const trimmed = line.trim()
         if (trimmed) {
-          // Process NMEA 2000 data with canboatjs
-          this.canboat.parseString(trimmed)
+          // Process NMEA 2000 data with canboatjs (when enabled)
+          // this.canboat.parseString(trimmed)
           this.emit('raw-nmea', trimmed)
         }
       })
@@ -134,9 +138,6 @@ class NMEADataProvider extends EventEmitter {
   }
 
   async connectToNetwork() {
-    const net = require('net')
-    const dgram = require('dgram')
-    
     if (this.options.networkProtocol === 'udp') {
       await this.connectToUDP()
     } else {
@@ -161,7 +162,7 @@ class NMEADataProvider extends EventEmitter {
       lines.forEach(line => {
         const trimmed = line.trim()
         if (trimmed) {
-          this.canboat.parseString(trimmed)
+          //this.canboat.parseString(trimmed)
           this.emit('raw-nmea', trimmed)
         }
       })
@@ -189,7 +190,7 @@ class NMEADataProvider extends EventEmitter {
       lines.forEach(line => {
         const trimmed = line.trim()
         if (trimmed) {
-          this.canboat.parseString(trimmed)
+          // this.canboat.parseString(trimmed)
           this.emit('raw-nmea', trimmed)
         }
       })
