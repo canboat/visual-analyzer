@@ -192,24 +192,133 @@ const AppPanel = (props: any) => {
         <TabPane tabId={SEND_TAB_ID}>
           <Card>
             <CardBody>
-              <h4>Send Panel</h4>
-              <p>This is the send tab content. You can add configuration options here.</p>
+              <h4 className="text-sk-primary">Send NMEA 2000 Messages</h4>
+              <p className="mb-3">Send custom NMEA 2000 messages to the network for testing and debugging purposes.</p>
+              
+              <div className="alert alert-info" role="alert">
+                <strong>Coming Soon:</strong> PGN composition and transmission interface will be available in a future version.
+              </div>
+              
+              <div className="row">
+                <div className="col-md-6">
+                  <div className="card bg-sk-light">
+                    <div className="card-body">
+                      <h6 className="card-title">Quick Send</h6>
+                      <p className="card-text small">Send predefined PGNs with custom data fields.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <div className="card bg-sk-light">
+                    <div className="card-body">
+                      <h6 className="card-title">Custom PGN</h6>
+                      <p className="card-text small">Compose and send custom PGN messages.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardBody>
           </Card>
         </TabPane>
         <TabPane tabId={TRANSFORM_TAB_ID}>
           <Card>
             <CardBody>
-              <h4>Transform Panel</h4>
-              <p>This is the transform tab content. You can add transformation options here.</p>
+              <h4 className="text-sk-primary">Data Transformation</h4>
+              <p className="mb-3">Transform and convert NMEA 2000 data between different formats and protocols.</p>
+              
+              <div className="alert alert-info" role="alert">
+                <strong>Coming Soon:</strong> Data transformation tools and protocol converters will be available in a future version.
+              </div>
+              
+              <div className="row">
+                <div className="col-md-4">
+                  <div className="card bg-sk-light">
+                    <div className="card-body">
+                      <h6 className="card-title">N2K → NMEA 0183</h6>
+                      <p className="card-text small">Convert NMEA 2000 messages to NMEA 0183 format.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="card bg-sk-light">
+                    <div className="card-body">
+                      <h6 className="card-title">N2K → Signal K</h6>
+                      <p className="card-text small">Transform to Signal K JSON format.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="card bg-sk-light">
+                    <div className="card-body">
+                      <h6 className="card-title">Custom Format</h6>
+                      <p className="card-text small">Export to custom data formats.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardBody>
           </Card>
         </TabPane>
         <TabPane tabId={SETTINGS_TAB_ID}>
           <Card>
             <CardBody>
-              <h4>Settings Panel</h4>
-              <p>This is the settings tab content. You can add configuration options here.</p>
+              <h4 className="text-sk-primary">Configuration Settings</h4>
+              <p className="mb-3">Configure the visual analyzer behavior and display preferences.</p>
+              
+              <div className="row">
+                <div className="col-md-6">
+                  <div className="card">
+                    <div className="card-header">
+                      <strong>Display Options</strong>
+                    </div>
+                    <div className="card-body">
+                      <div className="form-group">
+                        <label>Refresh Rate</label>
+                        <select className="form-control" defaultValue="1000">
+                          <option value="500">500ms</option>
+                          <option value="1000">1 second</option>
+                          <option value="2000">2 seconds</option>
+                          <option value="5000">5 seconds</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <div className="form-check">
+                          <input className="form-check-input" type="checkbox" id="autoScroll" defaultChecked />
+                          <label className="form-check-label" htmlFor="autoScroll">
+                            Auto-scroll to new messages
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <div className="card">
+                    <div className="card-header">
+                      <strong>Data Options</strong>
+                    </div>
+                    <div className="card-body">
+                      <div className="form-group">
+                        <label>Maximum Messages</label>
+                        <select className="form-control" defaultValue="1000">
+                          <option value="100">100</option>
+                          <option value="500">500</option>
+                          <option value="1000">1000</option>
+                          <option value="5000">5000</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <div className="form-check">
+                          <input className="form-check-input" type="checkbox" id="showRaw" />
+                          <label className="form-check-label" htmlFor="showRaw">
+                            Show raw data
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardBody>
           </Card>
         </TabPane>

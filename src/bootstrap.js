@@ -40,8 +40,27 @@ const mockAdminUI = {
 // Render the AppPanel with mock props
 ReactDOM.render(
   <React.StrictMode>
-    <div className="container-fluid mt-3">
-      <AppPanel adminUI={mockAdminUI} />
+    <div>
+      {/* SignalK-style Header */}
+      <nav className="navbar navbar-expand-lg" style={{
+        backgroundColor: '#003399',
+        borderBottom: '1px solid #c2cfd6',
+        marginBottom: '0'
+      }}>
+        <div className="container-fluid">
+          <span className="navbar-brand mb-0 h1" style={{ color: 'white', fontWeight: '600' }}>
+            📡 NMEA 2000 Visual Analyzer
+          </span>
+          <span className="navbar-text" style={{ color: '#a4b7c1', fontSize: '0.875rem' }}>
+            Signal K Server Plugin
+          </span>
+        </div>
+      </nav>
+      
+      {/* Main Content */}
+      <div className="container-fluid">
+        <AppPanel adminUI={mockAdminUI} />
+      </div>
     </div>
   </React.StrictMode>,
   document.getElementById('root')
