@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react'
-import { Card, CardBody, CardHeader, Col, Row, Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
+import { Card, CardBody, Col, Row, Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
 import { ReplaySubject } from 'rxjs'
 // import * as pkg from '../../package.json'
 import { PGNDataMap, PgnNumber, DeviceMap } from '../types'
-import { DataList, FilterPanel, Filter } from './DataList'
+import { DataList } from './DataList'
+import { FilterPanel, Filter } from './Filters'
 import { SentencePanel } from './SentencePanel'
 import { FromPgn } from '@canboat/canboatjs'
-import { PGN, createNmeaGroupFunction, PGN_59904 } from '@canboat/ts-pgns'
+import { PGN, PGN_59904 } from '@canboat/ts-pgns'
 
 // const SAFEPLUGINID = pkg.name.replace(/[-@/]/g, '_')
 // const saveSettingsItems = (items: any) => {
