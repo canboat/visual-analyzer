@@ -177,7 +177,7 @@ interface FilterPanelProps {
   doFiltering: Subject<boolean>
 }
 export const FilterPanel = (props: FilterPanelProps) => {
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
   const selectedPGNs = useObservableState(props.filterPgns)
   const selectedSrcs = useObservableState(props.filterSrcs)
   const selectedDsts = useObservableState(props.filterDsts)
