@@ -7,38 +7,37 @@ import Creatable from 'react-select/creatable'
 
 import { Subject } from 'rxjs'
 import { PgnNumber, PGNDataMap } from '../types'
-import { setupFilters, filterPGN } from '@canboat/canboatjs'
+import { setupFilters, filterPGN, FilterOptions } from '@canboat/canboatjs'
 
 interface DataListProps {
   data: Subject<PGNDataMap>
   onRowClicked: (row: PGN) => void
-  filterPgns: Subject<PgnNumber[]>
-  filterSrcs: Subject<number[]>
-  filterDsts: Subject<number[]>
-  filterManufacturers: Subject<string[]>
-  filterJavaScript: Subject<string>
-
+  filter: Subject<Filter>
   doFiltering: Subject<boolean>
+}
+
+export type Filter = {
+  pgn?: PgnNumber[]
+  src?: number[]
+  dst?: number[]
+  manufacturer?: string[]
+  javaScript?: string
 }
 
 const filterFor = (
   doFiltering: boolean | undefined,
-  pgns: number[] | undefined,
-  src: number[] | undefined,
-  dst: number[] | undefined,
-  manufacturer: string[] | undefined,
-  javaScript: string | undefined,
+  filter?: Filter
 ) => {
-  if (!doFiltering) return () => true
+  if (!doFiltering || filter === undefined) return () => true
   return (pgn: PGN) => {
     return filterPGN(
       pgn,
       setupFilters({
-        pgn: pgns,
-        src: src,
-        dst: dst,
-        manufacturer: manufacturer,
-        filter: javaScript,
+        pgn: filter.pgn,
+        src: filter.src,
+        dst: filter.dst,
+        manufacturer: filter.manufacturer,
+        filter: filter.javaScript,
       }),
     )
   }
@@ -46,17 +45,13 @@ const filterFor = (
 
 export const DataList = (props: DataListProps) => {
   const data = useObservableState<PGNDataMap>(props.data)
-  const filterPgns = useObservableState(props.filterPgns)
+  const filter = useObservableState(props.filter)
   const doFiltering = useObservableState(props.doFiltering)
-  const filterSrcs = useObservableState(props.filterSrcs)
-  const filterDsts = useObservableState(props.filterDsts)
-  const filterManufacturers = useObservableState(props.filterManufacturers)
-  const javaScriptFilter = useObservableState(props.filterJavaScript)
 
   const addToFilteredPgns = (i: PgnNumber) => {
-    const safeFilteredPgns = filterPgns || []
+    const safeFilteredPgns = filter?.pgn || []
     if (safeFilteredPgns.indexOf(i) === -1) {
-      props.filterPgns.next([...safeFilteredPgns, i])
+      props.filter.next({...filter, pgn: [...safeFilteredPgns, i]})
     }
   }
   return (
@@ -81,7 +76,7 @@ export const DataList = (props: DataListProps) => {
         </thead>
         <tbody>
           {(data != undefined ? Object.values(data) : [])
-            .filter(filterFor(doFiltering, filterPgns, filterSrcs, filterDsts, filterManufacturers, javaScriptFilter))
+            .filter(filterFor(doFiltering, filter))
             .sort((a, b) => a.src! - b.src!)
             .map((row: PGN, i: number) => {
               return (
@@ -168,21 +163,13 @@ export interface PgnOption {
   label: string
 }
 interface FilterPanelProps {
-  filterPgns: Subject<PgnNumber[]>
-  filterSrcs: Subject<number[]>
-  filterDsts: Subject<number[]>
-  filterManufacturers: Subject<string[]>
-  filterJavaScript: Subject<string>
+  filter: Subject<Filter>
   availableSrcs: Subject<number[]>
   doFiltering: Subject<boolean>
 }
 export const FilterPanel = (props: FilterPanelProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const selectedPGNs = useObservableState(props.filterPgns)
-  const selectedSrcs = useObservableState(props.filterSrcs)
-  const selectedDsts = useObservableState(props.filterDsts)
-  const selectedManufacturers = useObservableState(props.filterManufacturers)
-  const javaScriptFilter = useObservableState(props.filterJavaScript)
+  const filter = useObservableState(props.filter)
   const availableSrcs = useObservableState(props.availableSrcs)
   const doFiltering = useObservableState(props.doFiltering)
 
@@ -209,13 +196,13 @@ export const FilterPanel = (props: FilterPanelProps) => {
                 PGNs
               </Label>
               <Creatable
-                value={selectedPGNs?.map(toPgnOption)}
+                value={filter?.pgn?.map(toPgnOption)}
                 isMulti
                 name="pgns"
                 options={pgnOptions}
                 className="basic-multi-select"
                 classNamePrefix="select"
-                onChange={(values) => props.filterPgns.next(values.map((v) => v.value as PgnNumber))}
+                onChange={(values) => props.filter.next({ ...filter, pgn: values.map((v) => v.value as PgnNumber) })}
               />
             </Col>
             <Col xs="12" md="4" className="mb-3">
@@ -223,13 +210,13 @@ export const FilterPanel = (props: FilterPanelProps) => {
                 Sources
               </Label>
               <Creatable
-                value={selectedSrcs?.map(toSrcOption)}
+                value={filter?.src?.map(toSrcOption)}
                 isMulti
                 name="srcs"
                 options={availableSrcs?.map(toSrcOption)}
                 className="basic-multi-select"
                 classNamePrefix="select"
-                onChange={(values) => props.filterSrcs.next(values.map((v) => v.value))}
+                onChange={(values) => props.filter.next({ ...filter, src: values.map((v) => v.value) })}
               />
             </Col>
             <Col xs="12" md="4" className="mb-3">
@@ -237,13 +224,13 @@ export const FilterPanel = (props: FilterPanelProps) => {
                 Destinations
               </Label>
               <Creatable
-                value={selectedDsts?.map(toDstOption)}
+                value={filter?.dst?.map(toDstOption)}
                 isMulti
                 name="dsts"
                 options={availableSrcs?.map(toDstOption)}
                 className="basic-multi-select"
                 classNamePrefix="select"
-                onChange={(values) => props.filterDsts.next(values.map((v) => v.value))}
+                onChange={(values) => props.filter.next({ ...filter, dst: values.map((v) => v.value) })}
               />
             </Col>
           </Row>
@@ -253,13 +240,13 @@ export const FilterPanel = (props: FilterPanelProps) => {
                 Manufacturers
               </Label>
               <Creatable
-                value={selectedManufacturers?.map(toManufacturerOption)}
+                value={filter?.manufacturer?.map(toManufacturerOption)}
                 isMulti
                 name="manufacturers"
                 options={manufacturerCodeOptions}
                 className="basic-multi-select"
                 classNamePrefix="select"
-                onChange={(values) => props.filterManufacturers.next(values.map((v) => v.value))}
+                onChange={(values) => props.filter.next({ ...filter, manufacturer: values.map((v) => v.value) })}
               />
             </Col>
             <Col xs="12" md="6" className="mb-3">
@@ -271,8 +258,8 @@ export const FilterPanel = (props: FilterPanelProps) => {
                 id="javascriptFilter"
                 name="javascriptFilter"
                 placeholder="Enter JavaScript code to filter PGNs (e.g., pgn.src === 1 && pgn.pgn === 127251 && pgn.fields.sog > 5)"
-                value={javaScriptFilter || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => props.filterJavaScript.next(e.target.value)}
+                value={filter?.javaScript || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => props.filter.next({ ...filter, javaScript: e.target.value })}
                 style={{ fontFamily: 'monospace', fontSize: '12px', resize: 'vertical' }}
                 rows={3}
               />

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { Card, CardBody, CardHeader, Col, Row } from 'reactstrap'
 import { ReplaySubject } from 'rxjs'
 // import * as pkg from '../../package.json'
-import { PGNDataMap, PgnNumber, DeviceInformation, DeviceMap } from '../types'
-import { DataList, FilterPanel, PgnOption } from './DataList'
+import { PGNDataMap, PgnNumber, DeviceMap } from '../types'
+import { DataList, FilterPanel, Filter } from './DataList'
 import { SentencePanel } from './SentencePanel'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, createNmeaGroupFunction, PGN_59904 } from '@canboat/ts-pgns'
@@ -28,11 +28,7 @@ const AppPanel = (props: any) => {
   const [list, setList] = useState<any>({})
   const [selectedPgn] = useState(new ReplaySubject<PGN>())
   const [doFiltering] = useState(new ReplaySubject<boolean>())
-  const [filterPgns] = useState(new ReplaySubject<PgnNumber[]>())
-  const [filterSrcs] = useState(new ReplaySubject<number[]>())
-  const [filterDsts] = useState(new ReplaySubject<number[]>())
-  const [filterManufacturers] = useState(new ReplaySubject<string[]>())
-  const [filterJavaScript] = useState(new ReplaySubject<string>())
+  const [filter] = useState(new ReplaySubject<Filter>())
   const [availableSrcs] = useState(new ReplaySubject<number[]>())
   const [currentSrcs, setCurrentSrcs] = useState<number[]>([])
   const [deviceInfo] = useState(new ReplaySubject<DeviceMap>())
@@ -123,12 +119,8 @@ const AppPanel = (props: any) => {
             <Col xs="24" md="12">
               <FilterPanel
                 doFiltering={doFiltering}
-                filterPgns={filterPgns}
-                filterSrcs={filterSrcs}
-                filterDsts={filterDsts}
+                filter={filter}
                 availableSrcs={availableSrcs}
-                filterManufacturers={filterManufacturers}
-                filterJavaScript={filterJavaScript}
               />
             </Col>
           </Row>
@@ -136,11 +128,7 @@ const AppPanel = (props: any) => {
             <Col xs="12" md="6">
               <DataList
                 data={data}
-                filterPgns={filterPgns}
-                filterSrcs={filterSrcs}
-                filterDsts={filterDsts}
-                filterManufacturers={filterManufacturers}
-                filterJavaScript={filterJavaScript}
+                filter={filter}
                 doFiltering={doFiltering}
                 onRowClicked={(row: PGN) => {
                   selectedPgn.next(row)
