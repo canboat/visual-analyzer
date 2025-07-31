@@ -17,8 +17,12 @@ export type Filter = {
 }
 
 export const getFilterConfig = (filter?: Filter): FilterConfig => {
-  const pgs: number[] | undefined = filter?.pgn?.map((p) => !isNaN(Number(p)) ? Number(p) : null).filter((p) => p !== null) as number[]
-  const pgn_ids: string[] | undefined = filter?.pgn?.map((p) => isNaN(Number(p)) ? p : null).filter((p) => p !== null) as string[]
+  const pgs: number[] | undefined = filter?.pgn
+    ?.map((p) => (!isNaN(Number(p)) ? Number(p) : null))
+    .filter((p) => p !== null) as number[]
+  const pgn_ids: string[] | undefined = filter?.pgn
+    ?.map((p) => (isNaN(Number(p)) ? p : null))
+    .filter((p) => p !== null) as string[]
 
   return setupFilters({
     pgn: pgs,
@@ -33,10 +37,7 @@ export const getFilterConfig = (filter?: Filter): FilterConfig => {
 export const filterFor = (doFiltering: boolean | undefined, filter?: FilterConfig) => {
   if (!doFiltering || filter === undefined) return () => true
   return (pgn: PGN) => {
-    return filterPGN(
-      pgn,
-      filter,
-    )
+    return filterPGN(pgn, filter)
   }
 }
 
@@ -97,7 +98,7 @@ export const FilterPanel = (props: FilterPanelProps) => {
 
   return (
     <Card>
-      <CardHeader 
+      <CardHeader
         className="d-flex justify-content-between align-items-center py-2"
         onClick={() => setIsOpen(!isOpen)}
         style={{ cursor: 'pointer' }}

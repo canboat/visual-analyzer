@@ -55,7 +55,9 @@ export const DataList = (props: DataListProps) => {
               return (
                 <tr key={row.timestamp! + i}>
                   <td>{row.timestamp!.split('T')[1]}</td>
-                  <td style={{ color: 'red' }} onClick={() => addToFilteredPgns(row.pgn.toString())}>{row.pgn}</td>
+                  <td style={{ color: 'red' }} onClick={() => addToFilteredPgns(row.pgn.toString())}>
+                    {row.pgn}
+                  </td>
                   <td>{row.src}</td>
                   <td>{row.dst}</td>
                   <td
@@ -73,4 +75,3 @@ export const DataList = (props: DataListProps) => {
     </div>
   )
 }
-
