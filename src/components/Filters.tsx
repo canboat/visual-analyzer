@@ -40,7 +40,9 @@ export const filterFor = (doFiltering: boolean | undefined, filter?: FilterConfi
   }
 }
 
-const pgnOptions = getAllPGNs().map((pgn) => ({ value: pgn.Id, label: `${pgn.PGN} ${pgn.Description}` }))
+const pgnOptions = getAllPGNs()
+  .filter((pgn) => pgn.Fallback === undefined || pgn.Fallback === false)
+  .map((pgn) => ({ value: pgn.Id, label: `${pgn.PGN} ${pgn.Description}` }))
 
 const pgnOptionsByPgn = pgnOptions.reduce<{
   [id: string]: {
@@ -65,21 +67,26 @@ const toPgnOption = (i: string) =>
     label: i,
   }
 
-const toSrcOption = (i: number, devices?: DeviceMap) => ({
-  value: i,
-  label: `${i} ${devices?.[i]?.info[126996 as PgnNumber]?.modelId || ''}`,
-})
+const toSrcOption = (i: number, devices?: DeviceMap) => {
+  const model = devices?.[i]?.info[126996 as PgnNumber]?.modelId
+  return {
+    value: i,
+    label: `${i} ${model ? '(' + model + ')' : ''}`,
+  }
+}
 
-const toDstOption = (i: number, devices?: DeviceMap) => ({
-  value: i,
-  label: `${i} ${devices?.[i]?.info[126996 as PgnNumber]?.modelId || ''}`,
-})
+const toDstOption = (i: number, devices?: DeviceMap) => {
+  const model = devices?.[i]?.info[126996 as PgnNumber]?.modelId
+  return {
+    value: i,
+    label: `${i} ${model ? '(' + model + ')' : ''}`,
+  }
+}
 
 const toManufacturerOption = (i: string) => ({
   value: i,
   label: i,
 })
-
 
 interface FilterPanelProps {
   filter: Subject<Filter>
@@ -137,7 +144,7 @@ export const FilterPanel = (props: FilterPanelProps) => {
                 Sources
               </Label>
               <Creatable
-                value={filter?.src?.map(toSrcOption)}
+                value={filter?.src?.map((src) => toSrcOption(src, deviceInfo))}
                 isMulti
                 name="srcs"
                 options={availableSrcs?.map((s) => toSrcOption(s, deviceInfo))}
@@ -154,7 +161,7 @@ export const FilterPanel = (props: FilterPanelProps) => {
                 Destinations
               </Label>
               <Creatable
-                value={filter?.dst?.map(toDstOption)}
+                value={filter?.dst?.map((src) => toDstOption(src, deviceInfo))}
                 isMulti
                 name="dsts"
                 options={availableSrcs?.map((s) => toDstOption(s, deviceInfo))}
