@@ -54,7 +54,7 @@ Environment Variables:
   PUBLIC_DIR          Public directory path
   
 Configuration File:
-  The server looks for a config.json file in the server directory.
+  The server looks for a config.json file at ~/.visual-analyzer/config.json
   You can specify a custom config file with --config option.
 
 Examples:

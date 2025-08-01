@@ -70,7 +70,7 @@ The server can be configured through:
 
 #### Configuration File
 
-The server looks for a `config.json` file in the server directory by default. You can specify a custom configuration file with the `--config` option.
+The server looks for a `config.json` file at `~/.visual-analyzer/config.json` by default. You can specify a custom configuration file with the `--config` option.
 
 Example config.json:
 ```json

@@ -3,13 +3,17 @@ const http = require('http')
 const WebSocket = require('ws')
 const path = require('path')
 const fs = require('fs')
+const os = require('os')
 const NMEADataProvider = require('./nmea-provider')
 
 class VisualAnalyzerServer {
   constructor(options = {}) {
     this.port = options.port || 8080
     this.publicDir = path.join(__dirname, '../public')
-    this.configFile = process.env.VISUAL_ANALYZER_CONFIG || path.join(__dirname, 'config.json')
+    
+    // Default config file location in user's home directory
+    const defaultConfigPath = path.join(os.homedir(), '.visual-analyzer', 'config.json')
+    this.configFile = process.env.VISUAL_ANALYZER_CONFIG || defaultConfigPath
     this.app = express()
     this.server = http.createServer(this.app)
     this.wss = new WebSocket.Server({ server: this.server })
@@ -46,7 +50,7 @@ class VisualAnalyzerServer {
           ...config
         }
         
-        console.log('Configuration loaded from', this.configFile)
+        console.log(`Configuration loaded from ${this.configFile}`)
         
         // Auto-connect to active connection if specified
         if (this.currentConfig.connections.activeConnection) {
@@ -55,7 +59,15 @@ class VisualAnalyzerServer {
           }, 2000) // Wait 2 seconds after server startup
         }
       } else {
-        console.log('No configuration file found, using defaults')
+        console.log(`No configuration file found at ${this.configFile}`)
+        console.log('Using default configuration. Settings will be saved to this location when modified.')
+        
+        // Create the config directory if it doesn't exist
+        const configDir = path.dirname(this.configFile)
+        if (!fs.existsSync(configDir)) {
+          fs.mkdirSync(configDir, { recursive: true })
+          console.log(`Created config directory: ${configDir}`)
+        }
       }
     } catch (error) {
       console.error('Error loading configuration:', error)
@@ -573,6 +585,14 @@ class VisualAnalyzerServer {
         connections: this.currentConfig.connections,
         logging: { level: 'info' }
       }
+      
+      // Ensure the config directory exists
+      const configDir = path.dirname(this.configFile)
+      if (!fs.existsSync(configDir)) {
+        fs.mkdirSync(configDir, { recursive: true })
+        console.log(`Created config directory: ${configDir}`)
+      }
+      
       fs.writeFileSync(this.configFile, JSON.stringify(configData, null, 2))
       console.log(`Configuration saved to ${this.configFile}`)
     } catch (error) {
