@@ -1,5 +1,21 @@
+/**
+ * NMEA Data Provider for Visual Analyzer
+ * 
+ * This module provides connectivity to various NMEA 2000 data sources including:
+ * - SignalK WebSocket connections
+ * - Serial devices (Actisense NGT-1, iKonvert, Yacht Devices)
+ * - Network sources (TCP/UDP)
+ * - SocketCAN interfaces (Linux only)
+ * 
+ * Updated to use canboatjs canbus class for SocketCAN connections, which provides:
+ * - Robust CAN message handling
+ * - Automatic reconnection
+ * - Proper NMEA 2000 message parsing and encoding
+ * - Device address claiming support
+ */
+
 const EventEmitter = require('events')
-const { CanboatJS } = require('@canboat/canboatjs')
+const { canbus } = require('@canboat/canboatjs')
 const net = require('net')
 const dgram = require('dgram')
 const WebSocket = require('ws')
@@ -8,20 +24,7 @@ class NMEADataProvider extends EventEmitter {
   constructor(options = {}) {
     super()
     this.options = options
-    //this.canboat = new CanboatJS()
     this.isConnected = false
-    
-    // Configure canboatjs
-    /*
-    this.canboat.on('data', (data) => {
-      this.emit('nmea-data', data)
-    })
-
-    this.canboat.on('error', (error) => {
-      console.error('CanboatJS error:', error)
-      this.emit('error', error)
-    })
-      **/
   }
 
   async connect() {
@@ -129,8 +132,6 @@ class NMEADataProvider extends EventEmitter {
           // Process data based on device type
           const processedData = this.processSerialData(trimmed, deviceType)
           if (processedData) {
-            // Process NMEA 2000 data with canboatjs (when enabled)
-            // this.canboat.parseString(processedData)
             this.emit('raw-nmea', processedData)
           }
         }
@@ -173,7 +174,6 @@ class NMEADataProvider extends EventEmitter {
       lines.forEach(line => {
         const trimmed = line.trim()
         if (trimmed) {
-          //this.canboat.parseString(trimmed)
           this.emit('raw-nmea', trimmed)
         }
       })
@@ -201,7 +201,6 @@ class NMEADataProvider extends EventEmitter {
       lines.forEach(line => {
         const trimmed = line.trim()
         if (trimmed) {
-          // this.canboat.parseString(trimmed)
           this.emit('raw-nmea', trimmed)
         }
       })
@@ -217,36 +216,40 @@ class NMEADataProvider extends EventEmitter {
 
   async connectToSocketCAN() {
     try {
-      // SocketCAN requires the 'socketcan' npm package
-      // This is a Linux-specific implementation
-      const can = require('socketcan')
-      
       console.log(`Connecting to SocketCAN interface: ${this.options.socketcanInterface}`)
       
-      this.canChannel = can.createRawChannel(this.options.socketcanInterface, true)
-      
-      this.canChannel.addListener('onMessage', (message) => {
-        // Convert CAN message to NMEA 2000 format
-        const nmea2000Data = this.convertCANToNMEA2000(message)
-        if (nmea2000Data) {
-          this.emit('raw-nmea', nmea2000Data)
+      // Create canbus stream with SocketCAN interface using canboatjs
+      // This replaces the direct socketcan implementation with the more robust
+      // canboatjs canbus class which handles:
+      // - Automatic reconnection on failures
+      // - Proper NMEA 2000 message parsing
+      // - CAN ID encoding/decoding
+      // - Multi-frame message assembly
+      // - Device address claiming
+      const canbusOptions = {
+        canDevice: this.options.socketcanInterface || 'can0',
+        app: {
+          emit: (event, data) => {
+            // Handle events from canbus
+            if (event === 'canboatjs:rawoutput') {
+              this.emit('raw-nmea', data)
+            }
+          },
+          setProviderStatus: (providerId, msg) => {
+            console.log(`SocketCAN status: ${msg}`)
+          },
+          setProviderError: (providerId, msg) => {
+            console.error(`SocketCAN error: ${msg}`)
+            this.emit('error', new Error(msg))
+          }
         }
-      })
-
-      this.canChannel.addListener('onStopped', () => {
-        console.log('SocketCAN channel stopped')
-        this.isConnected = false
-        this.emit('disconnected')
-      })
-
-      this.canChannel.addListener('onError', (error) => {
-        console.error('SocketCAN error:', error)
-        this.emit('error', error)
-      })
-
-      // Start the CAN channel
-      this.canChannel.start()
-      console.log('SocketCAN connection established')
+      }
+      
+      this.canbusStream = new canbus(canbusOptions)
+      
+      // Start the canbus stream
+      this.canbusStream.start()
+      console.log('SocketCAN connection established using canboatjs canbus')
       
     } catch (error) {
       if (error.code === 'MODULE_NOT_FOUND') {
@@ -256,29 +259,6 @@ class NMEADataProvider extends EventEmitter {
         console.error('Failed to connect to SocketCAN:', error)
         throw error
       }
-    }
-  }
-
-  convertCANToNMEA2000(canMessage) {
-    // Convert raw CAN message to NMEA 2000 format
-    // This is a simplified conversion for demonstration
-    try {
-      const timestamp = new Date().toISOString()
-      const priority = (canMessage.id >> 26) & 0x7
-      const pgn = (canMessage.id >> 8) & 0x1FFFF
-      const src = canMessage.id & 0xFF
-      const dest = 255 // Broadcast for most NMEA 2000 messages
-      
-      // Convert data buffer to hex string
-      const dataHex = Array.from(canMessage.data)
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join(',')
-      
-      // Format: timestamp,priority,src,dest,pgn,length,data
-      return `${timestamp},${priority},${src},${dest},${pgn},${canMessage.data.length},${dataHex}`
-    } catch (error) {
-      console.error('Error converting CAN message:', error)
-      return null
     }
   }
 
@@ -314,8 +294,8 @@ class NMEADataProvider extends EventEmitter {
       this.udpSocket.close()
     }
     
-    if (this.canChannel) {
-      this.canChannel.stop()
+    if (this.canbusStream) {
+      this.canbusStream.end()
     }
     
     this.emit('disconnected')
@@ -384,15 +364,25 @@ class NMEADataProvider extends EventEmitter {
     if (!this.isConnected) {
       throw new Error('No active connection to send message')
     }
-    /*
-    // For now, we'll log the message and potentially broadcast it
-    // In a real implementation, this would send the message through the appropriate interface
+    
     console.log('Sending NMEA 2000 message:', {
       pgn: pgnData.pgn,
       src: pgnData.src,
       dest: pgnData.dest,
       data: pgnData
     })
+
+    // If we have a canbus connection (SocketCAN), send through it
+    if (this.canbusStream && this.canbusStream.sendPGN) {
+      try {
+        this.canbusStream.sendPGN(pgnData)
+        console.log('Message sent via SocketCAN connection')
+        return
+      } catch (error) {
+        console.error('Error sending message via SocketCAN:', error)
+        throw error
+      }
+    }
 
     // If we have an active TCP connection (like Yacht Devices), we could send it there
     if (this.tcpClient && this.tcpClient.readyState === 'open') {
@@ -422,7 +412,6 @@ class NMEADataProvider extends EventEmitter {
       // No physical connection available - message will only be broadcast to WebSocket clients
       console.log('No physical network connection - message broadcast only')
     }
-      */
   }
 
   // Format PGN message for transmission to the device
