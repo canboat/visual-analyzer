@@ -566,7 +566,6 @@ class VisualAnalyzerServer {
 
   saveConfigToFile() {
     try {
-      const configPath = path.join(__dirname, 'config.json')
       const configData = {
         server: {
           port: this.port
@@ -574,8 +573,8 @@ class VisualAnalyzerServer {
         connections: this.currentConfig.connections,
         logging: { level: 'info' }
       }
-      fs.writeFileSync(configPath, JSON.stringify(configData, null, 2))
-      console.log('Configuration saved to config.json')
+      fs.writeFileSync(this.configFile, JSON.stringify(configData, null, 2))
+      console.log(`Configuration saved to ${this.configFile}`)
     } catch (error) {
       console.error('Failed to save configuration:', error)
     }
