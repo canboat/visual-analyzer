@@ -4,7 +4,7 @@
     "publicDir": "./public"
   },
   "connections": {
-    "activeConnection": "yacht-devices-tcp",
+    "activeConnection": "w2k-1-localhost",
     "profiles": {
       "yacht-devices-tcp": {
         "name": "Yacht Devices TCP",

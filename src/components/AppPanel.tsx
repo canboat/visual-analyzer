@@ -39,11 +39,29 @@ const AppPanel = (props: any) => {
   const [currentSrcs, setCurrentSrcs] = useState<number[]>([])
   const [deviceInfo] = useState(new ReplaySubject<DeviceMap>())
   const [currentInfo, setCurrentInfo] = useState<DeviceMap>({})
-  const [connectionStatus, setConnectionStatus] = useState<{isConnected: boolean, lastUpdate: string}>({
+  const [connectionStatus, setConnectionStatus] = useState<{isConnected: boolean, lastUpdate: string, error?: string}>({
     isConnected: false,
-    lastUpdate: new Date().toISOString()
+    lastUpdate: new Date().toISOString(),
+    error: undefined
   })
   const sentInfoReq: number[] = []
+
+  // Debug function to test error display
+  const testErrorDisplay = () => {
+    console.log('Testing error display...')
+    setConnectionStatus({
+      isConnected: false,
+      lastUpdate: new Date().toISOString(),
+      error: 'Test connection error: Connection refused to localhost:60002 (ECONNREFUSED)'
+    })
+  }
+
+  // Make it available globally for testing
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).testErrorDisplay = testErrorDisplay
+    }
+  }, [])
 
   // Check if we're in embedded mode (SignalK plugin) vs standalone mode
   const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
@@ -71,15 +89,22 @@ const AppPanel = (props: any) => {
         const response = await fetch('/api/config')
         if (response.ok) {
           const config = await response.json()
+          console.log('Received config:', config)
           const initialStatus = {
             isConnected: config.connection?.isConnected || false,
-            lastUpdate: new Date().toISOString()
+            lastUpdate: config.connection?.lastUpdate || new Date().toISOString(),
+            error: config.connection?.error || undefined // Include any persisted error
           }
           console.log('Initial connection status loaded:', initialStatus)
           setConnectionStatus(initialStatus)
         }
       } catch (error) {
         console.error('Failed to load initial connection status:', error)
+        setConnectionStatus(prev => ({
+          ...prev,
+          error: `Failed to load configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          lastUpdate: new Date().toISOString()
+        }))
       }
     }
     
@@ -90,22 +115,120 @@ const AppPanel = (props: any) => {
   }, [isEmbedded])
 
   useEffect(() => {
+    // Create a dedicated WebSocket connection for monitoring connection status and errors
+    let statusWebSocket: WebSocket | null = null
+    
+    const connectStatusWebSocket = () => {
+      try {
+        statusWebSocket = new WebSocket(`ws://${window.location.host}`)
+        
+        statusWebSocket.onopen = () => {
+          console.log('Status WebSocket connected')
+          // Subscribe to connection events
+          statusWebSocket?.send(JSON.stringify({
+            type: 'subscribe',
+            subscription: 'status'
+          }))
+        }
+        
+        statusWebSocket.onmessage = (event) => {
+          console.log('=== STATUS WEBSOCKET MESSAGE ===')
+          console.log('Raw message:', event.data)
+          try {
+            const data = JSON.parse(event.data)
+            console.log('Parsed data:', data)
+            console.log('Event type:', data.event)
+            
+            if (data.event === 'nmea:connected') {
+              console.log('>>> STATUS WS: Processing nmea:connected event')
+              setConnectionStatus(prev => {
+                const newStatus = {
+                  ...prev,
+                  isConnected: true,
+                  lastUpdate: new Date().toISOString(),
+                  error: undefined
+                }
+                console.log('>>> STATUS WS: Setting connected status:', newStatus)
+                return newStatus
+              })
+            } else if (data.event === 'nmea:disconnected') {
+              console.log('>>> STATUS WS: Processing nmea:disconnected event')
+              setConnectionStatus(prev => {
+                const newStatus = {
+                  ...prev,
+                  isConnected: false,
+                  lastUpdate: new Date().toISOString()
+                }
+                console.log('>>> STATUS WS: Setting disconnected status:', newStatus)
+                return newStatus
+              })
+            } else if (data.event === 'error') {
+              console.log('>>> STATUS WS: Processing ERROR event:', data.error)
+              console.log('>>> STATUS WS: Current connectionStatus before update:', connectionStatus)
+              setConnectionStatus(prev => {
+                const newStatus = {
+                  ...prev,
+                  isConnected: false,
+                  error: data.error,
+                  lastUpdate: new Date().toISOString()
+                }
+                console.log('>>> STATUS WS: Setting ERROR status:', newStatus)
+                return newStatus
+              })
+            } else {
+              console.log('>>> STATUS WS: Ignoring event type:', data.event)
+            }
+          } catch (error) {
+            console.error('Error parsing status WebSocket message:', error)
+          }
+        }
+        
+        statusWebSocket.onclose = () => {
+          console.log('Status WebSocket disconnected')
+          // Attempt to reconnect after a delay
+          setTimeout(connectStatusWebSocket, 3000)
+        }
+        
+        statusWebSocket.onerror = (error) => {
+          console.error('Status WebSocket error:', error)
+        }
+      } catch (error) {
+        console.error('Failed to create status WebSocket:', error)
+        setTimeout(connectStatusWebSocket, 3000)
+      }
+    }
+    
+    // Only create status WebSocket in standalone mode
+    if (!isEmbedded) {
+      connectStatusWebSocket()
+    }
+    
+    return () => {
+      if (statusWebSocket) {
+        statusWebSocket.close()
+      }
+    }
+  }, [isEmbedded])
+
+  useEffect(() => {
     const ws = props.adminUI.openWebsocket({
       subscribe: 'none',
       events: 'canboatjs:rawoutput',
     })
 
     ws.onmessage = (x: any) => {
-      //console.log('Received dataX', x)
+      console.log('Received WebSocket message:', x.data)
 
       const parsed = JSON.parse(x.data)
+      console.log('Parsed WebSocket event:', parsed.event, parsed)
       
-      // Handle connection status events
+      // Handle connection status events (keep as backup)
       if (parsed.event === 'nmea:connected') {
         console.log('NMEA connection established')
         setConnectionStatus({
           isConnected: true,
-          lastUpdate: new Date().toISOString()
+          lastUpdate: new Date().toISOString(),
+          error: undefined // Clear any previous errors
         })
         return
       }
@@ -114,16 +237,18 @@ const AppPanel = (props: any) => {
         console.log('NMEA connection lost')
         setConnectionStatus({
           isConnected: false,
-          lastUpdate: new Date().toISOString()
+          lastUpdate: new Date().toISOString(),
+          error: undefined // Disconnection isn't necessarily an error
         })
         return
       }
       
       // Also handle error events that might affect connection status  
       if (parsed.event === 'error') {
-        console.error('NMEA connection error:', parsed.error)
+        console.error('NMEA connection error received via WebSocket:', parsed.error)
         setConnectionStatus(prev => ({
           ...prev,
+          error: parsed.error || 'Unknown connection error',
           lastUpdate: new Date().toISOString()
         }))
         return
@@ -330,7 +455,10 @@ const AppPanel = (props: any) => {
         </TabPane>
         {!isEmbedded && (
           <TabPane tabId={CONNECTIONS_TAB_ID}>
-            <ConnectionManagerPanel connectionStatus={connectionStatus} />
+            <ConnectionManagerPanel 
+              connectionStatus={connectionStatus} 
+              onStatusUpdate={setConnectionStatus}
+            />
           </TabPane>
         )}
       </TabContent>

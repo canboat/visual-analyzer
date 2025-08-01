@@ -16,6 +16,13 @@ class VisualAnalyzerServer {
     this.nmeaProvider = null
     this.currentConfig = { connections: { activeConnection: null, profiles: {} } }
     
+    // Track current connection state including errors
+    this.connectionState = {
+      isConnected: false,
+      lastUpdate: new Date().toISOString(),
+      error: null
+    }
+    
     // Load configuration on startup
     this.loadConfiguration()
     
@@ -237,6 +244,35 @@ class VisualAnalyzerServer {
     switch (data.type) {
       case 'subscribe':
         console.log('Client subscribing to:', data.subscription)
+        
+        // If subscribing to status, send current connection state immediately
+        if (data.subscription === 'status') {
+          console.log('Sending current connection state to new status subscriber')
+          
+          // Send current connection status
+          if (this.connectionState.isConnected) {
+            ws.send(JSON.stringify({
+              event: 'nmea:connected',
+              timestamp: this.connectionState.lastUpdate
+            }))
+          } else {
+            ws.send(JSON.stringify({
+              event: 'nmea:disconnected', 
+              timestamp: this.connectionState.lastUpdate
+            }))
+          }
+          
+          // Send current error if any
+          if (this.connectionState.error) {
+            console.log('Sending current error to new status subscriber:', this.connectionState.error)
+            ws.send(JSON.stringify({
+              event: 'error',
+              error: this.connectionState.error,
+              timestamp: this.connectionState.lastUpdate
+            }))
+          }
+        }
+        
         // Start sending data for the requested subscription
         //this.startDataStream(ws, data.subscription)
         break
@@ -338,15 +374,43 @@ class VisualAnalyzerServer {
 
     this.nmeaProvider.on('error', (error) => {
       console.error('NMEA Provider error:', error)
+      // Handle different error types and extract meaningful error message
+      let errorMessage = error.message || error.toString()
+      if (error.code) {
+        errorMessage = `${error.code}: ${errorMessage}`
+      }
+      if (error.errors && Array.isArray(error.errors)) {
+        // Handle AggregateError with multiple underlying errors
+        errorMessage = error.errors.map(e => e.message || e.toString()).join(', ')
+        if (error.code) {
+          errorMessage = `${error.code}: ${errorMessage}`
+        }
+      }
+      
+      // Update persistent connection state
+      this.connectionState = {
+        isConnected: false,
+        error: errorMessage || 'Unknown connection error',
+        lastUpdate: new Date().toISOString()
+      }
+      
       this.broadcast({
         event: 'error',
-        error: error.message,
+        error: errorMessage || 'Unknown connection error',
         timestamp: new Date().toISOString()
       })
     })
 
     this.nmeaProvider.on('connected', () => {
       console.log('NMEA data source connected')
+      
+      // Update persistent connection state
+      this.connectionState = {
+        isConnected: true,
+        error: null, // Clear any previous errors on successful connection
+        lastUpdate: new Date().toISOString()
+      }
+      
       this.broadcast({
         event: 'nmea:connected',
         timestamp: new Date().toISOString()
@@ -355,6 +419,14 @@ class VisualAnalyzerServer {
 
     this.nmeaProvider.on('disconnected', () => {
       console.log('NMEA data source disconnected')
+      
+      // Update persistent connection state
+      this.connectionState = {
+        isConnected: false,
+        error: this.connectionState.error, // Keep existing error if any
+        lastUpdate: new Date().toISOString()
+      }
+      
       this.broadcast({
         event: 'nmea:disconnected',
         timestamp: new Date().toISOString()
@@ -369,8 +441,10 @@ class VisualAnalyzerServer {
 
   broadcast(message) {
     // Send message to all connected WebSocket clients
+    console.log('Broadcasting message:', JSON.stringify(message))
     this.wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
+        console.log('Sending to WebSocket client')
         client.send(JSON.stringify(message))
       }
     })
@@ -384,7 +458,9 @@ class VisualAnalyzerServer {
       },
       connections: this.currentConfig.connections || { activeConnection: null, profiles: {} },
       connection: {
-        isConnected: this.nmeaProvider ? this.nmeaProvider.isConnectionActive() : false,
+        isConnected: this.connectionState.isConnected,
+        error: this.connectionState.error,
+        lastUpdate: this.connectionState.lastUpdate,
         activeProfile: this.getActiveConnectionProfile()
       }
     }
@@ -509,6 +585,13 @@ class VisualAnalyzerServer {
 
   restartNMEAConnection() {
     console.log('Restarting NMEA connection...')
+    
+    // Reset connection state on manual restart
+    this.connectionState = {
+      isConnected: false,
+      error: null, // Clear any previous errors on manual restart
+      lastUpdate: new Date().toISOString()
+    }
     
     // Disconnect existing connection
     if (this.nmeaProvider) {

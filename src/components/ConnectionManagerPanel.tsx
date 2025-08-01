@@ -35,13 +35,20 @@ interface ServerConfig {
 interface ConnectionStatus {
   isConnected: boolean
   lastUpdate: string
+  error?: string
 }
 
 interface ConnectionManagerPanelProps {
   connectionStatus?: ConnectionStatus
+  onStatusUpdate?: (status: ConnectionStatus) => void
 }
 
-export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ connectionStatus }) => {
+export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ connectionStatus, onStatusUpdate }) => {
+  // Add logging to track connectionStatus changes
+  console.log('=== CONNECTION MANAGER PANEL RENDER ===')
+  console.log('connectionStatus prop:', connectionStatus)
+  console.log('connectionStatus.error:', connectionStatus?.error)
+  console.log('onStatusUpdate callback available:', !!onStatusUpdate)
   const [config, setConfig] = useState<ServerConfig | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -71,6 +78,11 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
     return config?.connection.isConnected || false
   }
 
+  // Add debugging
+  React.useEffect(() => {
+    console.log('ConnectionManagerPanel received connectionStatus:', connectionStatus)
+  }, [connectionStatus])
+
   useEffect(() => {
     loadConfiguration()
   }, [])
@@ -89,6 +101,45 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
       setMessage({ type: 'error', text: `Failed to load configuration: ${error?.message || 'Unknown error'}` })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const restartConnection = async () => {
+    setSaving(true)
+    setMessage(null)
+    
+    try {
+      const response = await fetch('/api/restart-connection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Connection restart initiated successfully' })
+        
+        // Clear any existing error state immediately since we're restarting
+        if (onStatusUpdate) {
+          onStatusUpdate({
+            isConnected: false,
+            error: undefined, // Clear error on manual restart
+            lastUpdate: new Date().toISOString()
+          })
+        }
+        
+        // Just reload the configuration list (not connection status)
+        // Connection status will be updated via WebSocket events
+        setTimeout(() => {
+          loadConfiguration()
+        }, 2000)
+      } else {
+        throw new Error('Failed to restart connection')
+      }
+    } catch (error: any) {
+      setMessage({ type: 'error', text: `Failed to restart connection: ${error?.message || 'Unknown error'}` })
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -560,12 +611,77 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                         <span className="text-muted font-italic">No active connection</span>
                       )}
                     </div>
+                    {/* Display connection error if present */}
+                    {(() => {
+                      console.log('>>> ERROR DISPLAY CHECK <<<')
+                      console.log('connectionStatus:', connectionStatus)
+                      console.log('connectionStatus?.error:', connectionStatus?.error)
+                      console.log('Error display will show:', !!connectionStatus?.error)
+                      return connectionStatus?.error ? (
+                        <div className="mt-2">
+                          <div className="alert alert-danger alert-sm mb-0" role="alert">
+                            <i className="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>Connection Error:</strong> {connectionStatus.error}
+                          </div>
+                        </div>
+                      ) : null
+                    })()}
                   </div>
-                  {getCurrentConnectionStatus() && (
-                    <div className="text-success">
-                      <i className="fas fa-wifi fa-2x"></i>
+                  <div className="d-flex align-items-center">
+                    {getCurrentConnectionStatus() && (
+                      <div className="text-success mr-3">
+                        <i className="fas fa-wifi fa-2x"></i>
+                      </div>
+                    )}
+                    <div className="d-flex flex-column">
+                      <Button 
+                        color="outline-primary" 
+                        size="sm" 
+                        onClick={restartConnection}
+                        disabled={saving}
+                        className="mb-1"
+                      >
+                        <i className="fas fa-redo mr-1"></i>
+                        {saving ? 'Restarting...' : 'Restart Connection'}
+                      </Button>
+                      {connectionStatus?.error && (
+                        <Button 
+                          color="outline-secondary" 
+                          size="sm" 
+                          onClick={() => {
+                            // Clear error by updating parent component if needed
+                            setMessage(null)
+                          }}
+                        >
+                          <i className="fas fa-times mr-1"></i>
+                          Clear Error
+                        </Button>
+                      )}
+                      {/* Debug button to test error display */}
+                      <Button 
+                        color="outline-warning" 
+                        size="sm" 
+                        onClick={() => {
+                          // Simulate error for testing
+                          console.log('Testing error display - triggering test error')
+                          // Update connectionStatus through onStatusUpdate prop if available
+                          if (onStatusUpdate) {
+                            console.log('Triggering manual test error via onStatusUpdate')
+                            onStatusUpdate({
+                              isConnected: false,
+                              error: 'TEST ERROR: Manual test error to verify display works',
+                              lastUpdate: new Date().toISOString()
+                            })
+                          } else {
+                            console.log('No onStatusUpdate callback available')
+                          }
+                        }}
+                        className="mt-1"
+                      >
+                        Test Error Display
+                      </Button>
                     </div>
-                  )}
+                  </div>
                 </div>
               </CardBody>
             </Card>
