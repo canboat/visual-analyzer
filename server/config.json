@@ -22,7 +22,7 @@
       "actisense-usb": {
         "name": "Actisense NGT-1 USB",
         "type": "serial",
-        "serialPort": "/dev/ttyUSB0",
+        "serialPort": "/dev/tty.usbserial-2B688",
         "baudRate": 115200,
         "deviceType": "Actisense"
       },

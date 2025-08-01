@@ -96,7 +96,15 @@ class NMEADataProvider extends EventEmitter {
       setProviderStatus: (providerId, msg) => {
         console.log(`NMEADataProvider status: ${msg}`)
       },
-      on: (event, callback) => {}
+      on: (event, callback) => {},
+      emit: (event, data) => {
+        if (event === 'canboatjs:rawoutput') {
+          this.emit('raw-nmea', data)
+        }
+      },
+      listenerCount: (event) => {
+        return this.listenerCount(event === 'canboatjs:rawoutput' ? 'raw-nmea' : event)
+      }
     }
   }
 
