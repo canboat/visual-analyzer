@@ -39,6 +39,10 @@ const AppPanel = (props: any) => {
   const [currentSrcs, setCurrentSrcs] = useState<number[]>([])
   const [deviceInfo] = useState(new ReplaySubject<DeviceMap>())
   const [currentInfo, setCurrentInfo] = useState<DeviceMap>({})
+  const [connectionStatus, setConnectionStatus] = useState<{isConnected: boolean, lastUpdate: string}>({
+    isConnected: false,
+    lastUpdate: new Date().toISOString()
+  })
   const sentInfoReq: number[] = []
 
   // Check if we're in embedded mode (SignalK plugin) vs standalone mode
@@ -59,6 +63,32 @@ const AppPanel = (props: any) => {
     console.error(error.stack)
   })
 
+  // Load initial connection status from server
+  useEffect(() => {
+    const loadInitialStatus = async () => {
+      try {
+        console.log('Loading initial connection status...')
+        const response = await fetch('/api/config')
+        if (response.ok) {
+          const config = await response.json()
+          const initialStatus = {
+            isConnected: config.connection?.isConnected || false,
+            lastUpdate: new Date().toISOString()
+          }
+          console.log('Initial connection status loaded:', initialStatus)
+          setConnectionStatus(initialStatus)
+        }
+      } catch (error) {
+        console.error('Failed to load initial connection status:', error)
+      }
+    }
+    
+    // Only load initial status in standalone mode (not embedded)
+    if (!isEmbedded) {
+      loadInitialStatus()
+    }
+  }, [isEmbedded])
+
   useEffect(() => {
     const ws = props.adminUI.openWebsocket({
       subscribe: 'none',
@@ -69,6 +99,37 @@ const AppPanel = (props: any) => {
       //console.log('Received dataX', x)
 
       const parsed = JSON.parse(x.data)
+      
+      // Handle connection status events
+      if (parsed.event === 'nmea:connected') {
+        console.log('NMEA connection established')
+        setConnectionStatus({
+          isConnected: true,
+          lastUpdate: new Date().toISOString()
+        })
+        return
+      }
+      
+      if (parsed.event === 'nmea:disconnected') {
+        console.log('NMEA connection lost')
+        setConnectionStatus({
+          isConnected: false,
+          lastUpdate: new Date().toISOString()
+        })
+        return
+      }
+      
+      // Also handle error events that might affect connection status  
+      if (parsed.event === 'error') {
+        console.error('NMEA connection error:', parsed.error)
+        setConnectionStatus(prev => ({
+          ...prev,
+          lastUpdate: new Date().toISOString()
+        }))
+        return
+      }
+      
+      // Handle NMEA data events
       if (parsed.event !== 'canboatjs:rawoutput') {
         return
       }
@@ -269,7 +330,7 @@ const AppPanel = (props: any) => {
         </TabPane>
         {!isEmbedded && (
           <TabPane tabId={CONNECTIONS_TAB_ID}>
-            <ConnectionManagerPanel />
+            <ConnectionManagerPanel connectionStatus={connectionStatus} />
           </TabPane>
         )}
       </TabContent>

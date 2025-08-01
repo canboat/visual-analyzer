@@ -32,7 +32,16 @@ interface ServerConfig {
   }
 }
 
-export const ConnectionManagerPanel: React.FC = () => {
+interface ConnectionStatus {
+  isConnected: boolean
+  lastUpdate: string
+}
+
+interface ConnectionManagerPanelProps {
+  connectionStatus?: ConnectionStatus
+}
+
+export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ connectionStatus }) => {
   const [config, setConfig] = useState<ServerConfig | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -53,6 +62,14 @@ export const ConnectionManagerPanel: React.FC = () => {
     networkProtocol: 'tcp',
     socketcanInterface: 'can0'
   })
+
+  // Helper function to get current connection status, prioritizing real-time data
+  const getCurrentConnectionStatus = () => {
+    if (connectionStatus) {
+      return connectionStatus.isConnected
+    }
+    return config?.connection.isConnected || false
+  }
 
   useEffect(() => {
     loadConfiguration()
@@ -523,9 +540,9 @@ export const ConnectionManagerPanel: React.FC = () => {
                       <i className="fas fa-signal mr-2"></i>Current Connection
                     </h6>
                     <div className="d-flex align-items-center">
-                      <span className={`badge badge-lg ${config.connection.isConnected ? 'badge-success' : 'badge-secondary'} mr-3`}>
-                        <i className={`fas ${config.connection.isConnected ? 'fa-check-circle' : 'fa-times-circle'} mr-1`}></i>
-                        {config.connection.isConnected ? 'Connected' : 'Disconnected'}
+                      <span className={`badge badge-lg ${getCurrentConnectionStatus() ? 'badge-success' : 'badge-secondary'} mr-3`}>
+                        <i className={`fas ${getCurrentConnectionStatus() ? 'fa-check-circle' : 'fa-times-circle'} mr-1`}></i>
+                        {getCurrentConnectionStatus() ? 'Connected' : 'Disconnected'}
                       </span>
                       {config.connection.activeProfile ? (
                         <div className="text-muted">
@@ -533,13 +550,18 @@ export const ConnectionManagerPanel: React.FC = () => {
                           <span className="ml-2 badge badge-outline-secondary">
                             {config.connection.activeProfile.type.toUpperCase()}
                           </span>
+                          {connectionStatus && (
+                            <small className="ml-2 text-muted">
+                              Last update: {new Date(connectionStatus.lastUpdate).toLocaleTimeString()}
+                            </small>
+                          )}
                         </div>
                       ) : (
                         <span className="text-muted font-italic">No active connection</span>
                       )}
                     </div>
                   </div>
-                  {config.connection.isConnected && (
+                  {getCurrentConnectionStatus() && (
                     <div className="text-success">
                       <i className="fas fa-wifi fa-2x"></i>
                     </div>
@@ -627,9 +649,9 @@ export const ConnectionManagerPanel: React.FC = () => {
                           </td>
                           <td>
                             {config.connections.activeConnection === profileId ? (
-                              <span className={`badge ${config.connection.isConnected ? 'badge-success' : 'badge-warning'}`}>
-                                <i className={`fas ${config.connection.isConnected ? 'fa-check-circle' : 'fa-clock'} mr-1`}></i>
-                                {config.connection.isConnected ? 'Connected' : 'Connecting...'}
+                              <span className={`badge ${getCurrentConnectionStatus() ? 'badge-success' : 'badge-warning'}`}>
+                                <i className={`fas ${getCurrentConnectionStatus() ? 'fa-check-circle' : 'fa-clock'} mr-1`}></i>
+                                {getCurrentConnectionStatus() ? 'Connected' : 'Connecting...'}
                               </span>
                             ) : (
                               <span className="badge badge-secondary">
