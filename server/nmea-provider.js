@@ -260,21 +260,7 @@ class NMEADataProvider extends EventEmitter {
       // - Device address claiming
       const canbusOptions = {
         canDevice: this.options.socketcanInterface || 'can0',
-        app: {
-          emit: (event, data) => {
-            // Handle events from canbus
-            if (event === 'canboatjs:rawoutput') {
-              this.emit('raw-nmea', data)
-            }
-          },
-          setProviderStatus: (providerId, msg) => {
-            console.log(`SocketCAN status: ${msg}`)
-          },
-          setProviderError: (providerId, msg) => {
-            console.error(`SocketCAN error: ${msg}`)
-            this.emit('error', new Error(msg))
-          }
-        }
+        app: this.getServerApp(),
       }
       
       this.canbusStream = new canbus(canbusOptions)
