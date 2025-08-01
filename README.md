@@ -59,6 +59,15 @@ The standalone server can be configured via:
 2. **Environment variables**
 3. **Configuration file** (lowest priority)
 
+#### Configuration File Location
+
+The server automatically creates and uses a configuration file at:
+
+- **Linux/macOS**: `~/.visual-analyzer/config.json`
+- **Windows**: `%APPDATA%\visual-analyzer\config.json`
+
+You can override this location using the `--config` option or the `VISUAL_ANALYZER_CONFIG` environment variable.
+
 Example `config.json`:
 ```json
 {

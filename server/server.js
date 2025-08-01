@@ -11,8 +11,17 @@ class VisualAnalyzerServer {
     this.port = options.port || 8080
     this.publicDir = path.join(__dirname, '../public')
     
-    // Default config file location in user's home directory
-    const defaultConfigPath = path.join(os.homedir(), '.visual-analyzer', 'config.json')
+    // Platform-appropriate config file location
+    let configDir
+    if (process.platform === 'win32') {
+      // On Windows, use %APPDATA%\visual-analyzer
+      configDir = path.join(process.env.APPDATA || os.homedir(), 'visual-analyzer')
+    } else {
+      // On Unix-like systems, use ~/.visual-analyzer
+      configDir = path.join(os.homedir(), '.visual-analyzer')
+    }
+    
+    const defaultConfigPath = path.join(configDir, 'config.json')
     this.configFile = process.env.VISUAL_ANALYZER_CONFIG || defaultConfigPath
     this.app = express()
     this.server = http.createServer(this.app)
