@@ -60,7 +60,7 @@ class NMEADataProvider extends EventEmitter {
   }
 
   async connectToSignalK() {
-    const url = this.options.signalkUrl.replace('http', 'ws') + '/signalk/v1/stream'
+    const url = this.options.signalkUrl.replace('http', 'ws') + '/signalk/v1/stream?subscribe=none&events=canboatjs:rawoutput'
     
     console.log('Connecting to SignalK WebSocket:', url)
     
@@ -68,35 +68,16 @@ class NMEADataProvider extends EventEmitter {
     
     this.signalKWs.on('open', () => {
       console.log('Connected to SignalK server')
-      
-      // Subscribe to NMEA 2000 data
-      this.signalKWs.send(JSON.stringify({
-        context: 'vessels.self',
-        subscribe: [{
-          path: '*',
-          period: 100,
-          format: 'delta',
-          policy: 'ideal',
-          minPeriod: 50
-        }]
-      }))
+      this.isConnected = true
+      this.emit('connected')
     })
-
+      
     this.signalKWs.on('message', (data) => {
       try {
         const message = JSON.parse(data.toString())
-        
-        // Convert SignalK delta to NMEA 2000 format for visualization
-        if (message.updates && message.updates.length > 0) {
-          this.emit('signalk-data', message)
-          
-          // If we have raw NMEA data, process it with canboatjs
-          message.updates.forEach(update => {
-            if (update.source && update.source.label && update.source.label.includes('NMEA2000')) {
-              // Extract PGN and raw data if available
-              this.processSignalKUpdate(update)
-            }
-          })
+
+        if (message.event === 'canboatjs:rawoutput') {
+          this.emit('raw-nmea', message.data)
         }
       } catch (error) {
         console.error('Error processing SignalK message:', error)
