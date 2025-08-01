@@ -4,7 +4,7 @@
     "publicDir": "./public"
   },
   "connections": {
-    "activeConnection": "w2k-1-localhost",
+    "activeConnection": "actisense-w2k-1",
     "profiles": {
       "yacht-devices-tcp": {
         "name": "Yacht Devices TCP",
@@ -40,6 +40,20 @@
         "networkHost": "localhost",
         "networkPort": 60002,
         "networkProtocol": "tcp"
+      },
+      "actisense-w2k-1": {
+        "name": "Actisense W2K-1",
+        "type": "network",
+        "signalkUrl": "",
+        "signalkUsername": "",
+        "signalkPassword": "",
+        "serialPort": "",
+        "baudRate": 115200,
+        "deviceType": "Actisense ASCII",
+        "networkHost": "w2k-285364.local",
+        "networkPort": 60002,
+        "networkProtocol": "tcp",
+        "socketcanInterface": "can0"
       }
     }
   },

@@ -441,10 +441,10 @@ class VisualAnalyzerServer {
 
   broadcast(message) {
     // Send message to all connected WebSocket clients
-    console.log('Broadcasting message:', JSON.stringify(message))
+    //console.log('Broadcasting message:', JSON.stringify(message))
     this.wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        console.log('Sending to WebSocket client')
+        //console.log('Sending to WebSocket client')
         client.send(JSON.stringify(message))
       }
     })

@@ -35,24 +35,15 @@ class NMEADataProvider extends EventEmitter {
 
   async connect() {
     try {
-      if (this.options.signalkUrl) {
+      if ( this.options.type === 'signalk' ) {
         await this.connectToSignalK()
-      }
-      
-      if (this.options.serialPort) {
+      } else if (this.options.type === 'serial') {
         await this.connectToSerial()
-      }
-      
-      if (this.options.networkHost) {
+      } else if (this.options.type === 'network') {
         await this.connectToNetwork()
-      }
-      
-      if (this.options.socketcanInterface) {
+      } else if (this.options.type === 'socketcan') {
         await this.connectToSocketCAN()
-      }
-      
-      this.isConnected = true
-      this.emit('connected')
+      }      
     } catch (error) {
       console.error('Failed to connect to NMEA source:', error)
       this.emit('error', error)
@@ -111,7 +102,9 @@ class NMEADataProvider extends EventEmitter {
         this.serialStream.start()
           
         console.log('Actisense serial connection established using canboatjs ActisenseStream')
-        
+        this.isConnected = true
+        this.emit('connected')
+
       } else if (deviceType === 'iKonvert') {
         // Use iKonvertStream from canboatjs for Digital Yacht iKonvert devices
         this.serialStream = new iKonvertStream({
@@ -122,7 +115,8 @@ class NMEADataProvider extends EventEmitter {
         this.serialStream.start()
 
         console.log('iKonvert serial connection established using canboatjs iKonvertStream')
-        
+        this.isConnected = true
+        this.emit('connected')
       } else {
         // Fall back to generic serial port handling for other devices
         const SerialPort = require('serialport')
@@ -176,6 +170,8 @@ class NMEADataProvider extends EventEmitter {
 
     this.tcpClient.on('connect', () => {
       console.log('TCP connection established')
+      this.isConnected = true
+      this.emit('connected')
     })
 
     this.tcpClient.on('data', (data) => {
@@ -221,6 +217,8 @@ class NMEADataProvider extends EventEmitter {
     })
 
     this.udpSocket.bind(this.options.networkPort)
+      this.isConnected = true
+      this.emit('connected')
   }
 
   async connectToSocketCAN() {
@@ -259,7 +257,8 @@ class NMEADataProvider extends EventEmitter {
       // Start the canbus stream
       this.canbusStream.start()
       console.log('SocketCAN connection established using canboatjs canbus')
-      
+      this.isConnected = true
+      this.emit('connected')
     } catch (error) {
       if (error.code === 'MODULE_NOT_FOUND') {
         console.error('SocketCAN support requires the "socketcan" npm package. Install with: npm install socketcan')

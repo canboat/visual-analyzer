@@ -657,29 +657,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                           Clear Error
                         </Button>
                       )}
-                      {/* Debug button to test error display */}
-                      <Button 
-                        color="outline-warning" 
-                        size="sm" 
-                        onClick={() => {
-                          // Simulate error for testing
-                          console.log('Testing error display - triggering test error')
-                          // Update connectionStatus through onStatusUpdate prop if available
-                          if (onStatusUpdate) {
-                            console.log('Triggering manual test error via onStatusUpdate')
-                            onStatusUpdate({
-                              isConnected: false,
-                              error: 'TEST ERROR: Manual test error to verify display works',
-                              lastUpdate: new Date().toISOString()
-                            })
-                          } else {
-                            console.log('No onStatusUpdate callback available')
-                          }
-                        }}
-                        className="mt-1"
-                      >
-                        Test Error Display
-                      </Button>
                     </div>
                   </div>
                 </div>
