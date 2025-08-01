@@ -3,6 +3,9 @@
   "version": "1.2.0",
   "description": "NMEA 2000 data visualization utility",
   "main": "index.js",
+  "bin": {
+    "visual-analyzer": "./bin/visual-analyzer"
+  },
   "scripts": {
     "prepublishOnly": "npm run clean && npm run build",
     "watch": "webpack --watch --mode development",

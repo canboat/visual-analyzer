@@ -1,6 +1,90 @@
 # @canboat/visual-analyzer
 
-A powerful web-based tool for visually analyzing and debugging NMEA 2000 data streams in real-time. This Signal K embeddable webapp provides an intuitive interface for monitoring, filtering, and analyzing NMEA 2000 PGN (Parameter Group Number) messages.
+A powerful web-- **Device discovery** - Automatically requests and displays device information for detected sources
+
+## Installation & Usage
+
+### As a Signal K Plugin
+
+The Visual Analyzer is designed to be used as an embeddable webapp within Signal K Server. It will be automatically available at `/admin/#/appstore/install/@canboat/visual-analyzer` after installation.
+
+### Standalone Server
+
+You can also run the Visual Analyzer as a standalone server for development or independent use:
+
+#### Global Installation
+
+```bash
+npm install -g @canboat/visual-analyzer
+visual-analyzer
+```
+
+#### Development Installation
+
+```bash
+git clone https://github.com/canboat/visual-analyzer.git
+cd visual-analyzer
+npm install
+npm run build  # Build the frontend
+visual-analyzer  # Start the server
+```
+
+#### Command Line Options
+
+```bash
+# Start with default settings (port 8080)
+visual-analyzer
+
+# Start on a specific port
+visual-analyzer --port 3000
+
+# Use environment variable
+PORT=8080 visual-analyzer
+
+# Use custom configuration file
+visual-analyzer --config /path/to/config.json
+
+# Show help
+visual-analyzer --help
+
+# Show version
+visual-analyzer --version
+```
+
+#### Configuration
+
+The standalone server can be configured via:
+
+1. **Command line arguments** (highest priority)
+2. **Environment variables**
+3. **Configuration file** (lowest priority)
+
+Example `config.json`:
+```json
+{
+  "server": {
+    "port": 8080,
+    "publicDir": "./public"
+  },
+  "connections": {
+    "activeConnection": "serial",
+    "profiles": {
+      "serial": {
+        "name": "USB Serial Connection",
+        "type": "serial",
+        "port": "/dev/ttyUSB0",
+        "baudRate": 115200
+      },
+      "tcp": {
+        "name": "TCP Connection", 
+        "type": "tcp",
+        "host": "localhost",
+        "port": 10110
+      }
+    }
+  }
+}
+```ased tool for visually analyzing and debugging NMEA 2000 data streams in real-time. This Signal K embeddable webapp provides an intuitive interface for monitoring, filtering, and analyzing NMEA 2000 PGN (Parameter Group Number) messages.
 
 <img width="1368" height="815" alt="Visual Analyzer Screenshot" src="https://github.com/user-attachments/assets/060c30c2-51b7-462d-87ea-9deb56981971" />
 

@@ -12,16 +12,16 @@ process.on('unhandledRejection', (reason, promise) => {
       }
     });
 
-    
+
 // Load configuration from file if it exists
-const configPath = path.join(__dirname, 'config.json')
+const configPath = process.env.VISUAL_ANALYZER_CONFIG || path.join(__dirname, 'config.json')
 let fileConfig = {}
 if (fs.existsSync(configPath)) {
   try {
     fileConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'))
-    console.log('Loaded configuration from config.json')
+    console.log(`Loaded configuration from ${configPath}`)
   } catch (error) {
-    console.warn('Failed to load config.json:', error.message)
+    console.warn(`Failed to load ${configPath}:`, error.message)
   }
 }
 

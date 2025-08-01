@@ -1,10 +1,10 @@
 {
   "server": {
-    "port": 8080,
+    "port": "8080",
     "publicDir": "./public"
   },
   "connections": {
-    "activeConnection": "actisense-usb",
+    "activeConnection": "local-signalk",
     "profiles": {
       "yacht-devices-tcp": {
         "name": "Yacht Devices TCP",
