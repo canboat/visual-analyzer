@@ -6,7 +6,6 @@ import { PGNDataMap, PgnNumber, DeviceMap } from '../types'
 import { DataList } from './DataList'
 import { FilterPanel, Filter } from './Filters'
 import { SentencePanel } from './SentencePanel'
-import { SettingsPanel } from './SettingsPanel'
 import { ConnectionManagerPanel } from './ConnectionManagerPanel'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
@@ -27,7 +26,6 @@ const SEND_TAB_ID = 'send'
 const ANALYZER_TAB_ID = 'analyzer'
 const TRANSFORM_TAB_ID = 'transform'
 const CONNECTIONS_TAB_ID = 'connections'
-const SETTINGS_TAB_ID = 'settings'
 
 const AppPanel = (props: any) => {
   const [activeTab, setActiveTab] = useState(ANALYZER_TAB_ID)
@@ -157,15 +155,6 @@ const AppPanel = (props: any) => {
             Connections
           </NavLink>
         </NavItem>
-        <NavItem>
-          <NavLink
-            className={activeTab === SETTINGS_TAB_ID ? 'active' : ''}
-            onClick={() => setActiveTab(SETTINGS_TAB_ID)}
-            style={{ cursor: 'pointer' }}
-          >
-            Settings
-          </NavLink>
-        </NavItem>
       </Nav>
       <TabContent activeTab={activeTab}>
         <TabPane tabId={ANALYZER_TAB_ID}>
@@ -275,9 +264,6 @@ const AppPanel = (props: any) => {
         </TabPane>
         <TabPane tabId={CONNECTIONS_TAB_ID}>
           <ConnectionManagerPanel />
-        </TabPane>
-        <TabPane tabId={SETTINGS_TAB_ID}>
-          <SettingsPanel />
         </TabPane>
       </TabContent>
     </div>
