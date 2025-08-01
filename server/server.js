@@ -8,8 +8,8 @@ const NMEADataProvider = require('./nmea-provider')
 class VisualAnalyzerServer {
   constructor(options = {}) {
     this.port = options.port || 8080
-    this.publicDir = options.publicDir || path.join(__dirname, '../public')
-    this.configFile = path.join(__dirname, 'config.json')
+    this.publicDir = path.join(__dirname, '../public')
+    this.configFile = process.env.VISUAL_ANALYZER_CONFIG || path.join(__dirname, 'config.json')
     this.app = express()
     this.server = http.createServer(this.app)
     this.wss = new WebSocket.Server({ server: this.server })
@@ -193,7 +193,7 @@ class VisualAnalyzerServer {
     
     // Serve static files from public directory
     this.app.use(express.static(this.publicDir))
-    
+
     // Serve the main HTML file for any route (SPA support)
     this.app.get('*', (req, res) => {
       const indexPath = path.resolve(this.publicDir, 'index.html')
@@ -453,8 +453,7 @@ class VisualAnalyzerServer {
   getConfiguration() {
     return {
       server: {
-        port: this.port,
-        publicDir: this.publicDir
+          port: this.port
       },
       connections: this.currentConfig.connections || { activeConnection: null, profiles: {} },
       connection: {
@@ -570,8 +569,7 @@ class VisualAnalyzerServer {
       const configPath = path.join(__dirname, 'config.json')
       const configData = {
         server: {
-          port: this.port,
-          publicDir: this.publicDir
+          port: this.port
         },
         connections: this.currentConfig.connections,
         logging: { level: 'info' }

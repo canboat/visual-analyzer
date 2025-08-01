@@ -1,7 +1,6 @@
 {
   "server": {
-    "port": "8080",
-    "publicDir": "./public"
+    "port": "8080"
   },
   "connections": {
     "activeConnection": "local-signalk",

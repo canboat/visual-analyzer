@@ -20,7 +20,6 @@ interface ConnectionProfile {
 interface ServerConfig {
   server: {
     port: number
-    publicDir: string
   }
   connections: {
     activeConnection: string | null

@@ -56,8 +56,7 @@ The server uses a `server/config.json` file for persistent configuration. The se
 ```json
 {
   "server": {
-    "port": 8080,
-    "publicDir": "./public"
+    "port": 8080
   },
   "connections": {
     "activeConnection": "yacht-devices-tcp",

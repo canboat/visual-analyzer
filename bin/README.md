@@ -76,9 +76,8 @@ Example config.json:
 ```json
 {
   "server": {
-    "port": 8080,
-    "publicDir": "./public"
-  },
+    "port": 8080
+=  },
   "connections": {
     "activeConnection": "serial",
     "profiles": {

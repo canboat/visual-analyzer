@@ -4,14 +4,6 @@ const VisualAnalyzerServer = require('./server')
 const path = require('path')
 const fs = require('fs')
 
-process.on('unhandledRejection', (reason, promise) => {
-      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-      // You can also log the stack trace of the reason if it's an Error object
-      if (reason instanceof Error) {
-        console.error(reason.stack);
-      }
-    });
-
 
 // Load configuration from file if it exists
 const configPath = process.env.VISUAL_ANALYZER_CONFIG || path.join(__dirname, 'config.json')
@@ -28,7 +20,6 @@ if (fs.existsSync(configPath)) {
 // Configuration options (environment variables override config file)
 const config = {
   port: process.env.PORT || fileConfig.server?.port || 8080,
-  publicDir: process.env.PUBLIC_DIR || fileConfig.server?.publicDir || path.join(__dirname, '../public'),
   
   // Connection profiles system
   connections: fileConfig.connections || {
@@ -39,7 +30,6 @@ const config = {
 
 console.log('Starting Visual Analyzer Server with configuration:')
 console.log(`  Port: ${config.port}`)
-console.log(`  Public Directory: ${config.publicDir}`)
 console.log(`  Active Connection: ${config.connections.activeConnection || 'None configured'}`)
 
 // Create and start the server
