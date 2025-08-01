@@ -106,7 +106,7 @@ const AppPanel = (props: any) => {
 
         if (sentInfoReq.indexOf(pgn!.src!) === -1) {
           sentInfoReq.push(pgn!.src!)
-          //requestMetaData(pgn!.src!)
+          requestMetaData(pgn!.src!)
         }
       }
     }

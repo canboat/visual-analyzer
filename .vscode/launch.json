@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Launch N2K Analyzer",
+            "request": "launch",
+            "runtimeArgs": [
+                "run",
+                "server"
+            ],
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
+        }
+    ]
+}

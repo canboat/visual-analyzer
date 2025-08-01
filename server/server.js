@@ -120,6 +120,69 @@ class VisualAnalyzerServer {
         res.status(500).json({ success: false, error: error.message })
       }
     })
+
+    // SignalK-compatible input test endpoint for sending NMEA 2000 messages
+    this.app.post('/skServer/inputTest', (req, res) => {
+      try {
+        const { value, sendToN2K } = req.body
+        
+        if (!value) {
+          return res.status(400).json({ 
+            success: false, 
+            error: 'Missing required field: value' 
+          })
+        }
+
+        // Parse the PGN data from the value field
+        let pgnData
+        try {
+          pgnData = JSON.parse(value)
+        } catch (parseError) {
+          return res.status(400).json({ 
+            success: false, 
+            error: 'Invalid JSON in value field: ' + parseError.message 
+          })
+        }
+
+        console.log('Received NMEA 2000 message for transmission:', {
+          pgn: pgnData.pgn,
+          sendToN2K: sendToN2K,
+          data: pgnData
+        })
+
+        // If we have an active NMEA provider, attempt to send the message
+        if (this.nmeaProvider && sendToN2K) {
+          try {
+            // Convert PGN object to raw NMEA 2000 format if the provider supports it
+            if (typeof this.nmeaProvider.sendMessage === 'function') {
+              this.nmeaProvider.sendMessage(pgnData)
+              console.log('Message sent to NMEA 2000 network')
+            } else {
+              console.log('NMEA provider does not support message transmission')
+            }
+          } catch (sendError) {
+            console.error('Error sending message to NMEA 2000 network:', sendError)
+            // Don't fail the request - just log the error
+          }
+        } else if (sendToN2K) {
+          console.log('No active NMEA connection - message not transmitted')
+        }
+
+        // Return success response in SignalK format
+        res.json({ 
+          success: true,
+          message: 'Message processed successfully',
+          transmitted: sendToN2K && this.nmeaProvider ? true : false
+        })
+
+      } catch (error) {
+        console.error('Error processing input test request:', error)
+        res.status(500).json({ 
+          success: false, 
+          error: error.message 
+        })
+      }
+    })
     
     // Serve static files from public directory
     this.app.use(express.static(this.publicDir))

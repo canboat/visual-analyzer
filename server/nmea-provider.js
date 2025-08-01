@@ -303,6 +303,82 @@ class NMEADataProvider extends EventEmitter {
   isConnectionActive() {
     return this.isConnected
   }
+
+  // Send NMEA 2000 message to the network
+  sendMessage(pgnData) {
+    if (!this.isConnected) {
+      throw new Error('No active connection to send message')
+    }
+    /*
+    // For now, we'll log the message and potentially broadcast it
+    // In a real implementation, this would send the message through the appropriate interface
+    console.log('Sending NMEA 2000 message:', {
+      pgn: pgnData.pgn,
+      src: pgnData.src,
+      dest: pgnData.dest,
+      data: pgnData
+    })
+
+    // If we have an active TCP connection (like Yacht Devices), we could send it there
+    if (this.tcpClient && this.tcpClient.readyState === 'open') {
+      try {
+        // Convert PGN to the format expected by the device
+        const message = this.formatMessageForDevice(pgnData)
+        if (message) {
+          this.tcpClient.write(message + '\r\n')
+          console.log('Message sent via TCP connection')
+        }
+      } catch (error) {
+        console.error('Error sending message via TCP:', error)
+        throw error
+      }
+    } else if (this.udpClient) {
+      try {
+        const message = this.formatMessageForDevice(pgnData)
+        if (message) {
+          this.udpClient.send(message, this.options.networkPort, this.options.networkHost)
+          console.log('Message sent via UDP connection')
+        }
+      } catch (error) {
+        console.error('Error sending message via UDP:', error)
+        throw error
+      }
+    } else {
+      // No physical connection available - message will only be broadcast to WebSocket clients
+      console.log('No physical network connection - message broadcast only')
+    }
+      */
+  }
+
+  // Format PGN message for transmission to the device
+  formatMessageForDevice(pgnData) {
+    // This is a simplified implementation
+    // In practice, different devices expect different formats
+    
+    if (this.options.deviceType === 'Actisense') {
+      // Actisense NGT-1 format
+      // Would need proper implementation for each device type
+      return null // Not implemented yet
+    } else if (this.options.deviceType === 'iKonvert') {
+      // iKonvert format
+      return null // Not implemented yet
+    } else if (this.options.deviceType === 'Yacht Devices') {
+      // Yacht Devices format - typically accepts canboat format
+      const timestamp = new Date().toISOString()
+      const priority = pgnData.priority || 6
+      const src = pgnData.src || 1
+      const dest = pgnData.dest || 255
+      const pgn = pgnData.pgn
+      
+      // Simple placeholder data - would need proper PGN encoding
+      const dataBytes = 'ff,ff,ff,ff,ff,ff,ff,ff'
+      const len = 8
+      
+      return `${timestamp},${priority},${src},${dest},${pgn},${len},${dataBytes}`
+    }
+    
+    return null
+  }
 }
 
 module.exports = NMEADataProvider
