@@ -3,6 +3,7 @@
 A powerful web-based tool for visually analyzing and debugging NMEA 2000 data streams in real-time. This application provides an intuitive interface for monitoring, filtering, and analyzing NMEA 2000 PGN (Parameter Group Number) messages.
 
 <img width="1368" height="815" alt="Visual Analyzer Screenshot" src="https://github.com/user-attachments/assets/060c30c2-51b7-462d-87ea-9deb56981971" />
+<img width="1578" height="912" alt="image" src="https://github.com/user-attachments/assets/4ce653d1-714b-41c0-a577-9efcea3453cb" />
 
 ## Installation & Usage
 
