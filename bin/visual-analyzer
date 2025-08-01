@@ -46,6 +46,7 @@ Usage: visual-analyzer [options]
 Options:
   --port <port>       Server port (default: 8080)
   --config <file>     Configuration file path
+  --open, --browser   Open browser automatically after starting server
   --help, -h          Show this help message
   --version, -v       Show version information
 
@@ -56,12 +57,13 @@ Environment Variables:
 Configuration File:
   The server looks for a config.json file at:
   - Linux/macOS: ~/.visual-analyzer/config.json
-  - Windows: %APPDATA%\visual-analyzer\config.json
+  - Windows: %APPDATA%\\visual-analyzer\\config.json
   You can specify a custom config file with --config option.
 
 Examples:
   visual-analyzer                    # Start with default settings
   visual-analyzer --port 3000       # Start on port 3000
+  visual-analyzer --open             # Start and open browser
   PORT=8080 visual-analyzer         # Start using environment variable
   visual-analyzer --config /path/to/config.json
 
@@ -103,6 +105,10 @@ For more information, visit: https://github.com/canboat/visual-analyzer
     }
     options.configFile = configFile
   }
+  
+  if (arg === '--open' || arg === '--browser') {
+    options.openBrowser = true
+  }
 }
 
 // Display startup banner
@@ -119,6 +125,12 @@ const serverPath = path.join(__dirname, '..', 'server', 'index.js')
 if (options.configFile) {
   // Set environment variable so the server can pick it up
   process.env.VISUAL_ANALYZER_CONFIG = options.configFile
+}
+
+// Handle browser opening if requested
+if (options.openBrowser) {
+  // Set environment variable so the server can pick it up
+  process.env.VISUAL_ANALYZER_OPEN_BROWSER = 'true'
 }
 
 try {

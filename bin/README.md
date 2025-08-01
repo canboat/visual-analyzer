@@ -29,6 +29,7 @@ visual-analyzer [options]
 
 - `--port <port>` - Specify the server port (default: 8080)
 - `--config <file>` - Path to custom configuration file
+- `--open`, `--browser` - Open browser automatically after starting server
 - `--help`, `-h` - Show help message
 - `--version`, `-v` - Show version information
 
@@ -40,6 +41,9 @@ visual-analyzer
 
 # Start on a specific port
 visual-analyzer --port 3000
+
+# Start and open browser automatically
+visual-analyzer --open
 
 # Use environment variable for port
 PORT=8080 visual-analyzer

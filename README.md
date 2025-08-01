@@ -38,6 +38,9 @@ visual-analyzer
 # Start on a specific port
 visual-analyzer --port 3000
 
+# Start and open browser automatically  
+visual-analyzer --open
+
 # Use environment variable
 PORT=8080 visual-analyzer
 

@@ -646,7 +646,51 @@ class VisualAnalyzerServer {
       console.log(`Visual Analyzer server started on port ${this.port}`)
       console.log(`Access the application at: http://localhost:${this.port}`)
       console.log(`WebSocket endpoint available at: ws://localhost:${this.port}`)
+      
+      // Open browser if requested via environment variable
+      if (process.env.VISUAL_ANALYZER_OPEN_BROWSER === 'true') {
+        this.openBrowser(`http://localhost:${this.port}`)
+      }
     })
+  }
+
+  openBrowser(url) {
+    const { spawn } = require('child_process')
+    
+    console.log(`Opening browser at: ${url}`)
+    
+    let command
+    let args = [url]
+    
+    // Determine the appropriate command for the platform
+    if (process.platform === 'darwin') {
+      // macOS
+      command = 'open'
+    } else if (process.platform === 'win32') {
+      // Windows
+      command = 'start'
+      args = ['', url] // start command requires empty first argument
+    } else {
+      // Linux and others
+      command = 'xdg-open'
+    }
+    
+    try {
+      const child = spawn(command, args, { 
+        detached: true, 
+        stdio: 'ignore' 
+      })
+      
+      // Allow the parent process to exit independently
+      child.unref()
+      
+      setTimeout(() => {
+        console.log('Browser should have opened. If not, please visit the URL manually.')
+      }, 1000)
+    } catch (error) {
+      console.warn(`Failed to open browser automatically: ${error.message}`)
+      console.log('Please open your browser manually and visit the URL above.')
+    }
   }
 
   stop() {
