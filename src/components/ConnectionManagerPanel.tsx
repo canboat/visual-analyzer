@@ -467,11 +467,11 @@ export const ConnectionManagerPanel: React.FC = () => {
                   <Table className="mb-0 table-hover">
                     <thead className="thead-light">
                       <tr>
-                        <th style={{width: '25%'}}><i className="fas fa-tag mr-1"></i>Connection Name</th>
-                        <th style={{width: '15%'}}><i className="fas fa-cogs mr-1"></i>Type</th>
-                        <th style={{width: '30%'}}><i className="fas fa-info-circle mr-1"></i>Connection Details</th>
-                        <th style={{width: '15%'}}><i className="fas fa-signal mr-1"></i>Status</th>
-                        <th style={{width: '15%'}}><i className="fas fa-tools mr-1"></i>Actions</th>
+                        <th style={{width: '28%'}}><i className="fas fa-tag mr-1"></i>Connection Name</th>
+                        <th style={{width: '12%'}}><i className="fas fa-cogs mr-1"></i>Type</th>
+                        <th style={{width: '35%'}}><i className="fas fa-info-circle mr-1"></i>Connection Details</th>
+                        <th style={{width: '12%'}}><i className="fas fa-signal mr-1"></i>Status</th>
+                        <th style={{width: '13%'}}><i className="fas fa-tools mr-1"></i>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -521,39 +521,39 @@ export const ConnectionManagerPanel: React.FC = () => {
                             )}
                           </td>
                           <td>
-                            <div className="d-flex flex-column" style={{gap: '4px'}}>
+                            <div className="d-flex flex-row" style={{gap: '2px'}}>
                               {config.connections.activeConnection !== profileId && (
                                 <Button
-                                  size="sm"
+                                  size="xs"
                                   color="success"
                                   onClick={() => activateConnectionProfile(profileId)}
                                   disabled={loading}
                                   className="d-flex align-items-center justify-content-center"
-                                  style={{minWidth: '80px'}}
+                                  style={{minWidth: '50px', fontSize: '0.7rem', padding: '2px 4px'}}
                                 >
-                                  <i className="fas fa-play mr-1"></i>
+                                  <i className="fas fa-play" style={{fontSize: '9px', marginRight: '2px'}}></i>
                                   Activate
                                 </Button>
                               )}
                               <Button
-                                size="sm"
+                                size="xs"
                                 color="outline-primary"
                                 onClick={() => openEditModal(profileId)}
                                 className="d-flex align-items-center justify-content-center"
-                                style={{minWidth: '80px'}}
+                                style={{minWidth: '40px', fontSize: '0.7rem', padding: '2px 4px'}}
                               >
-                                <i className="fas fa-edit mr-1"></i>
+                                <i className="fas fa-edit" style={{fontSize: '9px', marginRight: '2px'}}></i>
                                 Edit
                               </Button>
                               <Button
-                                size="sm"
+                                size="xs"
                                 color="outline-danger"
                                 onClick={() => deleteConnectionProfile(profileId)}
                                 disabled={config.connections.activeConnection === profileId}
                                 className="d-flex align-items-center justify-content-center"
-                                style={{minWidth: '80px'}}
+                                style={{minWidth: '45px', fontSize: '0.7rem', padding: '2px 4px'}}
                               >
-                                <i className="fas fa-trash mr-1"></i>
+                                <i className="fas fa-trash" style={{fontSize: '9px', marginRight: '2px'}}></i>
                                 Delete
                               </Button>
                             </div>
@@ -570,9 +570,39 @@ export const ConnectionManagerPanel: React.FC = () => {
 
         {/* Connection Profile Modal */}
         <Modal isOpen={showModal} toggle={() => setShowModal(false)} size="lg" className="connection-modal">
-          <ModalHeader toggle={() => setShowModal(false)} className="bg-primary text-white">
-            <i className={`fas ${editingProfile ? 'fa-edit' : 'fa-plus-circle'} mr-2`}></i>
-            {editingProfile ? 'Edit Connection Profile' : 'Create New Connection Profile'}
+          <ModalHeader className="bg-primary text-white d-flex justify-content-between align-items-center" style={{border: 'none'}}>
+            <div className="d-flex align-items-center">
+              <i className={`fas ${editingProfile ? 'fa-edit' : 'fa-plus-circle'} mr-2`}></i>
+              <span>{editingProfile ? 'Edit Connection Profile' : 'Create New Connection Profile'}</span>
+            </div>
+            <button 
+              type="button" 
+              className="btn-close-modern" 
+              onClick={() => setShowModal(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                fontSize: '20px',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'
+                e.currentTarget.style.transform = 'scale(1.1)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.transform = 'scale(1)'
+              }}
+            >
+              <i className="fas fa-times"></i>
+            </button>
           </ModalHeader>
           <ModalBody className="p-4">
             <div className="mb-3">
