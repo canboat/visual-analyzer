@@ -305,3 +305,71 @@ body {
 .bg-sk-dark {
   background-color: var(--sk-dark) !important;
 }
+
+/* Badge styles - fix for invisible text in outline badges */
+.badge-outline-primary {
+  color: var(--sk-primary) !important;
+  border: 1px solid var(--sk-primary);
+  background-color: transparent;
+}
+
+.badge-outline-secondary {
+  color: var(--sk-gray-600) !important;
+  border: 1px solid var(--sk-gray-600);
+  background-color: transparent;
+}
+
+.badge-outline-success {
+  color: var(--sk-success) !important;
+  border: 1px solid var(--sk-success);
+  background-color: transparent;
+}
+
+.badge-outline-info {
+  color: var(--sk-info) !important;
+  border: 1px solid var(--sk-info);
+  background-color: transparent;
+}
+
+.badge-outline-warning {
+  color: var(--sk-warning) !important;
+  border: 1px solid var(--sk-warning);
+  background-color: transparent;
+}
+
+.badge-outline-danger {
+  color: var(--sk-danger) !important;
+  border: 1px solid var(--sk-danger);
+  background-color: transparent;
+}
+
+/* Regular badge styles - ensure proper text contrast */
+.badge-primary {
+  background-color: var(--sk-primary) !important;
+  color: white !important;
+}
+
+.badge-secondary {
+  background-color: var(--sk-gray-500) !important;
+  color: white !important;
+}
+
+.badge-success {
+  background-color: var(--sk-success) !important;
+  color: white !important;
+}
+
+.badge-info {
+  background-color: var(--sk-info) !important;
+  color: white !important;
+}
+
+.badge-warning {
+  background-color: var(--sk-warning) !important;
+  color: var(--sk-dark) !important;
+}
+
+.badge-danger {
+  background-color: var(--sk-danger) !important;
+  color: white !important;
+}
