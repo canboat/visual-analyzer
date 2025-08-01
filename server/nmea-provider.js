@@ -38,6 +38,10 @@ class NMEADataProvider extends EventEmitter {
         await this.connectToNetwork()
       }
       
+      if (this.options.socketcanInterface) {
+        await this.connectToSocketCAN()
+      }
+      
       this.isConnected = true
       this.emit('connected')
     } catch (error) {
@@ -211,6 +215,73 @@ class NMEADataProvider extends EventEmitter {
     this.udpSocket.bind(this.options.networkPort)
   }
 
+  async connectToSocketCAN() {
+    try {
+      // SocketCAN requires the 'socketcan' npm package
+      // This is a Linux-specific implementation
+      const can = require('socketcan')
+      
+      console.log(`Connecting to SocketCAN interface: ${this.options.socketcanInterface}`)
+      
+      this.canChannel = can.createRawChannel(this.options.socketcanInterface, true)
+      
+      this.canChannel.addListener('onMessage', (message) => {
+        // Convert CAN message to NMEA 2000 format
+        const nmea2000Data = this.convertCANToNMEA2000(message)
+        if (nmea2000Data) {
+          this.emit('raw-nmea', nmea2000Data)
+        }
+      })
+
+      this.canChannel.addListener('onStopped', () => {
+        console.log('SocketCAN channel stopped')
+        this.isConnected = false
+        this.emit('disconnected')
+      })
+
+      this.canChannel.addListener('onError', (error) => {
+        console.error('SocketCAN error:', error)
+        this.emit('error', error)
+      })
+
+      // Start the CAN channel
+      this.canChannel.start()
+      console.log('SocketCAN connection established')
+      
+    } catch (error) {
+      if (error.code === 'MODULE_NOT_FOUND') {
+        console.error('SocketCAN support requires the "socketcan" npm package. Install with: npm install socketcan')
+        throw new Error('SocketCAN package not installed. Run: npm install socketcan')
+      } else {
+        console.error('Failed to connect to SocketCAN:', error)
+        throw error
+      }
+    }
+  }
+
+  convertCANToNMEA2000(canMessage) {
+    // Convert raw CAN message to NMEA 2000 format
+    // This is a simplified conversion for demonstration
+    try {
+      const timestamp = new Date().toISOString()
+      const priority = (canMessage.id >> 26) & 0x7
+      const pgn = (canMessage.id >> 8) & 0x1FFFF
+      const src = canMessage.id & 0xFF
+      const dest = 255 // Broadcast for most NMEA 2000 messages
+      
+      // Convert data buffer to hex string
+      const dataHex = Array.from(canMessage.data)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join(',')
+      
+      // Format: timestamp,priority,src,dest,pgn,length,data
+      return `${timestamp},${priority},${src},${dest},${pgn},${canMessage.data.length},${dataHex}`
+    } catch (error) {
+      console.error('Error converting CAN message:', error)
+      return null
+    }
+  }
+
   processSignalKUpdate(update) {
     // Convert SignalK update back to NMEA 2000 format if possible
     // This is a simplified conversion - in practice, you might want more sophisticated handling
@@ -241,6 +312,10 @@ class NMEADataProvider extends EventEmitter {
     
     if (this.udpSocket) {
       this.udpSocket.close()
+    }
+    
+    if (this.canChannel) {
+      this.canChannel.stop()
     }
     
     this.emit('disconnected')

@@ -467,8 +467,12 @@ class VisualAnalyzerServer {
         if (!profile.signalkUrl) throw new Error('SignalK URL is required for SignalK connection')
         break
       
+      case 'socketcan':
+        if (!profile.socketcanInterface) throw new Error('SocketCAN interface is required for SocketCAN connection')
+        break
+      
       default:
-        throw new Error('Connection type must be serial, network, or signalk')
+        throw new Error('Connection type must be serial, network, signalk, or socketcan')
     }
   }
 

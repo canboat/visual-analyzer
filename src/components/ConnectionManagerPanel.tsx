@@ -4,16 +4,17 @@ import { Card, CardBody, Button, Form, FormGroup, Label, Input, Alert, Row, Col,
 interface ConnectionProfile {
   id: string
   name: string
-  type: 'serial' | 'network' | 'signalk'
+  type: 'serial' | 'network' | 'signalk' | 'socketcan'
   signalkUrl?: string
   signalkUsername?: string
   signalkPassword?: string
   serialPort?: string
   baudRate?: number
-  deviceType?: 'Actisense' | 'iKonvert' | 'Yacht Devices' | 'Yacht Devices RAW' | 'NavLink2' | 'Actisense WK2-1 ASCII'
+  deviceType?: 'Actisense' | 'iKonvert' | 'Yacht Devices' | 'Yacht Devices RAW' | 'NavLink2' | 'Actisense WK2-1 ASCII' | 'SocketCAN'
   networkHost?: string
   networkPort?: number
   networkProtocol?: 'tcp' | 'udp'
+  socketcanInterface?: string
 }
 
 interface ServerConfig {
@@ -49,7 +50,8 @@ export const ConnectionManagerPanel: React.FC = () => {
     deviceType: 'Yacht Devices RAW',
     networkHost: '',
     networkPort: 2000,
-    networkProtocol: 'tcp'
+    networkProtocol: 'tcp',
+    socketcanInterface: 'can0'
   })
 
   useEffect(() => {
@@ -188,7 +190,8 @@ export const ConnectionManagerPanel: React.FC = () => {
       deviceType: 'Yacht Devices RAW',
       networkHost: '',
       networkPort: 2000,
-      networkProtocol: 'tcp'
+      networkProtocol: 'tcp',
+      socketcanInterface: 'can0'
     })
     setEditingProfile(null)
   }
@@ -236,6 +239,7 @@ export const ConnectionManagerPanel: React.FC = () => {
               <option value="network">🌐 Network (TCP/UDP)</option>
               <option value="serial">🔌 Serial Port</option>
               <option value="signalk">⚓ SignalK Server</option>
+              <option value="socketcan">🚗 SocketCAN (Linux CAN)</option>
             </Input>
           </FormGroup>
         </div>
@@ -424,6 +428,49 @@ export const ConnectionManagerPanel: React.FC = () => {
             </div>
           </div>
         )}
+
+        {formData.type === 'socketcan' && (
+          <div className="border rounded p-3 bg-light">
+            <h6 className="text-warning mb-3">
+              <i className="fas fa-car mr-2"></i>SocketCAN Configuration
+            </h6>
+            <div className="alert alert-info mb-3">
+              <i className="fas fa-info-circle mr-2"></i>
+              <strong>Linux Only:</strong> SocketCAN requires a Linux system with CAN interface support. 
+              Commonly used with USB-CAN adapters or built-in CAN controllers.
+            </div>
+            
+            <FormGroup>
+              <Label for="socketcanInterface" className="font-weight-bold">CAN Interface</Label>
+              <Input
+                type="text"
+                id="socketcanInterface"
+                placeholder="can0"
+                value={formData.socketcanInterface}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('socketcanInterface', e.target.value)}
+                className="form-control-lg"
+              />
+              <small className="form-text text-muted">
+                CAN interface name (e.g., can0, can1, vcan0)
+              </small>
+            </FormGroup>
+            
+            <div className="mt-3">
+              <h6 className="text-muted mb-2">
+                <i className="fas fa-terminal mr-2"></i>Setup Commands
+              </h6>
+              <div className="bg-dark text-light p-3 rounded">
+                <small>
+                  <strong>Setup CAN interface:</strong><br/>
+                  <code className="text-warning">sudo ip link set can0 type can bitrate 250000</code><br/>
+                  <code className="text-warning">sudo ip link set up can0</code><br/><br/>
+                  <strong>Test interface:</strong><br/>
+                  <code className="text-warning">ip link show can0</code>
+                </small>
+              </div>
+            </div>
+          </div>
+        )}
       </Form>
     )
   }
@@ -537,7 +584,7 @@ export const ConnectionManagerPanel: React.FC = () => {
                         <tr key={profileId} className={config.connections.activeConnection === profileId ? 'table-primary' : ''}>
                           <td>
                             <div className="d-flex align-items-center">
-                              <i className={`fas ${profile.type === 'network' ? 'fa-network-wired' : profile.type === 'serial' ? 'fa-usb' : 'fa-anchor'} mr-2 text-${profile.type === 'network' ? 'info' : profile.type === 'serial' ? 'success' : 'primary'}`}></i>
+                              <i className={`fas ${profile.type === 'network' ? 'fa-network-wired' : profile.type === 'serial' ? 'fa-usb' : profile.type === 'socketcan' ? 'fa-car' : 'fa-anchor'} mr-2 text-${profile.type === 'network' ? 'info' : profile.type === 'serial' ? 'success' : profile.type === 'socketcan' ? 'warning' : 'primary'}`}></i>
                               <div>
                                 <strong>{profile.name}</strong>
                                 {config.connections.activeConnection === profileId && (
@@ -549,7 +596,7 @@ export const ConnectionManagerPanel: React.FC = () => {
                             </div>
                           </td>
                           <td>
-                            <span className={`badge badge-outline-${profile.type === 'network' ? 'info' : profile.type === 'serial' ? 'success' : 'primary'}`}>
+                            <span className={`badge badge-outline-${profile.type === 'network' ? 'info' : profile.type === 'serial' ? 'success' : profile.type === 'socketcan' ? 'warning' : 'primary'}`}>
                               {profile.type.toUpperCase()}
                             </span>
                           </td>
@@ -570,6 +617,11 @@ export const ConnectionManagerPanel: React.FC = () => {
                               )}
                               {profile.type === 'network' && (
                                 <><i className="fas fa-server mr-1"></i>{profile.networkHost}:{profile.networkPort} ({profile.networkProtocol?.toUpperCase()}) - {profile.deviceType}</>
+                              )}
+                              {profile.type === 'socketcan' && (
+                                <>
+                                  <i className="fas fa-microchip mr-1"></i>{profile.socketcanInterface}
+                                </>
                               )}
                             </small>
                           </td>
