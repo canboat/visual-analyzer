@@ -8,7 +8,7 @@ interface ConnectionProfile {
   signalkUrl?: string
   serialPort?: string
   baudRate?: number
-  deviceType?: 'Actisense' | 'iKonvert' | 'Yacht Devices'
+  deviceType?: 'Actisense' | 'iKonvert' | 'Yacht Devices' | 'Yacht Devices RAW' | 'NavLink2' | 'Actisense WK2-1 ASCII'
   networkHost?: string
   networkPort?: number
   networkProtocol?: 'tcp' | 'udp'
@@ -42,7 +42,7 @@ export const ConnectionManagerPanel: React.FC = () => {
     signalkUrl: '',
     serialPort: '',
     baudRate: 115200,
-    deviceType: 'Actisense',
+    deviceType: 'Yacht Devices RAW',
     networkHost: '',
     networkPort: 2000,
     networkProtocol: 'tcp'
@@ -179,7 +179,7 @@ export const ConnectionManagerPanel: React.FC = () => {
       signalkUrl: '',
       serialPort: '',
       baudRate: 115200,
-      deviceType: 'Actisense',
+      deviceType: 'Yacht Devices RAW',
       networkHost: '',
       networkPort: 2000,
       networkProtocol: 'tcp'
@@ -270,9 +270,9 @@ export const ConnectionManagerPanel: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('deviceType', e.target.value)}
                 className="form-control-lg"
               >
-                <option value="Actisense">🔹 Actisense (NGT-1, NGT-1-ISO)</option>
+                <option value="Actisense">🔹 Actisense (NGT-1 Compatible)</option>
                 <option value="iKonvert">🔹 iKonvert (NMEA 2000 Gateway)</option>
-                <option value="Yacht Devices">🔹 Yacht Devices (YDWG-02, YDNU-02)</option>
+                <option value="Yacht Devices">🔹 Yacht Devices RAW (YDNU-02)</option>
               </Input>
               <small className="form-text text-muted">
                 Select your specific NMEA 2000 gateway device
@@ -319,6 +319,23 @@ export const ConnectionManagerPanel: React.FC = () => {
             <h6 className="text-info mb-3">
               <i className="fas fa-network-wired mr-2"></i>Network Configuration
             </h6>
+            <FormGroup>
+              <Label for="networkDeviceType" className="font-weight-bold">Device Type</Label>
+              <Input
+                type="select"
+                id="networkDeviceType"
+                value={formData.deviceType}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('deviceType', e.target.value)}
+                className="form-control-lg"
+              >
+                <option value="Yacht Devices RAW">🔹 Yacht Devices RAW (YDWG-02)</option>
+                <option value="NavLink2">🔹 NavLink2 Gateway</option>
+                <option value="Actisense WK2-1 ASCII">🔹 Actisense ASCII (WK2-1)</option>
+              </Input>
+              <small className="form-text text-muted">
+                Select your specific NMEA 2000 network gateway device
+              </small>
+            </FormGroup>
             <div className="row">
               <div className="col-md-6">
                 <FormGroup>
@@ -504,7 +521,7 @@ export const ConnectionManagerPanel: React.FC = () => {
                                 <><i className="fas fa-microchip mr-1"></i>{profile.serialPort} ({profile.deviceType})</>
                               )}
                               {profile.type === 'network' && (
-                                <><i className="fas fa-server mr-1"></i>{profile.networkHost}:{profile.networkPort} ({profile.networkProtocol?.toUpperCase()})</>
+                                <><i className="fas fa-server mr-1"></i>{profile.networkHost}:{profile.networkPort} ({profile.networkProtocol?.toUpperCase()}) - {profile.deviceType}</>
                               )}
                             </small>
                           </td>
