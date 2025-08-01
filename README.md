@@ -183,7 +183,51 @@ Filter messages by device manufacturer to focus on equipment from specific vendo
 
 Advanced users can write custom JavaScript expressions for complex filtering logic.
 
-### Standalone Development
+## Architecture
+
+Built with modern web technologies:
+
+- **Frontend**: React with TypeScript
+- **Data Processing**: RxJS for reactive data streams
+- **NMEA 2000 Parsing**: @canboat/canboatjs and @canboat/ts-pgns
+- **UI Components**: Reactstrap (Bootstrap for React)
+- **Build System**: Webpack with hot module replacement
+
+## Development
+
+### Project Structure
+
+```
+visual-analyzer/
+├── bin/
+│   └── visual-analyzer           # Executable script for standalone server
+├── server/
+│   ├── index.js                  # Main server entry point
+│   ├── server.js                 # Express server setup
+│   ├── nmea-provider.js          # NMEA data source providers
+│   └── config.json               # Default server configuration
+├── src/
+│   ├── components/
+│   │   ├── AppPanel.tsx          # Main application component
+│   │   ├── ConnectionManagerPanel.tsx # Connection configuration
+│   │   ├── DataList.tsx          # Message list and filtering
+│   │   ├── Filters.tsx           # Filter components
+│   │   ├── SentencePanel.tsx     # Message detail view
+│   │   └── SettingsPanel.tsx     # Settings and configuration
+│   ├── bootstrap.js              # Application bootstrap
+│   ├── index.js                  # Frontend entry point
+│   ├── styles.css                # Application styles
+│   ├── types.ts                  # TypeScript type definitions
+│   └── reactstrap.d.ts           # Reactstrap type definitions
+├── public_src/
+│   └── index.html                # HTML template
+├── public/                       # Built frontend assets (generated)
+├── package.json                  # Project dependencies and scripts
+├── tsconfig.json                 # TypeScript configuration
+└── webpack.config.js             # Webpack build configuration
+```
+
+### Development Setup
 
 ```bash
 # Clone the repository for development
@@ -202,67 +246,6 @@ npm run format
 
 # Run linting
 npm run lint
-```
-
-## How It Works
-
-The visual-analyzer connects to Signal K Server's WebSocket stream and:
-
-1. **Receives NMEA 2000 data** - Listens for real-time PGN messages
-2. **Parses messages** - Uses `@canboat/canboatjs` and `@canboat/ts-pgns` for message parsing
-3. **Filters data** - Applies user-defined filters to focus on relevant messages
-4. **Displays information** - Shows parsed message data in an organized, searchable interface
-5. **Device discovery** - Automatically requests and displays device information for detected sources
-
-## Architecture
-
-Built with modern web technologies:
-
-- **Frontend**: React with TypeScript
-- **Data Processing**: RxJS for reactive data streams
-- **NMEA 2000 Parsing**: @canboat/canboatjs and @canboat/ts-pgns
-- **UI Components**: Reactstrap (Bootstrap for React)
-- **Build System**: Webpack with hot module replacement
-
-## Configuration
-
-The analyzer automatically configures itself by:
-
-- Connecting to Signal K Server's WebSocket endpoint
-- Detecting available NMEA 2000 data sources
-- Requesting device information from discovered sources
-- Building filter options based on available data
-
-## Filtering Options
-
-### PGN Filtering
-
-Filter messages by specific Parameter Group Numbers to focus on particular message types.
-
-### Source/Destination Filtering
-
-Filter by device source addresses or destination addresses to monitor specific devices.
-
-### Manufacturer Filtering
-
-Filter messages by device manufacturer to focus on equipment from specific vendors.
-
-### JavaScript Filtering
-
-Advanced users can write custom JavaScript expressions for complex filtering logic.
-
-## Development
-
-### Project Structure
-
-```
-src/
-├── components/
-│   ├── AppPanel.tsx      # Main application component
-│   ├── DataList.tsx      # Message list and filtering
-│   └── SentencePanel.tsx # Message detail view
-├── types.ts              # TypeScript type definitions
-└── index.js              # Entry point
 ```
 
 ### Key Dependencies
