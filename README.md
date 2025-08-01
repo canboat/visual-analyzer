@@ -1,35 +1,60 @@
 # @canboat/visual-analyzer
 
-A powerful web-- **Device discovery** - Automatically requests and displays device information for detected sources
+A powerful web-based tool for visually analyzing and debugging NMEA 2000 data streams in real-time. This application provides an intuitive interface for monitoring, filtering, and analyzing NMEA 2000 PGN (Parameter Group Number) messages.
+
+<img width="1368" height="815" alt="Visual Analyzer Screenshot" src="https://github.com/user-attachments/assets/060c30c2-51b7-462d-87ea-9deb56981971" />
 
 ## Installation & Usage
 
 ### As a Signal K Plugin
 
-The Visual Analyzer is designed to be used as an embeddable webapp within Signal K Server. It will be automatically available at `/admin/#/appstore/install/@canboat/visual-analyzer` after installation.
+The Visual Analyzer is designed to be used as an embeddable webapp within Signal K Server. It will be automatically available under "Web Apps" after installation.
 
 ### Standalone Server
 
-You can also run the Visual Analyzer as a standalone server for development or independent use:
+The Visual Analyzer can also be run as a standalone web server, making it perfect for:
+- Direct connection to NMEA 2000 networks via serial/USB adapters
+- Independent analysis without requiring Signal K Server
+- Quick troubleshooting and debugging of NMEA 2000 systems
+- Field testing and diagnostics
 
-#### Global Installation
+#### Quick Start
+
+Install globally using npm and start the server:
 
 ```bash
 npm install -g @canboat/visual-analyzer
-visual-analyzer
+
+visual-analyzer --open
 ```
 
-#### Development Installation
+This will:
+1. Install the Visual Analyzer as a global command
+2. Start the web server on port 8080
+3. Open your browser to `http://localhost:8080`
 
+#### Installation Requirements
+
+- **Node.js** version 22 or higher
+
+To check if you have Node.js installed:
 ```bash
-git clone https://github.com/canboat/visual-analyzer.git
-cd visual-analyzer
-npm install
-npm run build  # Build the frontend
-visual-analyzer  # Start the server
+node --version
 ```
+
+If you don't have Node.js, download it from [nodejs.org](https://nodejs.org/).
+
+#### Basic Usage
+
+The web interface will be available at `http://localhost:8080` where you can:
+- Configure data source connections (serial, TCP, file)
+- View real-time NMEA 2000 messages
+- Filter and search message data
+- Analyze device information
 
 #### Command Line Options
+
+The Visual Analyzer supports several command line options for customization:
 
 ```bash
 # Start with default settings (port 8080)
@@ -38,21 +63,32 @@ visual-analyzer
 # Start on a specific port
 visual-analyzer --port 3000
 
-# Start and open browser automatically  
+# Start and automatically open your web browser
 visual-analyzer --open
 
-# Use environment variable
-PORT=8080 visual-analyzer
-
-# Use custom configuration file
+# Use a custom configuration file
 visual-analyzer --config /path/to/config.json
 
-# Show help
+# Set port using environment variable
+PORT=8080 visual-analyzer
+
+# Display help information
 visual-analyzer --help
 
-# Show version
+# Show the current version
 visual-analyzer --version
 ```
+
+#### Getting Help
+
+If you encounter issues:
+
+1. **Check Node.js version**: Ensure you have Node.js 22 or higher
+2. **Port conflicts**: Try a different port with `--port 3000`
+3. **Firewall issues**: Make sure your firewall allows the application
+4. **Get help**: Run `visual-analyzer --help` for all available options
+
+For additional support, visit the [GitHub Issues](https://github.com/canboat/visual-analyzer/issues) page.
 
 #### Configuration
 
@@ -95,9 +131,7 @@ Example `config.json`:
     }
   }
 }
-```ased tool for visually analyzing and debugging NMEA 2000 data streams in real-time. This Signal K embeddable webapp provides an intuitive interface for monitoring, filtering, and analyzing NMEA 2000 PGN (Parameter Group Number) messages.
-
-<img width="1368" height="815" alt="Visual Analyzer Screenshot" src="https://github.com/user-attachments/assets/060c30c2-51b7-462d-87ea-9deb56981971" />
+```
 
 ## Features
 
@@ -112,9 +146,51 @@ Example `config.json`:
 - **Interactive data exploration** - Click on messages to view detailed information
 - **Signal K integration** - Seamlessly integrates with Signal K Server as an embeddable webapp
 
+## Data Sources
+
+The Visual Analyzer supports multiple data source types:
+
+- **Serial/USB connections** - Direct connection to NMEA 2000 gateways and adapters
+- **TCP/IP connections** - Network-based NMEA 2000 data streams
+- **File input** - Analysis of previously recorded NMEA 2000 data
+- **Signal K Server** - Integration with Signal K Server's live data streams
+
+## How It Works
+
+The visual-analyzer connects to NMEA 2000 data sources and:
+
+1. **Receives NMEA 2000 data** - Connects to serial ports, TCP streams, or files
+2. **Parses messages** - Uses `@canboat/canboatjs` and `@canboat/ts-pgns` for message parsing
+3. **Filters data** - Applies user-defined filters to focus on relevant messages
+4. **Displays information** - Shows parsed message data in an organized, searchable interface
+5. **Device discovery** - Automatically requests and displays device information for detected sources
+
+## Filtering Options
+
+### PGN Filtering
+
+Filter messages by specific Parameter Group Numbers to focus on particular message types.
+
+### Source/Destination Filtering
+
+Filter by device source addresses or destination addresses to monitor specific devices.
+
+### Manufacturer Filtering
+
+Filter messages by device manufacturer to focus on equipment from specific vendors.
+
+### JavaScript Filtering
+
+Advanced users can write custom JavaScript expressions for complex filtering logic.
+
 ### Standalone Development
 
 ```bash
+# Clone the repository for development
+git clone https://github.com/canboat/visual-analyzer.git
+cd visual-analyzer
+npm install
+
 # Start development server with hot reload
 npm run watch
 
