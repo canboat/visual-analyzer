@@ -21,7 +21,7 @@
  */
 
 const EventEmitter = require('events')
-const { canbus, serial: ActisenseStream, iKonvert: iKonvertStream, pgnToYdgwRawFormat, pgnToiKonvertSerialFormat } = require('@canboat/canboatjs')
+const { canbus, serial: ActisenseStream, iKonvert: iKonvertStream, pgnToYdgwRawFormat, pgnToiKonvertSerialFormat, pgnToActisenseN2KAsciiFormat } = require('@canboat/canboatjs')
 const net = require('net')
 const dgram = require('dgram')
 const WebSocket = require('ws')
@@ -412,9 +412,12 @@ class NMEADataProvider extends EventEmitter {
   }
 
   formatMessageForDevice(pgnData) {
-    if (this.options.deviceType === 'iKonvert') {
+    const deviceType = this.options.deviceType || 'Actisense'
+    if (deviceType === 'iKonvert') {
       return pgnToiKonvertSerialFormat(pgnData)
-    } else if (this.options.deviceType === 'Yacht Devices') {
+    } else if (deviceType === 'Actisense ASCII') {
+      return pgnToActisenseN2KAsciiFormat(pgnData)
+    } else if (deviceType === 'Yacht Devices RAW') {
       return pgnToYdgwRawFormat(pgnData)
     }
    }

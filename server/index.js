@@ -36,6 +36,7 @@ console.log(`  Active Connection: ${config.connections.activeConnection || 'None
 // Create and start the server
 const server = new VisualAnalyzerServer(config)
 
+/*
 // Connect to active connection profile if configured
 const activeProfile = config.connections.activeConnection 
   ? config.connections.profiles[config.connections.activeConnection] 
@@ -47,6 +48,7 @@ if (activeProfile) {
 } else {
   console.log('No active connection configured')
 }
+*/
 
 server.start()
 

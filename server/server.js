@@ -238,13 +238,13 @@ class VisualAnalyzerServer {
       case 'subscribe':
         console.log('Client subscribing to:', data.subscription)
         // Start sending data for the requested subscription
-        this.startDataStream(ws, data.subscription)
+        //this.startDataStream(ws, data.subscription)
         break
       
       case 'unsubscribe':
         console.log('Client unsubscribing from:', data.subscription)
         // Stop sending data for the subscription
-        this.stopDataStream(ws, data.subscription)
+        //this.stopDataStream(ws, data.subscription)
         break
       
       default:

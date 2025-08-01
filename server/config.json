@@ -11,7 +11,8 @@
         "type": "network",
         "networkHost": "ydwg",
         "networkPort": 1457,
-        "networkProtocol": "tcp"
+        "networkProtocol": "tcp",
+        "deviceType": "Yacht Devices RAW"
       },
       "local-signalk": {
         "name": "Local SignalK Server",
@@ -24,6 +25,21 @@
         "serialPort": "/dev/ttyUSB0",
         "baudRate": 115200,
         "deviceType": "Actisense"
+      },
+      "ikonvert-usb": {
+        "name": "Digital Yacht iKonvert USB",
+        "type": "serial",
+        "serialPort": "/dev/ttyUSB1",
+        "baudRate": 230400,
+        "deviceType": "iKonvert"
+      },
+      "w2k-1-localhost": {
+        "name": "W2K-1 localhost",
+        "type": "network",
+        "deviceType": "Actisense ASCII",
+        "networkHost": "localhost",
+        "networkPort": 60002,
+        "networkProtocol": "tcp"
       }
     }
   },

@@ -10,7 +10,7 @@ interface ConnectionProfile {
   signalkPassword?: string
   serialPort?: string
   baudRate?: number
-  deviceType?: 'Actisense' | 'iKonvert' | 'Yacht Devices' | 'Yacht Devices RAW' | 'NavLink2' | 'Actisense WK2-1 ASCII' | 'SocketCAN'
+  deviceType?: 'Actisense' | 'iKonvert' | 'Yacht Devices' | 'Yacht Devices RAW' | 'NavLink2' | 'Actisense ASCII' | 'SocketCAN'
   networkHost?: string
   networkPort?: number
   networkProtocol?: 'tcp' | 'udp'
@@ -375,7 +375,7 @@ export const ConnectionManagerPanel: React.FC = () => {
               >
                 <option value="Yacht Devices RAW">🔹 Yacht Devices RAW (YDWG-02)</option>
                 <option value="NavLink2">🔹 NavLink2 Gateway</option>
-                <option value="Actisense WK2-1 ASCII">🔹 Actisense ASCII (WK2-1)</option>
+                <option value="Actisense ASCII">🔹 Actisense ASCII (W2K-1)</option>
               </Input>
               <small className="form-text text-muted">
                 Select your specific NMEA 2000 network gateway device
