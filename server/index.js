@@ -4,6 +4,15 @@ const VisualAnalyzerServer = require('./server')
 const path = require('path')
 const fs = require('fs')
 
+process.on('unhandledRejection', (reason, promise) => {
+      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+      // You can also log the stack trace of the reason if it's an Error object
+      if (reason instanceof Error) {
+        console.error(reason.stack);
+      }
+    });
+
+    
 // Load configuration from file if it exists
 const configPath = path.join(__dirname, 'config.json')
 let fileConfig = {}

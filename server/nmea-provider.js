@@ -87,6 +87,19 @@ class NMEADataProvider extends EventEmitter {
     })
   }
 
+  getServerApp() {
+    return {
+      setProviderError: (providerId, msg) => {
+        console.error(`NMEADataProvider error: ${msg}`)
+        this.emit('error', new Error(msg))
+      },
+      setProviderStatus: (providerId, msg) => {
+        console.log(`NMEADataProvider status: ${msg}`)
+      },
+      on: (event, callback) => {}
+    }
+  }
+
   async connectToSerial() {
     try {
       const deviceType = this.options.deviceType || 'Actisense'
@@ -96,11 +109,11 @@ class NMEADataProvider extends EventEmitter {
         // Use ActisenseStream from canboatjs for Actisense NGT-1 devices
         this.serialStream = new ActisenseStream({
           device: this.options.serialPort,
-          baudrate: this.options.baudRate
+          baudrate: this.options.baudRate,
+          reconnect: false,
+          app: this.getServerApp()
         })
 
-        this.serialStream.start()
-          
         console.log('Actisense serial connection established using canboatjs ActisenseStream')
         this.isConnected = true
         this.emit('connected')
@@ -109,10 +122,9 @@ class NMEADataProvider extends EventEmitter {
         // Use iKonvertStream from canboatjs for Digital Yacht iKonvert devices
         this.serialStream = new iKonvertStream({
           device: this.options.serialPort,
-          baudrate: this.options.baudRate || 230400
+          baudrate: this.options.baudRate || 230400,
+          app: this.getServerApp()
         })
-
-        this.serialStream.start()
 
         console.log('iKonvert serial connection established using canboatjs iKonvertStream')
         this.isConnected = true

@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import AppPanel from './components/AppPanel'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './styles.css'
-
+    
 // Mock adminUI for standalone usage
 const mockAdminUI = {
   openWebsocket: (options) => {

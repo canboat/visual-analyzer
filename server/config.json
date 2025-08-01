@@ -4,7 +4,7 @@
     "publicDir": "./public"
   },
   "connections": {
-    "activeConnection": "actisense-w2k-1",
+    "activeConnection": "actisense-usb",
     "profiles": {
       "yacht-devices-tcp": {
         "name": "Yacht Devices TCP",
