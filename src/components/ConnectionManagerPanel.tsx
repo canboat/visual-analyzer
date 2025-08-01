@@ -6,6 +6,8 @@ interface ConnectionProfile {
   name: string
   type: 'serial' | 'network' | 'signalk'
   signalkUrl?: string
+  signalkUsername?: string
+  signalkPassword?: string
   serialPort?: string
   baudRate?: number
   deviceType?: 'Actisense' | 'iKonvert' | 'Yacht Devices' | 'Yacht Devices RAW' | 'NavLink2' | 'Actisense WK2-1 ASCII'
@@ -40,6 +42,8 @@ export const ConnectionManagerPanel: React.FC = () => {
     name: '',
     type: 'network',
     signalkUrl: '',
+    signalkUsername: '',
+    signalkPassword: '',
     serialPort: '',
     baudRate: 115200,
     deviceType: 'Yacht Devices RAW',
@@ -177,6 +181,8 @@ export const ConnectionManagerPanel: React.FC = () => {
       name: '',
       type: 'network',
       signalkUrl: '',
+      signalkUsername: '',
+      signalkPassword: '',
       serialPort: '',
       baudRate: 115200,
       deviceType: 'Yacht Devices RAW',
@@ -253,6 +259,41 @@ export const ConnectionManagerPanel: React.FC = () => {
                 Full URL including protocol (http:// or https://)
               </small>
             </FormGroup>
+            
+            <div className="row">
+              <div className="col-md-6">
+                <FormGroup>
+                  <Label for="signalkUsername" className="font-weight-bold">Username (Optional)</Label>
+                  <Input
+                    type="text"
+                    id="signalkUsername"
+                    placeholder="username"
+                    value={formData.signalkUsername}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('signalkUsername', e.target.value)}
+                    className="form-control-lg"
+                  />
+                  <small className="form-text text-muted">
+                    Leave empty if no authentication required
+                  </small>
+                </FormGroup>
+              </div>
+              <div className="col-md-6">
+                <FormGroup>
+                  <Label for="signalkPassword" className="font-weight-bold">Password (Optional)</Label>
+                  <Input
+                    type="password"
+                    id="signalkPassword"
+                    placeholder="password"
+                    value={formData.signalkPassword}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('signalkPassword', e.target.value)}
+                    className="form-control-lg"
+                  />
+                  <small className="form-text text-muted">
+                    Leave empty if no authentication required
+                  </small>
+                </FormGroup>
+              </div>
+            </div>
           </div>
         )}
 
@@ -515,7 +556,14 @@ export const ConnectionManagerPanel: React.FC = () => {
                           <td>
                             <small className="text-muted">
                               {profile.type === 'signalk' && (
-                                <><i className="fas fa-globe mr-1"></i>{profile.signalkUrl}</>
+                                <>
+                                  <i className="fas fa-globe mr-1"></i>{profile.signalkUrl}
+                                  {profile.signalkUsername && (
+                                    <span className="ml-2 badge badge-outline-info">
+                                      <i className="fas fa-user mr-1"></i>Auth
+                                    </span>
+                                  )}
+                                </>
                               )}
                               {profile.type === 'serial' && (
                                 <><i className="fas fa-microchip mr-1"></i>{profile.serialPort} ({profile.deviceType})</>
