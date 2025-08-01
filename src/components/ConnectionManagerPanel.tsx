@@ -197,121 +197,174 @@ export const ConnectionManagerPanel: React.FC = () => {
   const renderConnectionForm = () => {
     return (
       <Form>
-        <FormGroup>
-          <Label for="connectionName">Connection Name</Label>
-          <Input
-            type="text"
-            id="connectionName"
-            placeholder="My NMEA 2000 Gateway"
-            value={formData.name}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('name', e.target.value)}
-            required
-          />
-        </FormGroup>
+        <div className="mb-4">
+          <FormGroup>
+            <Label for="connectionName" className="font-weight-bold">
+              <i className="fas fa-tag mr-2"></i>Connection Name
+            </Label>
+            <Input
+              type="text"
+              id="connectionName"
+              placeholder="My NMEA 2000 Gateway"
+              value={formData.name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('name', e.target.value)}
+              required
+              className="form-control-lg"
+            />
+            <small className="form-text text-muted">
+              Choose a descriptive name to easily identify this connection
+            </small>
+          </FormGroup>
 
-        <FormGroup>
-          <Label for="connectionType">Connection Type</Label>
-          <Input
-            type="select"
-            id="connectionType"
-            value={formData.type}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('type', e.target.value)}
-          >
-            <option value="network">Network (TCP/UDP)</option>
-            <option value="serial">Serial Port</option>
-            <option value="signalk">SignalK Server</option>
-          </Input>
-        </FormGroup>
+          <FormGroup>
+            <Label for="connectionType" className="font-weight-bold">
+              <i className="fas fa-plug mr-2"></i>Connection Type
+            </Label>
+            <Input
+              type="select"
+              id="connectionType"
+              value={formData.type}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('type', e.target.value)}
+              className="form-control-lg"
+            >
+              <option value="network">🌐 Network (TCP/UDP)</option>
+              <option value="serial">🔌 Serial Port</option>
+              <option value="signalk">⚓ SignalK Server</option>
+            </Input>
+          </FormGroup>
+        </div>
 
         {formData.type === 'signalk' && (
-          <FormGroup>
-            <Label for="signalkUrl">SignalK URL</Label>
-            <Input
-              type="url"
-              id="signalkUrl"
-              placeholder="http://localhost:3000"
-              value={formData.signalkUrl}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('signalkUrl', e.target.value)}
-            />
-          </FormGroup>
+          <div className="border rounded p-3 bg-light">
+            <h6 className="text-primary mb-3">
+              <i className="fas fa-anchor mr-2"></i>SignalK Server Configuration
+            </h6>
+            <FormGroup>
+              <Label for="signalkUrl" className="font-weight-bold">SignalK URL</Label>
+              <Input
+                type="url"
+                id="signalkUrl"
+                placeholder="http://localhost:3000"
+                value={formData.signalkUrl}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('signalkUrl', e.target.value)}
+                className="form-control-lg"
+              />
+              <small className="form-text text-muted">
+                Full URL including protocol (http:// or https://)
+              </small>
+            </FormGroup>
+          </div>
         )}
 
         {formData.type === 'serial' && (
-          <>
+          <div className="border rounded p-3 bg-light">
+            <h6 className="text-success mb-3">
+              <i className="fas fa-usb mr-2"></i>Serial Port Configuration
+            </h6>
             <FormGroup>
-              <Label for="deviceType">Device Type</Label>
+              <Label for="deviceType" className="font-weight-bold">Device Type</Label>
               <Input
                 type="select"
                 id="deviceType"
                 value={formData.deviceType}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('deviceType', e.target.value)}
+                className="form-control-lg"
               >
-                <option value="Actisense">Actisense (NGT-1, NGT-1-ISO)</option>
-                <option value="iKonvert">iKonvert (NMEA 2000 Gateway)</option>
-                <option value="Yacht Devices">Yacht Devices (YDWG-02, YDNU-02)</option>
+                <option value="Actisense">🔹 Actisense (NGT-1, NGT-1-ISO)</option>
+                <option value="iKonvert">🔹 iKonvert (NMEA 2000 Gateway)</option>
+                <option value="Yacht Devices">🔹 Yacht Devices (YDWG-02, YDNU-02)</option>
               </Input>
+              <small className="form-text text-muted">
+                Select your specific NMEA 2000 gateway device
+              </small>
             </FormGroup>
-            <FormGroup>
-              <Label for="serialPort">Serial Port</Label>
-              <Input
-                type="text"
-                id="serialPort"
-                placeholder="/dev/ttyUSB0 or COM3"
-                value={formData.serialPort}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('serialPort', e.target.value)}
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label for="baudRate">Baud Rate</Label>
-              <Input
-                type="select"
-                id="baudRate"
-                value={formData.baudRate}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('baudRate', parseInt(e.target.value))}
-              >
-                <option value={9600}>9600</option>
-                <option value={38400}>38400</option>
-                <option value={115200}>115200</option>
-                <option value={230400}>230400</option>
-              </Input>
-            </FormGroup>
-          </>
+            
+            <div className="row">
+              <div className="col-md-8">
+                <FormGroup>
+                  <Label for="serialPort" className="font-weight-bold">Serial Port</Label>
+                  <Input
+                    type="text"
+                    id="serialPort"
+                    placeholder="/dev/ttyUSB0 or COM3"
+                    value={formData.serialPort}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('serialPort', e.target.value)}
+                    className="form-control-lg"
+                  />
+                </FormGroup>
+              </div>
+              <div className="col-md-4">
+                <FormGroup>
+                  <Label for="baudRate" className="font-weight-bold">Baud Rate</Label>
+                  <Input
+                    type="select"
+                    id="baudRate"
+                    value={formData.baudRate}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('baudRate', parseInt(e.target.value))}
+                    className="form-control-lg"
+                  >
+                    <option value={9600}>9600</option>
+                    <option value={38400}>38400</option>
+                    <option value={115200}>115200</option>
+                    <option value={230400}>230400</option>
+                  </Input>
+                </FormGroup>
+              </div>
+            </div>
+          </div>
         )}
 
         {formData.type === 'network' && (
-          <>
-            <FormGroup>
-              <Label for="networkHost">Host/IP Address</Label>
-              <Input
-                type="text"
-                id="networkHost"
-                placeholder="192.168.1.100 or ydwg"
-                value={formData.networkHost}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('networkHost', e.target.value)}
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label for="networkPort">Port</Label>
-              <Input
-                type="number"
-                id="networkPort"
-                value={formData.networkPort}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('networkPort', parseInt(e.target.value))}
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label for="networkProtocol">Protocol</Label>
-              <Input
-                type="select"
-                id="networkProtocol"
-                value={formData.networkProtocol}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('networkProtocol', e.target.value as 'tcp' | 'udp')}
-              >
-                <option value="tcp">TCP</option>
-                <option value="udp">UDP</option>
-              </Input>
-            </FormGroup>
-          </>
+          <div className="border rounded p-3 bg-light">
+            <h6 className="text-info mb-3">
+              <i className="fas fa-network-wired mr-2"></i>Network Configuration
+            </h6>
+            <div className="row">
+              <div className="col-md-6">
+                <FormGroup>
+                  <Label for="networkHost" className="font-weight-bold">Host/IP Address</Label>
+                  <Input
+                    type="text"
+                    id="networkHost"
+                    placeholder="192.168.1.100 or ydwg"
+                    value={formData.networkHost}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('networkHost', e.target.value)}
+                    className="form-control-lg"
+                  />
+                  <small className="form-text text-muted">
+                    IP address or hostname of your gateway
+                  </small>
+                </FormGroup>
+              </div>
+              <div className="col-md-3">
+                <FormGroup>
+                  <Label for="networkPort" className="font-weight-bold">Port</Label>
+                  <Input
+                    type="number"
+                    id="networkPort"
+                    value={formData.networkPort}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('networkPort', parseInt(e.target.value))}
+                    className="form-control-lg"
+                  />
+                </FormGroup>
+              </div>
+              <div className="col-md-3">
+                <FormGroup>
+                  <Label for="networkProtocol" className="font-weight-bold">Protocol</Label>
+                  <Input
+                    type="select"
+                    id="networkProtocol"
+                    value={formData.networkProtocol}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('networkProtocol', e.target.value as 'tcp' | 'udp')}
+                    className="form-control-lg"
+                  >
+                    <option value="tcp">TCP</option>
+                    <option value="udp">UDP</option>
+                  </Input>
+                </FormGroup>
+              </div>
+            </div>
+          </div>
         )}
       </Form>
     )
@@ -335,12 +388,15 @@ export const ConnectionManagerPanel: React.FC = () => {
   return (
     <Card>
       <CardBody>
-        <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <h4 className="text-sk-primary mb-1">Connection Manager</h4>
-            <p className="mb-0">Manage multiple NMEA 2000 data source connections</p>
+            <h4 className="text-sk-primary mb-1">
+              <i className="fas fa-plug mr-2"></i>Connection Manager
+            </h4>
+            <p className="mb-0 text-muted">Manage multiple NMEA 2000 data source connections</p>
           </div>
-          <Button color="primary" onClick={openCreateModal}>
+          <Button color="primary" onClick={openCreateModal} size="lg" className="px-4">
+            <i className="fas fa-plus mr-2"></i>
             Add Connection
           </Button>
         </div>
@@ -354,88 +410,139 @@ export const ConnectionManagerPanel: React.FC = () => {
         {config && (
           <>
             {/* Current Connection Status */}
-            <Card className="mb-3">
+            <Card className="mb-4 border-left-primary">
               <CardBody>
-                <h6>Current Connection</h6>
-                <div className="d-flex align-items-center">
-                  <span className={`badge ${config.connection.isConnected ? 'badge-success' : 'badge-secondary'} mr-2`}>
-                    {config.connection.isConnected ? 'Connected' : 'Disconnected'}
-                  </span>
-                  {config.connection.activeProfile ? (
-                    <span className="text-muted">
-                      Active: {config.connection.activeProfile.name} ({config.connection.activeProfile.type})
-                    </span>
-                  ) : (
-                    <span className="text-muted">No active connection</span>
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h6 className="mb-1">
+                      <i className="fas fa-signal mr-2"></i>Current Connection
+                    </h6>
+                    <div className="d-flex align-items-center">
+                      <span className={`badge badge-lg ${config.connection.isConnected ? 'badge-success' : 'badge-secondary'} mr-3`}>
+                        <i className={`fas ${config.connection.isConnected ? 'fa-check-circle' : 'fa-times-circle'} mr-1`}></i>
+                        {config.connection.isConnected ? 'Connected' : 'Disconnected'}
+                      </span>
+                      {config.connection.activeProfile ? (
+                        <div className="text-muted">
+                          <strong>{config.connection.activeProfile.name}</strong>
+                          <span className="ml-2 badge badge-outline-secondary">
+                            {config.connection.activeProfile.type.toUpperCase()}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-muted font-italic">No active connection</span>
+                      )}
+                    </div>
+                  </div>
+                  {config.connection.isConnected && (
+                    <div className="text-success">
+                      <i className="fas fa-wifi fa-2x"></i>
+                    </div>
                   )}
                 </div>
               </CardBody>
             </Card>
 
             {/* Connection Profiles List */}
-            <Card>
-              <div className="card-header">
-                <strong>Connection Profiles</strong>
+            <Card className="shadow-sm">
+              <div className="card-header bg-light d-flex justify-content-between align-items-center">
+                <strong>
+                  <i className="fas fa-list mr-2"></i>Connection Profiles
+                </strong>
+                <span className="badge badge-secondary">
+                  {Object.keys(config.connections.profiles).length} profiles
+                </span>
               </div>
               <CardBody className="p-0">
                 {Object.keys(config.connections.profiles).length === 0 ? (
-                  <div className="text-center p-4">
-                    <p className="text-muted mb-0">No connection profiles configured</p>
+                  <div className="text-center p-5">
+                    <i className="fas fa-plug fa-3x text-muted mb-3"></i>
+                    <h6 className="text-muted mb-2">No connection profiles configured</h6>
+                    <p className="text-muted mb-3">Create your first connection profile to get started</p>
+                    <Button color="primary" onClick={openCreateModal}>
+                      <i className="fas fa-plus mr-2"></i>Create First Profile
+                    </Button>
                   </div>
                 ) : (
-                  <Table className="mb-0">
-                    <thead>
+                  <Table className="mb-0 table-hover">
+                    <thead className="thead-light">
                       <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Details</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th style={{width: '25%'}}><i className="fas fa-tag mr-1"></i>Connection Name</th>
+                        <th style={{width: '15%'}}><i className="fas fa-cogs mr-1"></i>Type</th>
+                        <th style={{width: '30%'}}><i className="fas fa-info-circle mr-1"></i>Connection Details</th>
+                        <th style={{width: '15%'}}><i className="fas fa-signal mr-1"></i>Status</th>
+                        <th style={{width: '15%'}}><i className="fas fa-tools mr-1"></i>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {Object.entries(config.connections.profiles).map(([profileId, profile]) => (
-                        <tr key={profileId}>
+                        <tr key={profileId} className={config.connections.activeConnection === profileId ? 'table-primary' : ''}>
                           <td>
-                            <strong>{profile.name}</strong>
-                            {config.connections.activeConnection === profileId && (
-                              <span className="badge badge-primary ml-2">Active</span>
-                            )}
+                            <div className="d-flex align-items-center">
+                              <i className={`fas ${profile.type === 'network' ? 'fa-network-wired' : profile.type === 'serial' ? 'fa-usb' : 'fa-anchor'} mr-2 text-${profile.type === 'network' ? 'info' : profile.type === 'serial' ? 'success' : 'primary'}`}></i>
+                              <div>
+                                <strong>{profile.name}</strong>
+                                {config.connections.activeConnection === profileId && (
+                                  <span className="badge badge-primary ml-2">
+                                    <i className="fas fa-star mr-1"></i>Active
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </td>
                           <td>
-                            <span className="text-capitalize">{profile.type}</span>
+                            <span className={`badge badge-outline-${profile.type === 'network' ? 'info' : profile.type === 'serial' ? 'success' : 'primary'}`}>
+                              {profile.type.toUpperCase()}
+                            </span>
                           </td>
                           <td>
-                            {profile.type === 'signalk' && profile.signalkUrl}
-                            {profile.type === 'serial' && `${profile.serialPort} (${profile.deviceType})`}
-                            {profile.type === 'network' && `${profile.networkHost}:${profile.networkPort} (${profile.networkProtocol?.toUpperCase()})`}
+                            <small className="text-muted">
+                              {profile.type === 'signalk' && (
+                                <><i className="fas fa-globe mr-1"></i>{profile.signalkUrl}</>
+                              )}
+                              {profile.type === 'serial' && (
+                                <><i className="fas fa-microchip mr-1"></i>{profile.serialPort} ({profile.deviceType})</>
+                              )}
+                              {profile.type === 'network' && (
+                                <><i className="fas fa-server mr-1"></i>{profile.networkHost}:{profile.networkPort} ({profile.networkProtocol?.toUpperCase()})</>
+                              )}
+                            </small>
                           </td>
                           <td>
                             {config.connections.activeConnection === profileId ? (
                               <span className={`badge ${config.connection.isConnected ? 'badge-success' : 'badge-warning'}`}>
+                                <i className={`fas ${config.connection.isConnected ? 'fa-check-circle' : 'fa-clock'} mr-1`}></i>
                                 {config.connection.isConnected ? 'Connected' : 'Connecting...'}
                               </span>
                             ) : (
-                              <span className="badge badge-secondary">Inactive</span>
+                              <span className="badge badge-secondary">
+                                <i className="fas fa-minus-circle mr-1"></i>Inactive
+                              </span>
                             )}
                           </td>
                           <td>
-                            <div className="btn-group" role="group">
+                            <div className="d-flex flex-column" style={{gap: '4px'}}>
                               {config.connections.activeConnection !== profileId && (
                                 <Button
                                   size="sm"
                                   color="success"
                                   onClick={() => activateConnectionProfile(profileId)}
                                   disabled={loading}
+                                  className="d-flex align-items-center justify-content-center"
+                                  style={{minWidth: '80px'}}
                                 >
+                                  <i className="fas fa-play mr-1"></i>
                                   Activate
                                 </Button>
                               )}
                               <Button
                                 size="sm"
-                                color="outline-secondary"
+                                color="outline-primary"
                                 onClick={() => openEditModal(profileId)}
+                                className="d-flex align-items-center justify-content-center"
+                                style={{minWidth: '80px'}}
                               >
+                                <i className="fas fa-edit mr-1"></i>
                                 Edit
                               </Button>
                               <Button
@@ -443,7 +550,10 @@ export const ConnectionManagerPanel: React.FC = () => {
                                 color="outline-danger"
                                 onClick={() => deleteConnectionProfile(profileId)}
                                 disabled={config.connections.activeConnection === profileId}
+                                className="d-flex align-items-center justify-content-center"
+                                style={{minWidth: '80px'}}
                               >
+                                <i className="fas fa-trash mr-1"></i>
                                 Delete
                               </Button>
                             </div>
@@ -459,31 +569,91 @@ export const ConnectionManagerPanel: React.FC = () => {
         )}
 
         {/* Connection Profile Modal */}
-        <Modal isOpen={showModal} toggle={() => setShowModal(false)} size="lg">
-          <ModalHeader toggle={() => setShowModal(false)}>
+        <Modal isOpen={showModal} toggle={() => setShowModal(false)} size="lg" className="connection-modal">
+          <ModalHeader toggle={() => setShowModal(false)} className="bg-primary text-white">
+            <i className={`fas ${editingProfile ? 'fa-edit' : 'fa-plus-circle'} mr-2`}></i>
             {editingProfile ? 'Edit Connection Profile' : 'Create New Connection Profile'}
           </ModalHeader>
-          <ModalBody>
+          <ModalBody className="p-4">
+            <div className="mb-3">
+              <div className="alert alert-info d-flex align-items-center">
+                <i className="fas fa-info-circle mr-2"></i>
+                <div>
+                  <strong>Connection Profile:</strong> Save multiple gateway configurations for easy switching between different NMEA 2000 data sources.
+                </div>
+              </div>
+            </div>
             {renderConnectionForm()}
           </ModalBody>
-          <ModalFooter>
-            <Button color="primary" onClick={saveConnectionProfile} disabled={saving}>
-              {saving ? 'Saving...' : (editingProfile ? 'Update' : 'Create')}
+          <ModalFooter className="bg-light">
+            <Button 
+              color="primary" 
+              onClick={saveConnectionProfile} 
+              disabled={saving || !formData.name.trim()}
+              size="lg"
+              className="px-4"
+            >
+              {saving ? (
+                <>
+                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <i className={`fas ${editingProfile ? 'fa-save' : 'fa-plus'} mr-2`}></i>
+                  {editingProfile ? 'Update Profile' : 'Create Profile'}
+                </>
+              )}
             </Button>
-            <Button color="secondary" onClick={() => setShowModal(false)}>
+            <Button color="secondary" onClick={() => setShowModal(false)} size="lg" className="px-4">
+              <i className="fas fa-times mr-2"></i>
               Cancel
             </Button>
           </ModalFooter>
         </Modal>
 
         <div className="mt-4">
-          <h6>Usage Tips</h6>
-          <ul className="text-muted">
-            <li>Create multiple connection profiles for different environments or devices</li>
-            <li>Only one connection can be active at a time</li>
-            <li>Switching connections will automatically disconnect the current one</li>
-            <li>Connection profiles are saved automatically and persist across server restarts</li>
-          </ul>
+          <Card className="bg-light border-0">
+            <CardBody>
+              <h6 className="text-primary mb-3">
+                <i className="fas fa-lightbulb mr-2"></i>Usage Tips
+              </h6>
+              <div className="row">
+                <div className="col-md-6">
+                  <ul className="list-unstyled">
+                    <li className="mb-2">
+                      <i className="fas fa-check text-success mr-2"></i>
+                      <small>Create multiple connection profiles for different environments or devices</small>
+                    </li>
+                    <li className="mb-2">
+                      <i className="fas fa-check text-success mr-2"></i>
+                      <small>Only one connection can be active at a time</small>
+                    </li>
+                    <li className="mb-2">
+                      <i className="fas fa-check text-success mr-2"></i>
+                      <small>Switching connections will automatically disconnect the current one</small>
+                    </li>
+                  </ul>
+                </div>
+                <div className="col-md-6">
+                  <ul className="list-unstyled">
+                    <li className="mb-2">
+                      <i className="fas fa-info text-info mr-2"></i>
+                      <small>Connection profiles are saved automatically and persist across server restarts</small>
+                    </li>
+                    <li className="mb-2">
+                      <i className="fas fa-info text-info mr-2"></i>
+                      <small>Use descriptive names to easily identify your connections</small>
+                    </li>
+                    <li className="mb-2">
+                      <i className="fas fa-info text-info mr-2"></i>
+                      <small>Test your connection after creating a new profile</small>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
         </div>
       </CardBody>
     </Card>
