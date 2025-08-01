@@ -41,6 +41,9 @@ const AppPanel = (props: any) => {
   const [currentInfo, setCurrentInfo] = useState<DeviceMap>({})
   const sentInfoReq: number[] = []
 
+  // Check if we're in embedded mode (SignalK plugin) vs standalone mode
+  const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
+
   const parser = new FromPgn({
     returnNulls: true,
     checkForInvalidFields: true,
@@ -146,15 +149,17 @@ const AppPanel = (props: any) => {
             Transform
           </NavLink>
         </NavItem>
-        <NavItem>
-          <NavLink
-            className={activeTab === CONNECTIONS_TAB_ID ? 'active' : ''}
-            onClick={() => setActiveTab(CONNECTIONS_TAB_ID)}
-            style={{ cursor: 'pointer' }}
-          >
-            Connections
-          </NavLink>
-        </NavItem>
+        {!isEmbedded && (
+          <NavItem>
+            <NavLink
+              className={activeTab === CONNECTIONS_TAB_ID ? 'active' : ''}
+              onClick={() => setActiveTab(CONNECTIONS_TAB_ID)}
+              style={{ cursor: 'pointer' }}
+            >
+              Connections
+            </NavLink>
+          </NavItem>
+        )}
       </Nav>
       <TabContent activeTab={activeTab}>
         <TabPane tabId={ANALYZER_TAB_ID}>
@@ -262,9 +267,11 @@ const AppPanel = (props: any) => {
             </CardBody>
           </Card>
         </TabPane>
-        <TabPane tabId={CONNECTIONS_TAB_ID}>
-          <ConnectionManagerPanel />
-        </TabPane>
+        {!isEmbedded && (
+          <TabPane tabId={CONNECTIONS_TAB_ID}>
+            <ConnectionManagerPanel />
+          </TabPane>
+        )}
       </TabContent>
     </div>
   )
