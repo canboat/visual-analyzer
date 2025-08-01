@@ -1,0 +1,62 @@
+{
+  "server": {
+    "port": "8080"
+  },
+  "connections": {
+    "activeConnection": "local-signalk",
+    "profiles": {
+      "yacht-devices-tcp": {
+        "name": "Yacht Devices TCP",
+        "type": "network",
+        "networkHost": "ydwg",
+        "networkPort": 1457,
+        "networkProtocol": "tcp",
+        "deviceType": "Yacht Devices RAW"
+      },
+      "local-signalk": {
+        "name": "Local SignalK Server",
+        "type": "signalk",
+        "signalkUrl": "http://localhost:3000"
+      },
+      "actisense-usb": {
+        "name": "Actisense NGT-1 USB",
+        "type": "serial",
+        "serialPort": "/dev/tty.usbserial-2B688",
+        "baudRate": 115200,
+        "deviceType": "Actisense"
+      },
+      "ikonvert-usb": {
+        "name": "Digital Yacht iKonvert USB",
+        "type": "serial",
+        "serialPort": "/dev/ttyUSB1",
+        "baudRate": 230400,
+        "deviceType": "iKonvert"
+      },
+      "w2k-1-localhost": {
+        "name": "W2K-1 localhost",
+        "type": "network",
+        "deviceType": "Actisense ASCII",
+        "networkHost": "localhost",
+        "networkPort": 60002,
+        "networkProtocol": "tcp"
+      },
+      "actisense-w2k-1": {
+        "name": "Actisense W2K-1",
+        "type": "network",
+        "signalkUrl": "",
+        "signalkUsername": "",
+        "signalkPassword": "",
+        "serialPort": "",
+        "baudRate": 115200,
+        "deviceType": "Actisense ASCII",
+        "networkHost": "w2k-285364.local",
+        "networkPort": 60002,
+        "networkProtocol": "tcp",
+        "socketcanInterface": "can0"
+      }
+    }
+  },
+  "logging": {
+    "level": "info"
+  }
+}

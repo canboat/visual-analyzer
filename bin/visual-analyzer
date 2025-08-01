@@ -1,0 +1,147 @@
+#!/usr/bin/env node
+
+/**
+ * Visual Analyzer Server - NMEA 2000 Data Visualization Tool
+ * 
+ * This is the command-line entry point for the Visual Analyzer server.
+ * It provides a standalone server for analyzing and visualizing NMEA 2000 data.
+ * 
+ * Usage:
+ *   visual-analyzer [options]
+ * 
+ * Options:
+ *   --port <port>       Server port (default: 8080)
+ *   --config <file>     Configuration file path
+ *   --help              Show this help message
+ *   --version           Show version information
+ * 
+ * Configuration:
+ *   The server can be configured via:
+ *   1. Command line arguments
+ *   2. Environment variables
+ *   3. config.json file in the server directory
+ * 
+ * Examples:
+ *   visual-analyzer                    # Start with default settings
+ *   visual-analyzer --port 3000       # Start on port 3000
+ *   PORT=8080 visual-analyzer         # Start using environment variable
+ */
+
+const path = require('path')
+const fs = require('fs')
+
+// Parse command line arguments
+const args = process.argv.slice(2)
+const options = {}
+
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i]
+  
+  if (arg === '--help' || arg === '-h') {
+    console.log(`
+Visual Analyzer Server - NMEA 2000 Data Visualization Tool
+
+Usage: visual-analyzer [options]
+
+Options:
+  --port <port>       Server port (default: 8080)
+  --config <file>     Configuration file path
+  --open, --browser   Open browser automatically after starting server
+  --help, -h          Show this help message
+  --version, -v       Show version information
+
+Environment Variables:
+  PORT                Server port
+  PUBLIC_DIR          Public directory path
+  
+Configuration File:
+  The server looks for a config.json file at:
+  - Linux/macOS: ~/.visual-analyzer/config.json
+  - Windows: %APPDATA%\\visual-analyzer\\config.json
+  You can specify a custom config file with --config option.
+
+Examples:
+  visual-analyzer                    # Start with default settings
+  visual-analyzer --port 3000       # Start on port 3000
+  visual-analyzer --open             # Start and open browser
+  PORT=8080 visual-analyzer         # Start using environment variable
+  visual-analyzer --config /path/to/config.json
+
+For more information, visit: https://github.com/canboat/visual-analyzer
+`)
+    process.exit(0)
+  }
+  
+  if (arg === '--version' || arg === '-v') {
+    const packagePath = path.join(__dirname, '..', 'package.json')
+    try {
+      const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'))
+      console.log(`Visual Analyzer Server v${pkg.version}`)
+      console.log(`Description: ${pkg.description}`)
+    } catch (error) {
+      console.log('Visual Analyzer Server')
+    }
+    process.exit(0)
+  }
+  
+  if (arg === '--port') {
+    const port = args[++i]
+    if (!port || isNaN(parseInt(port))) {
+      console.error('Error: --port requires a valid port number')
+      process.exit(1)
+    }
+    process.env.PORT = port
+  }
+  
+  if (arg === '--config') {
+    const configFile = args[++i]
+    if (!configFile) {
+      console.error('Error: --config requires a file path')
+      process.exit(1)
+    }
+    if (!fs.existsSync(configFile)) {
+      console.error(`Error: Configuration file not found: ${configFile}`)
+      process.exit(1)
+    }
+    options.configFile = configFile
+  }
+  
+  if (arg === '--open' || arg === '--browser') {
+    options.openBrowser = true
+  }
+}
+
+// Display startup banner
+console.log('╭─────────────────────────────────────────────╮')
+console.log('│         Visual Analyzer Server              │')
+console.log('│         NMEA 2000 Data Visualization        │')
+console.log('╰─────────────────────────────────────────────╯')
+console.log('')
+
+// Start the server by requiring the main server entry point
+const serverPath = path.join(__dirname, '..', 'server', 'index.js')
+
+// Handle custom config file if specified
+if (options.configFile) {
+  // Set environment variable so the server can pick it up
+  process.env.VISUAL_ANALYZER_CONFIG = options.configFile
+}
+
+// Handle browser opening if requested
+if (options.openBrowser) {
+  // Set environment variable so the server can pick it up
+  process.env.VISUAL_ANALYZER_OPEN_BROWSER = 'true'
+}
+
+try {
+  require(serverPath)
+} catch (error) {
+  console.error('Failed to start Visual Analyzer Server:')
+  console.error(error.message)
+  console.error('')
+  console.error('Please ensure all dependencies are installed:')
+  console.error('  npm install')
+  console.error('')
+  console.error('For more help, run: visual-analyzer --help')
+  process.exit(1)
+}

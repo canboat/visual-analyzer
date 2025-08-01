@@ -6,6 +6,7 @@ import { PGNDataMap, PgnNumber, DeviceMap } from '../types'
 import { DataList } from './DataList'
 import { FilterPanel, Filter } from './Filters'
 import { SentencePanel } from './SentencePanel'
+import { ConnectionManagerPanel } from './ConnectionManagerPanel'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
 
@@ -24,7 +25,7 @@ const infoPGNS: number[] = [60928, 126998, 126996]
 const SEND_TAB_ID = 'send'
 const ANALYZER_TAB_ID = 'analyzer'
 const TRANSFORM_TAB_ID = 'transform'
-const SETTINGS_TAB_ID = 'settings'
+const CONNECTIONS_TAB_ID = 'connections'
 
 const AppPanel = (props: any) => {
   const [activeTab, setActiveTab] = useState(ANALYZER_TAB_ID)
@@ -38,7 +39,32 @@ const AppPanel = (props: any) => {
   const [currentSrcs, setCurrentSrcs] = useState<number[]>([])
   const [deviceInfo] = useState(new ReplaySubject<DeviceMap>())
   const [currentInfo, setCurrentInfo] = useState<DeviceMap>({})
+  const [connectionStatus, setConnectionStatus] = useState<{isConnected: boolean, lastUpdate: string, error?: string}>({
+    isConnected: false,
+    lastUpdate: new Date().toISOString(),
+    error: undefined
+  })
   const sentInfoReq: number[] = []
+
+  // Debug function to test error display
+  const testErrorDisplay = () => {
+    console.log('Testing error display...')
+    setConnectionStatus({
+      isConnected: false,
+      lastUpdate: new Date().toISOString(),
+      error: 'Test connection error: Connection refused to localhost:60002 (ECONNREFUSED)'
+    })
+  }
+
+  // Make it available globally for testing
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).testErrorDisplay = testErrorDisplay
+    }
+  }, [])
+
+  // Check if we're in embedded mode (SignalK plugin) vs standalone mode
+  const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
 
   const parser = new FromPgn({
     returnNulls: true,
@@ -55,6 +81,135 @@ const AppPanel = (props: any) => {
     console.error(error.stack)
   })
 
+  // Load initial connection status from server
+  useEffect(() => {
+    const loadInitialStatus = async () => {
+      try {
+        console.log('Loading initial connection status...')
+        const response = await fetch('/api/config')
+        if (response.ok) {
+          const config = await response.json()
+          console.log('Received config:', config)
+          const initialStatus = {
+            isConnected: config.connection?.isConnected || false,
+            lastUpdate: config.connection?.lastUpdate || new Date().toISOString(),
+            error: config.connection?.error || undefined // Include any persisted error
+          }
+          console.log('Initial connection status loaded:', initialStatus)
+          setConnectionStatus(initialStatus)
+        }
+      } catch (error) {
+        console.error('Failed to load initial connection status:', error)
+        setConnectionStatus(prev => ({
+          ...prev,
+          error: `Failed to load configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          lastUpdate: new Date().toISOString()
+        }))
+      }
+    }
+    
+    // Only load initial status in standalone mode (not embedded)
+    if (!isEmbedded) {
+      loadInitialStatus()
+    }
+  }, [isEmbedded])
+
+  useEffect(() => {
+    // Create a dedicated WebSocket connection for monitoring connection status and errors
+    let statusWebSocket: WebSocket | null = null
+    
+    const connectStatusWebSocket = () => {
+      try {
+        statusWebSocket = new WebSocket(`ws://${window.location.host}`)
+        
+        statusWebSocket.onopen = () => {
+          console.log('Status WebSocket connected')
+          // Subscribe to connection events
+          statusWebSocket?.send(JSON.stringify({
+            type: 'subscribe',
+            subscription: 'status'
+          }))
+        }
+        
+        statusWebSocket.onmessage = (event) => {
+          console.log('=== STATUS WEBSOCKET MESSAGE ===')
+          console.log('Raw message:', event.data)
+          try {
+            const data = JSON.parse(event.data)
+            console.log('Parsed data:', data)
+            console.log('Event type:', data.event)
+            
+            if (data.event === 'nmea:connected') {
+              console.log('>>> STATUS WS: Processing nmea:connected event')
+              setConnectionStatus(prev => {
+                const newStatus = {
+                  ...prev,
+                  isConnected: true,
+                  lastUpdate: new Date().toISOString(),
+                  error: undefined
+                }
+                console.log('>>> STATUS WS: Setting connected status:', newStatus)
+                return newStatus
+              })
+            } else if (data.event === 'nmea:disconnected') {
+              console.log('>>> STATUS WS: Processing nmea:disconnected event')
+              setConnectionStatus(prev => {
+                const newStatus = {
+                  ...prev,
+                  isConnected: false,
+                  lastUpdate: new Date().toISOString()
+                }
+                console.log('>>> STATUS WS: Setting disconnected status:', newStatus)
+                return newStatus
+              })
+            } else if (data.event === 'error') {
+              console.log('>>> STATUS WS: Processing ERROR event:', data.error)
+              console.log('>>> STATUS WS: Current connectionStatus before update:', connectionStatus)
+              setConnectionStatus(prev => {
+                const newStatus = {
+                  ...prev,
+                  isConnected: false,
+                  error: data.error,
+                  lastUpdate: new Date().toISOString()
+                }
+                console.log('>>> STATUS WS: Setting ERROR status:', newStatus)
+                return newStatus
+              })
+            } else {
+              console.log('>>> STATUS WS: Ignoring event type:', data.event)
+            }
+          } catch (error) {
+            console.error('Error parsing status WebSocket message:', error)
+          }
+        }
+        
+        statusWebSocket.onclose = () => {
+          console.log('Status WebSocket disconnected')
+          // Attempt to reconnect after a delay
+          setTimeout(connectStatusWebSocket, 3000)
+        }
+        
+        statusWebSocket.onerror = (error) => {
+          console.error('Status WebSocket error:', error)
+        }
+      } catch (error) {
+        console.error('Failed to create status WebSocket:', error)
+        setTimeout(connectStatusWebSocket, 3000)
+      }
+    }
+    
+    // Only create status WebSocket in standalone mode
+    if (!isEmbedded) {
+      connectStatusWebSocket()
+    }
+    
+    return () => {
+      if (statusWebSocket) {
+        statusWebSocket.close()
+      }
+    }
+  }, [isEmbedded])
+
   useEffect(() => {
     const ws = props.adminUI.openWebsocket({
       subscribe: 'none',
@@ -62,9 +217,44 @@ const AppPanel = (props: any) => {
     })
 
     ws.onmessage = (x: any) => {
-      //console.log('Received dataX', x)
+      console.log('Received WebSocket message:', x.data)
 
       const parsed = JSON.parse(x.data)
+      console.log('Parsed WebSocket event:', parsed.event, parsed)
+      
+      // Handle connection status events (keep as backup)
+      if (parsed.event === 'nmea:connected') {
+        console.log('NMEA connection established')
+        setConnectionStatus({
+          isConnected: true,
+          lastUpdate: new Date().toISOString(),
+          error: undefined // Clear any previous errors
+        })
+        return
+      }
+      
+      if (parsed.event === 'nmea:disconnected') {
+        console.log('NMEA connection lost')
+        setConnectionStatus({
+          isConnected: false,
+          lastUpdate: new Date().toISOString(),
+          error: undefined // Disconnection isn't necessarily an error
+        })
+        return
+      }
+      
+      // Also handle error events that might affect connection status  
+      if (parsed.event === 'error') {
+        console.error('NMEA connection error received via WebSocket:', parsed.error)
+        setConnectionStatus(prev => ({
+          ...prev,
+          error: parsed.error || 'Unknown connection error',
+          lastUpdate: new Date().toISOString()
+        }))
+        return
+      }
+      
+      // Handle NMEA data events
       if (parsed.event !== 'canboatjs:rawoutput') {
         return
       }
@@ -145,15 +335,17 @@ const AppPanel = (props: any) => {
             Transform
           </NavLink>
         </NavItem>
-        <NavItem>
-          <NavLink
-            className={activeTab === SETTINGS_TAB_ID ? 'active' : ''}
-            onClick={() => setActiveTab(SETTINGS_TAB_ID)}
-            style={{ cursor: 'pointer' }}
-          >
-            Settings
-          </NavLink>
-        </NavItem>
+        {!isEmbedded && (
+          <NavItem>
+            <NavLink
+              className={activeTab === CONNECTIONS_TAB_ID ? 'active' : ''}
+              onClick={() => setActiveTab(CONNECTIONS_TAB_ID)}
+              style={{ cursor: 'pointer' }}
+            >
+              Connections
+            </NavLink>
+          </NavItem>
+        )}
       </Nav>
       <TabContent activeTab={activeTab}>
         <TabPane tabId={ANALYZER_TAB_ID}>
@@ -261,74 +453,14 @@ const AppPanel = (props: any) => {
             </CardBody>
           </Card>
         </TabPane>
-        <TabPane tabId={SETTINGS_TAB_ID}>
-          <Card>
-            <CardBody>
-              <h4 className="text-sk-primary">Configuration Settings</h4>
-              <p className="mb-3">Configure the visual analyzer behavior and display preferences.</p>
-
-              <div className="alert alert-info" role="alert">
-                <strong>Coming Soon:</strong> Advanced configuration options and customization features will be
-                available in a future version. These are fake and do not work.
-              </div>
-
-              <div className="row">
-                <div className="col-md-6">
-                  <div className="card">
-                    <div className="card-header">
-                      <strong>Display Options</strong>
-                    </div>
-                    <div className="card-body">
-                      <div className="form-group">
-                        <label>Refresh Rate</label>
-                        <select className="form-control" defaultValue="1000">
-                          <option value="500">500ms</option>
-                          <option value="1000">1 second</option>
-                          <option value="2000">2 seconds</option>
-                          <option value="5000">5 seconds</option>
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <div className="form-check">
-                          <input className="form-check-input" type="checkbox" id="autoScroll" defaultChecked />
-                          <label className="form-check-label" htmlFor="autoScroll">
-                            Auto-scroll to new messages
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="card">
-                    <div className="card-header">
-                      <strong>Data Options</strong>
-                    </div>
-                    <div className="card-body">
-                      <div className="form-group">
-                        <label>Maximum Messages</label>
-                        <select className="form-control" defaultValue="1000">
-                          <option value="100">100</option>
-                          <option value="500">500</option>
-                          <option value="1000">1000</option>
-                          <option value="5000">5000</option>
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <div className="form-check">
-                          <input className="form-check-input" type="checkbox" id="showRaw" />
-                          <label className="form-check-label" htmlFor="showRaw">
-                            Show raw data
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-        </TabPane>
+        {!isEmbedded && (
+          <TabPane tabId={CONNECTIONS_TAB_ID}>
+            <ConnectionManagerPanel 
+              connectionStatus={connectionStatus} 
+              onStatusUpdate={setConnectionStatus}
+            />
+          </TabPane>
+        )}
       </TabContent>
     </div>
   )
