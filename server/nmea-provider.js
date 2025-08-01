@@ -96,7 +96,12 @@ class NMEADataProvider extends EventEmitter {
       setProviderStatus: (providerId, msg) => {
         console.log(`NMEADataProvider status: ${msg}`)
       },
-      on: (event, callback) => {},
+      on: (event, callback) => {
+        this.on(event, callback)
+      },
+      removeListener: (event, callback) => {
+        this.removeListener(event, callback)
+      },
       emit: (event, data) => {
         if (event === 'canboatjs:rawoutput') {
           this.emit('raw-nmea', data)
@@ -373,15 +378,8 @@ class NMEADataProvider extends EventEmitter {
         console.error('Error sending message via SocketCAN:', error)
         throw error
       }
-    } else if (this.serialStream && this.serialStream.sendPGN) {
-      try {
-        this.serialStream.sendPGN(pgnData)
-        console.log('Message sent via serial stream')
-        return
-      } catch (error) {
-        console.error('Error sending message via serial stream:', error)
-        throw error
-      }
+    } else if (this.serialStream ) {
+      this.emit('nmea2000JsonOut', pgnData)
     } else if (this.tcpClient && this.tcpClient.readyState === 'open') {
       try {
         // Convert PGN to the format expected by the device
