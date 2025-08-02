@@ -82,7 +82,7 @@ export const DataList = (props: DataListProps) => {
             .sort((a, b) => a.src! - b.src!)
             .map((row: PGN, i: number) => {
               return (
-                <tr key={`${row.pgn}-${row.src}`}>
+                <tr key={`${(row as any).id}-${row.pgn}-${row.src}`}>
                   <td>{row.timestamp!.split('T')[1]}</td>
                   <td 
                     style={{ color: 'red', cursor: 'pointer' }} 
