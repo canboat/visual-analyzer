@@ -69,12 +69,186 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
       return <div>No raw byte data available</div>
     }
 
+    // Helper function to calculate the total bit size of a set of fields
+    const calculateFieldSetBitSize = (fields: any[], startIndex: number, count: number) => {
+      let totalBits = 0
+      for (let i = startIndex; i < startIndex + count && i < fields.length; i++) {
+        totalBits += fields[i].BitLength || 0
+      }
+      return totalBits
+    }
+
+    // Helper function to render a single field row
+    const renderFieldRow = (field: any, fieldIndex: number, absoluteBitOffset: number, repetitionIndex?: number, repetitionCount?: number) => {
+      const bitStart = absoluteBitOffset
+      const bitLength = field.BitLength || 0
+      const bitEnd = bitStart + bitLength - 1
+      const byteStart = Math.floor(bitStart / 8)
+      const byteEnd = Math.floor(bitEnd / 8)
+      
+      // Extract raw value from bytes
+      let rawValue = 'N/A'
+      if (byteStart < rawBytes.length && byteEnd < rawBytes.length) {
+        if (byteStart === byteEnd) {
+          // Field is within a single byte
+          const bitInByteStart = bitStart % 8
+          const mask = ((1 << bitLength) - 1) << bitInByteStart
+          rawValue = `0x${((rawBytes[byteStart] & mask) >> bitInByteStart).toString(16).toUpperCase()}`
+        } else {
+          // Field spans multiple bytes - extract bits across multiple bytes
+          let combinedValue = 0
+          let bitsRemaining = bitLength
+          let currentBitPos = bitStart
+          
+          while (bitsRemaining > 0) {
+            const currentByte = Math.floor(currentBitPos / 8)
+            const bitPosInByte = currentBitPos % 8
+            const bitsToReadFromThisByte = Math.min(8 - bitPosInByte, bitsRemaining)
+            
+            if (currentByte < rawBytes.length) {
+              const mask = ((1 << bitsToReadFromThisByte) - 1) << bitPosInByte
+              const extractedBits = (rawBytes[currentByte] & mask) >> bitPosInByte
+              combinedValue |= extractedBits << (bitLength - bitsRemaining)
+            }
+            
+            bitsRemaining -= bitsToReadFromThisByte
+            currentBitPos += bitsToReadFromThisByte
+          }
+          
+          rawValue = `0x${combinedValue.toString(16).toUpperCase()}`
+        }
+      }
+
+      // Get parsed value from PGN data - handle repeating fields
+      let parsedValue = 'N/A'
+      if (repetitionIndex !== undefined) {
+        // For repeating fields, look in the list array
+        const listData = (pgnData.fields as any).list
+        if (listData && listData[repetitionIndex] && listData[repetitionIndex][field.Id] !== undefined) {
+          parsedValue = JSON.stringify(listData[repetitionIndex][field.Id])
+        }
+      } else {
+        // For non-repeating fields, look directly in fields
+        if ((pgnData.fields as any)[field.Id] !== undefined) {
+          parsedValue = JSON.stringify((pgnData.fields as any)[field.Id])
+        }
+      }
+
+      const fieldName = repetitionIndex !== undefined 
+        ? `${field.Name} [${repetitionIndex + 1}/${repetitionCount}]`
+        : field.Name
+
+      return (
+        <tr key={`${fieldIndex}-${repetitionIndex || 0}`}>
+          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
+            <strong>{fieldName}</strong>
+            {field.Unit && <span style={{ color: '#6c757d' }}> ({field.Unit})</span>}
+            {repetitionIndex !== undefined && (
+              <div style={{ fontSize: '11px', color: '#6c757d' }}>Repeating field #{fieldIndex - ((definition.RepeatingFieldSet1StartField || 1) - 1) + 1}</div>
+            )}
+          </td>
+          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
+            {bitStart} - {bitEnd} ({bitLength} bits)
+          </td>
+          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
+            {byteStart}{byteStart !== byteEnd ? ` - ${byteEnd}` : ''}
+          </td>
+          <td style={{ padding: '8px', border: '1px solid #dee2e6', fontFamily: 'monospace' }}>
+            {rawValue}
+          </td>
+          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
+            {parsedValue}
+          </td>
+        </tr>
+      )
+    }
+
+    // Check if this PGN has repeating fields
+    const hasRepeatingFields = definition.RepeatingFieldSet1Size && definition.RepeatingFieldSet1Size > 0
+    let repetitionCount = 0
+    
+    if (hasRepeatingFields) {
+      // Get the count from the count field
+      const countFieldIndex = definition.RepeatingFieldSet1CountField
+      console.log('Count field index:', countFieldIndex, 'Total fields:', definition.Fields.length)
+      
+      if (countFieldIndex !== undefined && countFieldIndex > 0 && countFieldIndex <= definition.Fields.length) {
+        // Field indices in the definition are 1-based, so subtract 1 to get 0-based array index
+        const countField = definition.Fields[countFieldIndex - 1]
+        console.log('Count field:', countField.Name, countField.Id)
+        
+        let countValue = (pgnData.fields as any)[countField.Id]
+        console.log('Count value from field:', countValue, 'Type:', typeof countValue)
+        
+        // If the defined count field doesn't have a value, try common alternatives
+        if (countValue === undefined || countValue === null) {
+          // Try common alternative field names for count
+          const alternativeNames = ['numberOfParameters', 'parameterCount', 'count', 'number']
+          for (const altName of alternativeNames) {
+            if ((pgnData.fields as any)[altName] !== undefined) {
+              countValue = (pgnData.fields as any)[altName]
+              console.log(`Found count in alternative field '${altName}':`, countValue)
+              break
+            }
+          }
+        }
+        
+        if (typeof countValue === 'number') {
+          repetitionCount = countValue
+        }
+      }
+    }
+
+    // Debug information
+    console.log('Debug repeating fields:', {
+      hasRepeatingFields,
+      RepeatingFieldSet1Size: definition.RepeatingFieldSet1Size,
+      RepeatingFieldSet1StartField: definition.RepeatingFieldSet1StartField,
+      RepeatingFieldSet1CountField: definition.RepeatingFieldSet1CountField,
+      repetitionCount,
+      fieldsData: pgnData.fields,
+      listData: (pgnData.fields as any).list,
+      allFieldKeys: Object.keys(pgnData.fields),
+      allFieldValues: pgnData.fields
+    })
+
+    // Calculate bit offsets for all fields (sequential reading)
+    let currentBitOffset = 0
+    const fieldBitOffsets: number[] = []
+    
+    for (let i = 0; i < definition.Fields.length; i++) {
+      const isRepeatingField = hasRepeatingFields && 
+        definition.RepeatingFieldSet1StartField !== undefined &&
+        i >= (definition.RepeatingFieldSet1StartField - 1) &&
+        i < ((definition.RepeatingFieldSet1StartField - 1) + (definition.RepeatingFieldSet1Size || 0))
+      
+      if (!isRepeatingField) {
+        fieldBitOffsets[i] = currentBitOffset
+        currentBitOffset += definition.Fields[i].BitLength || 0
+      } else if (i === ((definition.RepeatingFieldSet1StartField || 1) - 1)) {
+        // At the start of repeating fields, calculate the size of all repetitions
+        const repetitionBitSize = calculateFieldSetBitSize(
+          definition.Fields, 
+          (definition.RepeatingFieldSet1StartField || 1) - 1, 
+          definition.RepeatingFieldSet1Size || 0
+        )
+        // Skip past all repetitions for the sequential bit offset calculation
+        currentBitOffset += repetitionBitSize * repetitionCount
+      }
+    }
+
     return (
       <div style={{ fontFamily: 'monospace', fontSize: '14px' }}>
         <h6>Input Lines: {pgnData.input?.length || 0}</h6>
         <div style={{ marginBottom: '10px', fontSize: '12px', color: '#6c757d' }}>
           {pgnData.input && pgnData.input.length > 1 && (
             <div>Multi-frame PGN detected - combining {pgnData.input.length} input lines</div>
+          )}
+          {hasRepeatingFields && (
+            <div>
+              Repeating fields detected: {definition.RepeatingFieldSet1Size} fields repeat {repetitionCount} times
+              (Starting at field {(definition.RepeatingFieldSet1StartField || 1)})
+            </div>
           )}
         </div>
         
@@ -101,54 +275,55 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
               </tr>
             </thead>
             <tbody>
-              {definition.Fields.map((field, index) => {
-                const bitStart = field.BitOffset
-                const bitLength = field.BitLength || 0
-                const bitEnd = bitStart + bitLength - 1
-                const byteStart = Math.floor(bitStart / 8)
-                const byteEnd = Math.floor(bitEnd / 8)
-                
-                // Extract raw value from bytes
-                let rawValue = 'N/A'
-                if (byteStart < rawBytes.length && byteEnd < rawBytes.length) {
-                  if (byteStart === byteEnd) {
-                    // Field is within a single byte
-                    const bitInByteStart = bitStart % 8
-                    const mask = ((1 << bitLength) - 1) << bitInByteStart
-                    rawValue = `0x${((rawBytes[byteStart] & mask) >> bitInByteStart).toString(16).toUpperCase()}`
-                  } else {
-                    // Field spans multiple bytes
-                    const bytes = rawBytes.slice(byteStart, byteEnd + 1)
-                    rawValue = bytes.map((b: number) => `0x${b.toString(16).padStart(2, '0').toUpperCase()}`).join(' ')
+              {definition.Fields.map((field, fieldIndex) => {
+                // Check if this field is part of a repeating set
+                const isRepeatingField = hasRepeatingFields && 
+                  definition.RepeatingFieldSet1StartField !== undefined &&
+                  fieldIndex >= (definition.RepeatingFieldSet1StartField - 1) &&
+                  fieldIndex < ((definition.RepeatingFieldSet1StartField - 1) + (definition.RepeatingFieldSet1Size || 0))
+
+                console.log(`Field ${fieldIndex} (${field.Name}): isRepeatingField=${isRepeatingField}, repetitionCount=${repetitionCount}, startField=${definition.RepeatingFieldSet1StartField}, fieldSetSize=${definition.RepeatingFieldSet1Size}`)
+
+                if (isRepeatingField && repetitionCount > 0) {
+                  // Render this field for each repetition
+                  const rows = []
+                  const baseFieldIndex = fieldIndex - ((definition.RepeatingFieldSet1StartField || 1) - 1)
+                  
+                  // Calculate the bit size of one complete repetition
+                  const repetitionBitSize = calculateFieldSetBitSize(
+                    definition.Fields, 
+                    (definition.RepeatingFieldSet1StartField || 1) - 1, 
+                    definition.RepeatingFieldSet1Size || 0
+                  )
+                  
+                  // Calculate bit offset to start of repeating section
+                  let repeatSectionStartBit = 0
+                  for (let i = 0; i < ((definition.RepeatingFieldSet1StartField || 1) - 1); i++) {
+                    repeatSectionStartBit += definition.Fields[i].BitLength || 0
                   }
+                  
+                  console.log(`Repeating field ${field.Name}: repetitionBitSize=${repetitionBitSize}, repeatSectionStartBit=${repeatSectionStartBit}`)
+                  
+                  for (let repIndex = 0; repIndex < repetitionCount; repIndex++) {
+                    // Calculate field's bit offset within this repetition
+                    let fieldBitOffsetInRepetition = 0
+                    for (let i = (definition.RepeatingFieldSet1StartField || 1) - 1; i < fieldIndex; i++) {
+                      fieldBitOffsetInRepetition += definition.Fields[i].BitLength || 0
+                    }
+                    
+                    const absoluteBitOffset = repeatSectionStartBit + 
+                      (repIndex * repetitionBitSize) + 
+                      fieldBitOffsetInRepetition
+                    
+                    rows.push(renderFieldRow(field, fieldIndex, absoluteBitOffset, repIndex, repetitionCount))
+                  }
+                  return rows
+                } else if (!isRepeatingField) {
+                  // Render non-repeating field normally - use the bit offset from the definition
+                  return renderFieldRow(field, fieldIndex, fieldBitOffsets[fieldIndex])
                 }
-
-                // Get parsed value from PGN data
-                const parsedValue = (pgnData.fields as any)[field.Id] !== undefined 
-                  ? JSON.stringify((pgnData.fields as any)[field.Id]) 
-                  : 'N/A'
-
-                return (
-                  <tr key={index}>
-                    <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
-                      <strong>{field.Name}</strong>
-                      {field.Unit && <span style={{ color: '#6c757d' }}> ({field.Unit})</span>}
-                    </td>
-                    <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
-                      {bitStart} - {bitEnd} ({bitLength} bits)
-                    </td>
-                    <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
-                      {byteStart}{byteStart !== byteEnd ? ` - ${byteEnd}` : ''}
-                    </td>
-                    <td style={{ padding: '8px', border: '1px solid #dee2e6', fontFamily: 'monospace' }}>
-                      {rawValue}
-                    </td>
-                    <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
-                      {parsedValue}
-                    </td>
-                  </tr>
-                )
-              })}
+                return null
+              }).filter(row => row !== null)}
             </tbody>
           </table>
         </div>
