@@ -20,38 +20,46 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
 
   // Parse the input data to get raw bytes using canboatjs utilities
   const getRawBytes = (): number[] => {
-    // pgnData.input is an array of NMEA sentences like:
-    // ["2024-08-02T07:30:45.123Z,6,126992,0,255,8,01,02,03,04,05,06,07,08"]
+    // pgnData.input is an array of NMEA sentences that may contain multiple lines
+    // for fast-packet PGNs that span multiple CAN frames
     if (!pgnData.input || pgnData.input.length === 0) return []
     
-    const inputLine = pgnData.input[0]
-    if (!inputLine) return []
+    let allBytes: number[] = []
     
-    try {
-      // Use canboatjs parseN2kString to parse different input formats
-      // This handles multiple formats: Actisense, N2K ASCII, YDGW Raw, etc.
-      const parseResult = parseN2kString(inputLine, {})
+    // Process each input line
+    for (const inputLine of pgnData.input) {
+      if (!inputLine) continue
       
-      if (parseResult && parseResult.data && !parseResult.error) {
-        // parseResult.data is a Buffer containing the raw bytes
-        return Array.from(parseResult.data)
+      try {
+        // Use canboatjs parseN2kString to parse different input formats
+        // This handles multiple formats: Actisense, N2K ASCII, YDGW Raw, etc.
+        const parseResult = parseN2kString(inputLine, {})
+        
+        if (parseResult && parseResult.data && !parseResult.error) {
+          // parseResult.data is a Buffer containing the raw bytes
+          const lineBytes = Array.from(parseResult.data) as number[]
+          allBytes = allBytes.concat(lineBytes)
+          continue // Successfully parsed with canboatjs
+        }
+      } catch (error) {
+        console.warn('Failed to parse input line with parseN2kString:', inputLine, error)
       }
-    } catch (error) {
-      console.warn('Failed to parse input with parseN2kString, falling back to simple parsing:', error)
+      
+      // Fallback to simple parsing for manual input
+      try {
+        // Split by comma and get the hex bytes (starting from index 6)
+        const parts = inputLine.split(',')
+        if (parts.length >= 7) {
+          const hexBytes = parts.slice(6).filter(part => part.length === 2)
+          const lineBytes = hexBytes.map(hex => parseInt(hex, 16))
+          allBytes = allBytes.concat(lineBytes)
+        }
+      } catch (error) {
+        console.warn('Failed to parse input line:', inputLine, error)
+      }
     }
     
-    // Fallback to simple parsing for manual input
-    try {
-      // Split by comma and get the hex bytes (starting from index 6)
-      const parts = inputLine.split(',')
-      if (parts.length < 7) return []
-      
-      const hexBytes = parts.slice(6).filter(part => part.length === 2)
-      return hexBytes.map(hex => parseInt(hex, 16))
-    } catch (error) {
-      console.warn('Failed to parse input data:', error)
-      return []
-    }
+    return allBytes
   }
 
   const rawBytes = getRawBytes()
@@ -63,7 +71,14 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
 
     return (
       <div style={{ fontFamily: 'monospace', fontSize: '14px' }}>
-        <h6>Raw Bytes ({rawBytes.length} bytes)</h6>
+        <h6>Input Lines: {pgnData.input?.length || 0}</h6>
+        <div style={{ marginBottom: '10px', fontSize: '12px', color: '#6c757d' }}>
+          {pgnData.input && pgnData.input.length > 1 && (
+            <div>Multi-frame PGN detected - combining {pgnData.input.length} input lines</div>
+          )}
+        </div>
+        
+        <h6>Raw Bytes ({rawBytes.length} bytes total)</h6>
         <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}>
           {rawBytes.map((byte: number, index: number) => (
             <span key={index} style={{ marginRight: '8px', padding: '2px 4px', backgroundColor: '#e9ecef' }}>
