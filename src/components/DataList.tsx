@@ -27,6 +27,13 @@ export const DataList = (props: DataListProps) => {
       props.filter.next({ ...filter, pgn: [...safeFilteredPgns, i] })
     }
   }
+
+  const addToFilteredSrcs = (src: number) => {
+    const safeFilteredSrcs = filter?.src || []
+    if (safeFilteredSrcs.indexOf(src) === -1) {
+      props.filter.next({ ...filter, src: [...safeFilteredSrcs, src] })
+    }
+  }
   return (
     <div
       style={{
@@ -58,7 +65,9 @@ export const DataList = (props: DataListProps) => {
                   <td style={{ color: 'red' }} onClick={() => addToFilteredPgns(row.pgn.toString())}>
                     {row.pgn}
                   </td>
-                  <td>{row.src}</td>
+                  <td style={{ color: 'red', cursor: 'pointer' }} onClick={() => addToFilteredSrcs(row.src!)}>
+                    {row.src}
+                  </td>
                   <td>{row.dst}</td>
                   <td
                     onClick={() => {
