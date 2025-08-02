@@ -134,8 +134,12 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
         }
       }
 
+      const baseFieldIndex = repetitionIndex !== undefined 
+        ? fieldIndex - ((definition.RepeatingFieldSet1StartField || 1) - 1)
+        : undefined
+      
       const fieldName = repetitionIndex !== undefined 
-        ? `${field.Name} [${repetitionIndex + 1}/${repetitionCount}]`
+        ? `${field.Name} [Group ${repetitionIndex + 1}/${repetitionCount}]`
         : field.Name
 
       return (
@@ -143,8 +147,10 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
           <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
             <strong>{fieldName}</strong>
             {field.Unit && <span style={{ color: '#6c757d' }}> ({field.Unit})</span>}
-            {repetitionIndex !== undefined && (
-              <div style={{ fontSize: '11px', color: '#6c757d' }}>Repeating field #{fieldIndex - ((definition.RepeatingFieldSet1StartField || 1) - 1) + 1}</div>
+            {repetitionIndex !== undefined && baseFieldIndex !== undefined && (
+              <div style={{ fontSize: '11px', color: '#6c757d' }}>
+                {baseFieldIndex === 0 ? '├─ ' : '└─ '}Field #{baseFieldIndex + 1} of repetition
+              </div>
             )}
           </td>
           <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
@@ -275,55 +281,87 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
               </tr>
             </thead>
             <tbody>
-              {definition.Fields.map((field, fieldIndex) => {
-                // Check if this field is part of a repeating set
-                const isRepeatingField = hasRepeatingFields && 
-                  definition.RepeatingFieldSet1StartField !== undefined &&
-                  fieldIndex >= (definition.RepeatingFieldSet1StartField - 1) &&
-                  fieldIndex < ((definition.RepeatingFieldSet1StartField - 1) + (definition.RepeatingFieldSet1Size || 0))
+              {(() => {
+                const rows: JSX.Element[] = []
+                let repeatingFieldsProcessed = false
 
-                console.log(`Field ${fieldIndex} (${field.Name}): isRepeatingField=${isRepeatingField}, repetitionCount=${repetitionCount}, startField=${definition.RepeatingFieldSet1StartField}, fieldSetSize=${definition.RepeatingFieldSet1Size}`)
+                for (let fieldIndex = 0; fieldIndex < definition.Fields.length; fieldIndex++) {
+                  const field = definition.Fields[fieldIndex]
+                  
+                  // Check if this field is part of a repeating set
+                  const isRepeatingField = hasRepeatingFields && 
+                    definition.RepeatingFieldSet1StartField !== undefined &&
+                    fieldIndex >= (definition.RepeatingFieldSet1StartField - 1) &&
+                    fieldIndex < ((definition.RepeatingFieldSet1StartField - 1) + (definition.RepeatingFieldSet1Size || 0))
 
-                if (isRepeatingField && repetitionCount > 0) {
-                  // Render this field for each repetition
-                  const rows = []
-                  const baseFieldIndex = fieldIndex - ((definition.RepeatingFieldSet1StartField || 1) - 1)
-                  
-                  // Calculate the bit size of one complete repetition
-                  const repetitionBitSize = calculateFieldSetBitSize(
-                    definition.Fields, 
-                    (definition.RepeatingFieldSet1StartField || 1) - 1, 
-                    definition.RepeatingFieldSet1Size || 0
-                  )
-                  
-                  // Calculate bit offset to start of repeating section
-                  let repeatSectionStartBit = 0
-                  for (let i = 0; i < ((definition.RepeatingFieldSet1StartField || 1) - 1); i++) {
-                    repeatSectionStartBit += definition.Fields[i].BitLength || 0
-                  }
-                  
-                  console.log(`Repeating field ${field.Name}: repetitionBitSize=${repetitionBitSize}, repeatSectionStartBit=${repeatSectionStartBit}`)
-                  
-                  for (let repIndex = 0; repIndex < repetitionCount; repIndex++) {
-                    // Calculate field's bit offset within this repetition
-                    let fieldBitOffsetInRepetition = 0
-                    for (let i = (definition.RepeatingFieldSet1StartField || 1) - 1; i < fieldIndex; i++) {
-                      fieldBitOffsetInRepetition += definition.Fields[i].BitLength || 0
+                  console.log(`Field ${fieldIndex} (${field.Name}): isRepeatingField=${isRepeatingField}, repetitionCount=${repetitionCount}, startField=${definition.RepeatingFieldSet1StartField}, fieldSetSize=${definition.RepeatingFieldSet1Size}`)
+
+                  if (isRepeatingField && repetitionCount > 0 && !repeatingFieldsProcessed) {
+                    // Process all repetitions for all repeating fields at once
+                    repeatingFieldsProcessed = true
+                    
+                    // Calculate the bit size of one complete repetition
+                    const repetitionBitSize = calculateFieldSetBitSize(
+                      definition.Fields, 
+                      (definition.RepeatingFieldSet1StartField || 1) - 1, 
+                      definition.RepeatingFieldSet1Size || 0
+                    )
+                    
+                    // Calculate bit offset to start of repeating section
+                    let repeatSectionStartBit = 0
+                    for (let i = 0; i < ((definition.RepeatingFieldSet1StartField || 1) - 1); i++) {
+                      repeatSectionStartBit += definition.Fields[i].BitLength || 0
                     }
-                    
-                    const absoluteBitOffset = repeatSectionStartBit + 
-                      (repIndex * repetitionBitSize) + 
-                      fieldBitOffsetInRepetition
-                    
-                    rows.push(renderFieldRow(field, fieldIndex, absoluteBitOffset, repIndex, repetitionCount))
+
+                    // Render each repetition completely (all fields in the repetition)
+                    for (let repIndex = 0; repIndex < repetitionCount; repIndex++) {
+                      // Add separator before each repetition (except the first)
+                      if (repIndex > 0) {
+                        rows.push(
+                          <tr key={`separator-${repIndex}`} style={{ height: '8px' }}>
+                            <td colSpan={5} style={{ 
+                              padding: '4px', 
+                              border: 'none', 
+                              backgroundColor: '#f8f9fa',
+                              borderTop: '2px solid #dee2e6'
+                            }}></td>
+                          </tr>
+                        )
+                      }
+
+                      // Render all fields in this repetition
+                      for (let fieldOffset = 0; fieldOffset < (definition.RepeatingFieldSet1Size || 0); fieldOffset++) {
+                        const currentFieldIndex = ((definition.RepeatingFieldSet1StartField || 1) - 1) + fieldOffset
+                        const currentField = definition.Fields[currentFieldIndex]
+                        
+                        if (currentField) {
+                          // Calculate field's bit offset within this repetition
+                          let fieldBitOffsetInRepetition = 0
+                          for (let i = (definition.RepeatingFieldSet1StartField || 1) - 1; i < currentFieldIndex; i++) {
+                            fieldBitOffsetInRepetition += definition.Fields[i].BitLength || 0
+                          }
+                          
+                          const absoluteBitOffset = repeatSectionStartBit + 
+                            (repIndex * repetitionBitSize) + 
+                            fieldBitOffsetInRepetition
+                          
+                          const fieldRow = renderFieldRow(currentField, currentFieldIndex, absoluteBitOffset, repIndex, repetitionCount)
+                          rows.push(fieldRow)
+                        }
+                      }
+                    }
+
+                    // Skip ahead past all the repeating fields since we've processed them
+                    fieldIndex = ((definition.RepeatingFieldSet1StartField || 1) - 1) + (definition.RepeatingFieldSet1Size || 0) - 1
+                  } else if (!isRepeatingField) {
+                    // Render non-repeating field normally
+                    const fieldRow = renderFieldRow(field, fieldIndex, fieldBitOffsets[fieldIndex])
+                    rows.push(fieldRow)
                   }
-                  return rows
-                } else if (!isRepeatingField) {
-                  // Render non-repeating field normally - use the bit offset from the definition
-                  return renderFieldRow(field, fieldIndex, fieldBitOffsets[fieldIndex])
                 }
-                return null
-              }).filter(row => row !== null)}
+
+                return rows
+              })()}
             </tbody>
           </table>
         </div>
