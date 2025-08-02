@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Col, Input, Label, Row, Table, Button, Collapse, Card, CardBody, CardHeader } from 'reactstrap'
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
@@ -94,30 +94,84 @@ interface FilterPanelProps {
   deviceInfo: Subject<DeviceMap>
   doFiltering: Subject<boolean>
 }
+const FILTER_PANEL_STATE_KEY = 'visual_analyzer_filter_panel_open'
+
 export const FilterPanel = (props: FilterPanelProps) => {
-  const [isOpen, setIsOpen] = useState(false)
+  // Load initial collapse state from localStorage
+  const [isOpen, setIsOpen] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const saved = window.localStorage.getItem(FILTER_PANEL_STATE_KEY)
+        return saved ? JSON.parse(saved) : false
+      }
+    } catch (e) {
+      return false
+    }
+    return false
+  })
+  
   const filter = useObservableState(props.filter)
   const availableSrcs = useObservableState(props.availableSrcs)
   const deviceInfo = useObservableState(props.deviceInfo)
   const doFiltering = useObservableState(props.doFiltering)
 
+  // Save collapse state to localStorage when it changes
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(FILTER_PANEL_STATE_KEY, JSON.stringify(isOpen))
+      }
+    } catch (e) {
+      console.warn('Failed to save filter panel state to localStorage:', e)
+    }
+  }, [isOpen])
+
   return (
     <Card>
       <CardHeader
         className="d-flex justify-content-between align-items-center py-2"
-        onClick={() => setIsOpen(!isOpen)}
         style={{ cursor: 'pointer' }}
       >
-        <h6 className="mb-0" style={{ fontWeight: 'bold' }}>
-          Filters
-        </h6>
-        <Button
-          color="outline-primary"
-          size="sm"
-          style={{ border: 'none', fontSize: '16px', padding: '2px 6px', pointerEvents: 'none' }}
+        <div 
+          className="d-flex align-items-center flex-grow-1"
+          onClick={() => setIsOpen(!isOpen)}
         >
-          {isOpen ? '−' : '+'}
-        </Button>
+          <h6 className="mb-0" style={{ fontWeight: 'bold' }}>
+            Filters
+          </h6>
+        </div>
+        <div className="d-flex align-items-center">
+          <span style={{ fontSize: '14px', fontWeight: '500', marginRight: '8px' }}>
+            Enable Filtering
+          </span>
+          <Label className="switch switch-text switch-primary mb-0 me-3">
+            <Input
+              type="checkbox"
+              id="enableFiltering"
+              name="enableFiltering"
+              className="switch-input"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                e.stopPropagation()
+                props.doFiltering.next(!doFiltering)
+              }}
+              checked={doFiltering}
+              onClick={(e: React.MouseEvent<HTMLInputElement>) => e.stopPropagation()}
+            />
+            <span className="switch-label" data-on="On" data-off="Off" />
+            <span className="switch-handle" />
+          </Label>
+          <Button
+            color="outline-primary"
+            size="sm"
+            style={{ border: 'none', fontSize: '16px', padding: '2px 6px' }}
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+              e.stopPropagation()
+              setIsOpen(!isOpen)
+            }}
+          >
+            {isOpen ? '−' : '+'}
+          </Button>
+        </div>
       </CardHeader>
       <Collapse isOpen={isOpen}>
         <CardBody>
@@ -209,24 +263,6 @@ export const FilterPanel = (props: FilterPanelProps) => {
                 style={{ fontFamily: 'monospace', fontSize: '12px', resize: 'vertical' }}
                 rows={3}
               />
-            </Col>
-          </Row>
-          <Row>
-            <Col xs="12" md="6"></Col>
-            <Col xs="12" md="6" className="d-flex align-items-center justify-content-md-end">
-              <Label className="switch switch-text switch-primary mb-0 me-3">
-                <Input
-                  type="checkbox"
-                  id="Meta"
-                  name="meta"
-                  className="switch-input"
-                  onChange={() => props.doFiltering.next(!doFiltering)}
-                  checked={doFiltering}
-                />
-                <span className="switch-label" data-on="Yes" data-off="No" />
-                <span className="switch-handle" />
-              </Label>
-              <span style={{ lineHeight: '24px', fontWeight: 'bold', marginLeft: '12px' }}>Enable Filtering</span>
             </Col>
           </Row>
         </CardBody>

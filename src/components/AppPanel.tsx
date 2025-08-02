@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Card, CardBody, Col, Row, Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
-import { ReplaySubject } from 'rxjs'
+import { ReplaySubject, combineLatest } from 'rxjs'
 // import * as pkg from '../../package.json'
 import { PGNDataMap, PgnNumber, DeviceMap } from '../types'
 import { DataList } from './DataList'
@@ -10,16 +10,40 @@ import { ConnectionManagerPanel } from './ConnectionManagerPanel'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
 
-// const SAFEPLUGINID = pkg.name.replace(/[-@/]/g, '_')
-// const saveSettingsItems = (items: any) => {
-//   let settings
-//   try {
-//     settings = JSON.parse(window.localStorage.getItem(SAFEPLUGINID) || '')
-//   } catch (e) {
-//     settings = {}
-//   }
-//   window.localStorage.setItem(SAFEPLUGINID, JSON.stringify({ ...settings, ...items }))
-// }
+const LOCALSTORAGE_KEY = 'visual_analyzer_settings'
+
+const saveFilterSettings = (filter: Filter, doFiltering: boolean) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const settings = {
+        filter,
+        doFiltering,
+        lastSaved: new Date().toISOString()
+      }
+      window.localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(settings))
+    }
+  } catch (e) {
+    console.warn('Failed to save filter settings to localStorage:', e)
+  }
+}
+
+const loadFilterSettings = (): { filter: Filter; doFiltering: boolean } | null => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = window.localStorage.getItem(LOCALSTORAGE_KEY)
+      if (saved) {
+        const settings = JSON.parse(saved)
+        return {
+          filter: settings.filter || {},
+          doFiltering: settings.doFiltering || false
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load filter settings from localStorage:', e)
+  }
+  return null
+}
 
 const infoPGNS: number[] = [60928, 126998, 126996]
 const SEND_TAB_ID = 'send'
@@ -297,6 +321,30 @@ const AppPanel = (props: any) => {
       }
     }
     setWs(ws)
+  }, [])
+
+  // Initialize filter settings from localStorage on component mount
+  useEffect(() => {
+    const savedSettings = loadFilterSettings()
+    if (savedSettings) {
+      filter.next(savedSettings.filter)
+      doFiltering.next(savedSettings.doFiltering)
+    } else {
+      // Set default values if no saved settings
+      filter.next({})
+      doFiltering.next(false)
+    }
+  }, [])
+
+  // Save filter settings to localStorage when they change
+  useEffect(() => {
+    const subscription = combineLatest([filter, doFiltering]).subscribe(([filterValue, doFilteringValue]) => {
+      saveFilterSettings(filterValue, doFilteringValue)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
   /*
