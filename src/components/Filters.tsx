@@ -163,7 +163,11 @@ export const FilterPanel = (props: FilterPanelProps) => {
           <Button
             color="outline-primary"
             size="sm"
-            style={{ border: 'none', fontSize: '16px', padding: '2px 6px', pointerEvents: 'none' }}
+            style={{ border: 'none', fontSize: '16px', padding: '2px 6px' }}
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+              e.stopPropagation()
+              setIsOpen(!isOpen)
+            }}
           >
             {isOpen ? '−' : '+'}
           </Button>
