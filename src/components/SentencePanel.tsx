@@ -67,7 +67,8 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
         <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}>
           {rawBytes.map((byte: number, index: number) => (
             <span key={index} style={{ marginRight: '8px', padding: '2px 4px', backgroundColor: '#e9ecef' }}>
-              {index.toString().padStart(2, '0')}: {byte.toString(16).padStart(2, '0').toUpperCase()}
+              {/* {index.toString().padStart(2, '0')}:  */}
+              {byte.toString(16).padStart(2, '0').toUpperCase()}
             </span>
           ))}
         </div>
@@ -103,7 +104,7 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
                   } else {
                     // Field spans multiple bytes
                     const bytes = rawBytes.slice(byteStart, byteEnd + 1)
-                    rawValue = bytes.map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join(' ')
+                    rawValue = bytes.map((b: number) => `0x${b.toString(16).padStart(2, '0').toUpperCase()}`).join(' ')
                   }
                 }
 
