@@ -54,9 +54,11 @@ class NMEADataProvider extends EventEmitter {
     const url = this.options.signalkUrl.replace('http', 'ws') + '/signalk/v1/stream?subscribe=none&events=canboatjs:rawoutput'
     
     console.log('Connecting to SignalK WebSocket:', url)
-    
-    this.signalKWs = new WebSocket(url)
-    
+
+    this.signalKWs = new WebSocket(url, {
+      rejectUnauthorized: false
+    })
+
     this.signalKWs.on('open', () => {
       console.log('Connected to SignalK server')
       this.isConnected = true
