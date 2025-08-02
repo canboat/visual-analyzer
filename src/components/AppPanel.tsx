@@ -156,27 +156,27 @@ const AppPanel = (props: any) => {
         }
         
         statusWebSocket.onmessage = (event) => {
-          console.log('=== STATUS WEBSOCKET MESSAGE ===')
-          console.log('Raw message:', event.data)
+          //console.log('=== STATUS WEBSOCKET MESSAGE ===')
+          //console.log('Raw message:', event.data)
           try {
             const data = JSON.parse(event.data)
-            console.log('Parsed data:', data)
-            console.log('Event type:', data.event)
+            //console.log('Parsed data:', data)
+            //console.log('Event type:', data.event)
             
             if (data.event === 'nmea:connected') {
-              console.log('>>> STATUS WS: Processing nmea:connected event')
               setConnectionStatus(prev => {
+                //console.log('>>> STATUS WS: Processing nmea:connected event')
                 const newStatus = {
                   ...prev,
                   isConnected: true,
                   lastUpdate: new Date().toISOString(),
                   error: undefined
                 }
-                console.log('>>> STATUS WS: Setting connected status:', newStatus)
+                //console.log('>>> STATUS WS: Setting connected status:', newStatus)
                 return newStatus
               })
             } else if (data.event === 'nmea:disconnected') {
-              console.log('>>> STATUS WS: Processing nmea:disconnected event')
+              //console.log('>>> STATUS WS: Processing nmea:disconnected event')
               setConnectionStatus(prev => {
                 const newStatus = {
                   ...prev,
@@ -200,7 +200,7 @@ const AppPanel = (props: any) => {
                 return newStatus
               })
             } else {
-              console.log('>>> STATUS WS: Ignoring event type:', data.event)
+              //console.log('>>> STATUS WS: Ignoring event type:', data.event)
             }
           } catch (error) {
             console.error('Error parsing status WebSocket message:', error)
@@ -241,14 +241,14 @@ const AppPanel = (props: any) => {
     })
 
     ws.onmessage = (x: any) => {
-      console.log('Received WebSocket message:', x.data)
+     // console.log('Received WebSocket message:', x.data)
 
       const parsed = JSON.parse(x.data)
-      console.log('Parsed WebSocket event:', parsed.event, parsed)
+      //console.log('Parsed WebSocket event:', parsed.event, parsed)
       
       // Handle connection status events (keep as backup)
       if (parsed.event === 'nmea:connected') {
-        console.log('NMEA connection established')
+        //console.log('NMEA connection established')
         setConnectionStatus({
           isConnected: true,
           lastUpdate: new Date().toISOString(),
