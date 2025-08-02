@@ -12,10 +12,24 @@ The following filter data is automatically saved to localStorage whenever change
 - **Destination filters**: Selected destination addresses
 - **Manufacturer filters**: Selected manufacturer codes
 - **JavaScript filter**: Custom JavaScript filter code
-- **Enable Filtering toggle**: Whether filtering is enabled or disabled
+- **Enable Filtering toggle**: Whether filtering is enabled or disabled (now located in the header for easy access)
 
 ### Filter Panel State (`visual_analyzer_filter_panel_open`)
 - **Collapse state**: Whether the filter panel is expanded or collapsed
+
+## UI Improvements
+
+### Enable Filtering Toggle
+The "Enable Filtering" toggle has been moved to the filter panel header, making it:
+- **Always visible**: No need to expand the panel to enable/disable filtering
+- **Quick access**: Toggle filtering on/off with one click, even when panel is collapsed
+- **Better UX**: Immediate visual feedback on filtering state
+
+### Header Layout
+- **Left side**: "Filters" title (clickable to expand/collapse)
+- **Right side**: "Enable Filtering" label + toggle switch + expand/collapse button
+- **Event handling**: Toggle clicks don't trigger panel expansion
+- **Clear labeling**: Explicit "Enable Filtering" text makes the toggle purpose obvious
 
 ## Implementation Details
 
