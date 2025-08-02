@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Col, Input, Label, Row, Table, Button, Collapse, Card, CardBody, CardHeader } from 'reactstrap'
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
@@ -94,12 +94,37 @@ interface FilterPanelProps {
   deviceInfo: Subject<DeviceMap>
   doFiltering: Subject<boolean>
 }
+const FILTER_PANEL_STATE_KEY = 'visual_analyzer_filter_panel_open'
+
 export const FilterPanel = (props: FilterPanelProps) => {
-  const [isOpen, setIsOpen] = useState(false)
+  // Load initial collapse state from localStorage
+  const [isOpen, setIsOpen] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const saved = window.localStorage.getItem(FILTER_PANEL_STATE_KEY)
+        return saved ? JSON.parse(saved) : false
+      }
+    } catch (e) {
+      return false
+    }
+    return false
+  })
+  
   const filter = useObservableState(props.filter)
   const availableSrcs = useObservableState(props.availableSrcs)
   const deviceInfo = useObservableState(props.deviceInfo)
   const doFiltering = useObservableState(props.doFiltering)
+
+  // Save collapse state to localStorage when it changes
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(FILTER_PANEL_STATE_KEY, JSON.stringify(isOpen))
+      }
+    } catch (e) {
+      console.warn('Failed to save filter panel state to localStorage:', e)
+    }
+  }, [isOpen])
 
   return (
     <Card>
