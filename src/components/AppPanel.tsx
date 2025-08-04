@@ -45,6 +45,35 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean } | null =
   return null
 }
 
+export const getRowKey = (pgn: PGN): string => {
+  let key = `${pgn.getDefinition().Id}-${pgn.pgn}-${pgn.src}`
+  if (pgn.getDefinition().Fallback === true || pgn.pgn === 126208) {
+    const fieldHash = createFieldDataHash(pgn.fields)
+    key = `${key}-${fieldHash}`
+  }
+  return key
+}
+
+// Simple hash function for creating consistent hashes from field data
+const createFieldDataHash = (fields: any): string => {
+  try {
+    // Serialize the fields object to a stable string representation
+    const serialized = JSON.stringify(fields, Object.keys(fields).filter(key => key !== 'data').sort())
+
+    // Simple djb2 hash algorithm implementation
+    let hash = 5381
+    for (let i = 0; i < serialized.length; i++) {
+      hash = ((hash << 5) + hash) + serialized.charCodeAt(i)
+      hash = hash >>> 0 // Convert to 32-bit unsigned integer
+    }
+    
+    return hash.toString(16) // Return as hexadecimal string
+  } catch (error) {
+    console.warn('Failed to create field data hash:', error)
+    return 'hash-error'
+  }
+}
+
 const infoPGNS: number[] = [60928, 126998, 126996]
 const SEND_TAB_ID = 'send'
 const ANALYZER_TAB_ID = 'analyzer'
@@ -288,7 +317,7 @@ const AppPanel = (props: any) => {
         //console.log('pgn', pgn)
         if (infoPGNS.indexOf(pgn!.pgn) === -1) {
           setList((prev: any) => {
-            prev[`${pgn!.getDefinition().Id}-${pgn!.pgn}-${pgn!.src}`] = pgn
+            prev[getRowKey(pgn!)] = pgn
             data.next({ ...prev })
             return prev
           })

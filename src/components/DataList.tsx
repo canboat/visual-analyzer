@@ -6,6 +6,7 @@ import { PGN } from '@canboat/ts-pgns'
 import { Subject } from 'rxjs'
 import { PgnNumber, PGNDataMap } from '../types'
 import { Filter, filterFor, getFilterConfig } from './Filters'
+import { getRowKey } from './AppPanel'
 
 interface DataListProps {
   data: Subject<PGNDataMap>
@@ -79,10 +80,16 @@ export const DataList = (props: DataListProps) => {
         <tbody>
           {(data != undefined ? Object.values(data) : [])
             .filter(filterFor(doFiltering, filterConfig))
-            .sort((a, b) => a.src! - b.src!)
+            .sort((a, b) => {
+              // Sort by PGN first, then by src
+              if (a.src !== b.src) {
+                return a.src! - b.src!
+              }
+              return a.pgn - b.pgn
+            })
             .map((row: PGN, i: number) => {
               return (
-                <tr key={`${(row as any).id}-${row.pgn}-${row.src}`}>
+                <tr key={getRowKey(row)} onClick={() => handleRowClick(row)}>
                   <td>{row.timestamp!.split('T')[1]}</td>
                   <td 
                     style={{ color: 'red', cursor: 'pointer' }} 
