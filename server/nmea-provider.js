@@ -143,8 +143,8 @@ class NMEADataProvider extends EventEmitter {
         requestId: requestId,
         login: {
           username: this.options.signalkUsername,
-          password: this.options.signalkPassword
-        }
+          password: this.options.signalkPassword,
+        },
       }
 
       console.log('Sending WebSocket authentication message')
@@ -165,7 +165,7 @@ class NMEADataProvider extends EventEmitter {
     if (message.statusCode === 200 && message.login && message.login.token) {
       this.authToken = message.login.token
       console.log('SignalK WebSocket authentication successful.')
-      
+
       if (this.pendingAuthResolve) {
         this.pendingAuthResolve(true)
         this.pendingAuthResolve = null
@@ -442,8 +442,8 @@ class NMEADataProvider extends EventEmitter {
     const logoutMessage = {
       requestId: requestId,
       logout: {
-        token: this.authToken
-      }
+        token: this.authToken,
+      },
     }
 
     console.log('Sending SignalK logout message')
@@ -474,7 +474,7 @@ class NMEADataProvider extends EventEmitter {
   getAuthStatus() {
     return {
       isAuthenticated: this.isAuthenticated(),
-      hasToken: !!this.authToken
+      hasToken: !!this.authToken,
     }
   }
 
@@ -496,8 +496,8 @@ class NMEADataProvider extends EventEmitter {
       try {
         // Create the message payload with authentication token if available
         const messagePayload = {
-          context: "*",
-          ...pgnData
+          context: '*',
+          ...pgnData,
         }
 
         this.signalKWs.send(JSON.stringify(messagePayload))
