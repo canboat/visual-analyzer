@@ -1,0 +1,34 @@
+{
+  "server": {
+    "port": "8080"
+  },
+  "connections": {
+    "activeConnection": "authenticated-signalk",
+    "profiles": {
+      "authenticated-signalk": {
+        "name": "Authenticated SignalK Server",
+        "type": "signalk",
+        "signalkUrl": "http://localhost:3000",
+        "signalkUsername": "admin",
+        "signalkPassword": "password123"
+      },
+      "open-signalk": {
+        "name": "Open SignalK Server (No Auth)",
+        "type": "signalk",
+        "signalkUrl": "http://localhost:3000",
+        "signalkUsername": "",
+        "signalkPassword": ""
+      },
+      "secure-signalk": {
+        "name": "Secure SignalK Server (HTTPS/WSS)",
+        "type": "signalk",
+        "signalkUrl": "https://my-boat.signalk.io",
+        "signalkUsername": "skipper",
+        "signalkPassword": "my-secure-password"
+      }
+    }
+  },
+  "logging": {
+    "level": "info"
+  }
+}
