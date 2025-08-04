@@ -101,7 +101,12 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
           const mask = ((1 << bitLength) - 1) << bitInByteStart
           rawValue = `0x${((rawBytes[byteStart] & mask) >> bitInByteStart).toString(16).toUpperCase()}`
         } else {
+          // Field spans multiple bytes
+          const bytes = rawBytes.slice(byteStart, byteEnd + 1)
+          rawValue = bytes.map((b: number) => `0x${b.toString(16).padStart(2, '0').toUpperCase()}`).join(' ')
+
           // Field spans multiple bytes - extract bits across multiple bytes
+          /*
           let combinedValue = 0
           let bitsRemaining = bitLength
           let currentBitPos = bitStart
@@ -122,6 +127,7 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
           }
 
           rawValue = `0x${combinedValue.toString(16).toUpperCase()}`
+          */
         }
       }
 
