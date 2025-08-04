@@ -16,7 +16,9 @@
       "local-signalk": {
         "name": "Local SignalK Server",
         "type": "signalk",
-        "signalkUrl": "http://localhost:3000"
+        "signalkUrl": "http://localhost:3000",
+        "signalkUsername": "",
+        "signalkPassword": ""
       },
       "actisense-usb": {
         "name": "Actisense NGT-1 USB",

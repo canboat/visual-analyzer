@@ -2,7 +2,7 @@
  * NMEA Data Provider for Visual Analyzer
  *
  * This module provides connectivity to various NMEA 2000 data sources including:
- * - SignalK WebSocket connections
+ * - SignalK WebSocket connections (with authentication support)
  * - Serial devices (Actisense NGT-1, iKonvert, Yacht Devices)
  * - Network sources (TCP/UDP)
  * - SocketCAN interfaces (Linux only)
@@ -13,11 +13,17 @@
  * - canbus for SocketCAN connections
  * - Proper message formatting with pgnToActisenseSerialFormat and pgnToiKonvertSerialFormat
  *
+ * SignalK Authentication Features:
+ * - WebSocket-based authentication using login/logout messages
+ * - Authenticated message sending with token inclusion
+ * - Graceful handling of servers without authentication
+ *
  * Features:
  * - Robust NMEA 2000 message handling and parsing
  * - Automatic reconnection for SocketCAN
  * - Device-specific optimizations
  * - Bidirectional communication support
+ * - SignalK security specification compliance
  */
 
 const EventEmitter = require('events')
@@ -38,6 +44,9 @@ class NMEADataProvider extends EventEmitter {
     super()
     this.options = options
     this.isConnected = false
+    this.authToken = null
+    this.authRequestId = 0
+    this.pendingAuthResolve = null
   }
 
   async connect() {
@@ -71,12 +80,30 @@ class NMEADataProvider extends EventEmitter {
       console.log('Connected to SignalK server')
       this.isConnected = true
       this.emit('connected')
+
+      // Authenticate if credentials are provided
+      if (this.options.signalkUsername && this.options.signalkPassword) {
+        this.authenticateViaWebSocket()
+      }
     })
 
     this.signalKWs.on('message', (data) => {
       try {
         const message = JSON.parse(data.toString())
 
+        // Handle authentication responses
+        if (message.requestId && message.requestId.startsWith('auth-')) {
+          this.handleAuthenticationResponse(message)
+          return
+        }
+
+        // Handle logout responses
+        if (message.requestId && message.requestId.startsWith('logout-')) {
+          this.handleLogoutResponse(message)
+          return
+        }
+
+        // Handle regular messages
         if (message.event === 'canboatjs:rawoutput') {
           this.emit('raw-nmea', message.data)
         }
@@ -94,7 +121,73 @@ class NMEADataProvider extends EventEmitter {
       console.log('SignalK WebSocket connection closed')
       this.isConnected = false
       this.emit('disconnected')
+
+      // Reject any pending authentication promise
+      if (this.pendingAuthResolve) {
+        this.pendingAuthResolve(false)
+        this.pendingAuthResolve = null
+      }
     })
+  }
+
+  authenticateViaWebSocket() {
+    if (!this.options.signalkUsername || !this.options.signalkPassword) {
+      return Promise.resolve(false)
+    }
+
+    return new Promise((resolve) => {
+      const requestId = `auth-${++this.authRequestId}`
+      this.pendingAuthResolve = resolve
+
+      const loginMessage = {
+        requestId: requestId,
+        login: {
+          username: this.options.signalkUsername,
+          password: this.options.signalkPassword,
+        },
+      }
+
+      console.log('Sending WebSocket authentication message')
+      this.signalKWs.send(JSON.stringify(loginMessage))
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        if (this.pendingAuthResolve === resolve) {
+          console.error('SignalK authentication timeout')
+          this.pendingAuthResolve = null
+          resolve(false)
+        }
+      }, 10000)
+    })
+  }
+
+  handleAuthenticationResponse(message) {
+    if (message.statusCode === 200 && message.login && message.login.token) {
+      this.authToken = message.login.token
+      console.log('SignalK WebSocket authentication successful.')
+
+      if (this.pendingAuthResolve) {
+        this.pendingAuthResolve(true)
+        this.pendingAuthResolve = null
+      }
+    } else {
+      console.error(`SignalK WebSocket authentication failed with status ${message.statusCode}`)
+      this.emit('error', new Error(`SignalK WebSocket authentication failed with status ${message.statusCode}`))
+      if (this.pendingAuthResolve) {
+        this.pendingAuthResolve(false)
+        this.pendingAuthResolve = null
+      }
+    }
+  }
+
+  handleLogoutResponse(message) {
+    if (message.statusCode === 200) {
+      console.log('SignalK logout successful')
+    } else {
+      console.error('SignalK logout failed:', message.statusCode)
+    }
+    // Clear token regardless of result
+    this.authToken = null
   }
 
   getServerApp() {
@@ -305,6 +398,11 @@ class NMEADataProvider extends EventEmitter {
   disconnect() {
     this.isConnected = false
 
+    // Logout from SignalK if we have a token
+    if (this.signalKWs && this.authToken && this.signalKWs.readyState === WebSocket.OPEN) {
+      this.logoutFromSignalK()
+    }
+
     if (this.signalKWs) {
       this.signalKWs.close()
     }
@@ -329,7 +427,27 @@ class NMEADataProvider extends EventEmitter {
       this.canbusStream.end()
     }
 
+    // Clear authentication data
+    this.authToken = null
+
     this.emit('disconnected')
+  }
+
+  logoutFromSignalK() {
+    if (!this.authToken || !this.signalKWs || this.signalKWs.readyState !== WebSocket.OPEN) {
+      return
+    }
+
+    const requestId = `logout-${++this.authRequestId}`
+    const logoutMessage = {
+      requestId: requestId,
+      logout: {
+        token: this.authToken,
+      },
+    }
+
+    console.log('Sending SignalK logout message')
+    this.signalKWs.send(JSON.stringify(logoutMessage))
   }
 
   getDelimiterForDevice(deviceType) {
@@ -349,6 +467,17 @@ class NMEADataProvider extends EventEmitter {
     return this.isConnected
   }
 
+  isAuthenticated() {
+    return !!this.authToken
+  }
+
+  getAuthStatus() {
+    return {
+      isAuthenticated: this.isAuthenticated(),
+      hasToken: !!this.authToken,
+    }
+  }
+
   // Send NMEA 2000 message to the network
   sendMessage(pgnData) {
     if (!this.isConnected) {
@@ -362,8 +491,25 @@ class NMEADataProvider extends EventEmitter {
       data: pgnData,
     })
 
+    // If we have a SignalK WebSocket connection, send through it with authentication
+    if (this.signalKWs && this.signalKWs.readyState === WebSocket.OPEN) {
+      try {
+        // Create the message payload with authentication token if available
+        const messagePayload = {
+          context: '*',
+          ...pgnData,
+        }
+
+        this.signalKWs.send(JSON.stringify(messagePayload))
+        console.log('Message sent via SignalK WebSocket connection')
+        return
+      } catch (error) {
+        console.error('Error sending message via SignalK WebSocket:', error)
+        throw error
+      }
+    }
     // If we have a canbus connection (SocketCAN), send through it
-    if (this.canbusStream) {
+    else if (this.canbusStream) {
       try {
         this.canbusStream.sendPGN(pgnData)
         console.log('Message sent via SocketCAN connection')

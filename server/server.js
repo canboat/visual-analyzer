@@ -273,12 +273,17 @@ class VisualAnalyzerServer {
 
           // Send current connection status
           if (this.connectionState.isConnected) {
-            ws.send(
-              JSON.stringify({
-                event: 'nmea:connected',
-                timestamp: this.connectionState.lastUpdate,
-              }),
-            )
+            const statusData = {
+              event: 'nmea:connected',
+              timestamp: this.connectionState.lastUpdate,
+            }
+
+            // Add authentication status if this is a SignalK connection
+            if (this.nmeaProvider && this.nmeaProvider.options.type === 'signalk') {
+              statusData.auth = this.nmeaProvider.getAuthStatus()
+            }
+
+            ws.send(JSON.stringify(statusData))
           } else {
             ws.send(
               JSON.stringify({
@@ -441,10 +446,17 @@ class VisualAnalyzerServer {
         lastUpdate: new Date().toISOString(),
       }
 
-      this.broadcast({
+      const connectionData = {
         event: 'nmea:connected',
         timestamp: new Date().toISOString(),
-      })
+      }
+
+      // Add authentication status if this is a SignalK connection
+      if (this.nmeaProvider.options.type === 'signalk') {
+        connectionData.auth = this.nmeaProvider.getAuthStatus()
+      }
+
+      this.broadcast(connectionData)
     })
 
     this.nmeaProvider.on('disconnected', () => {
