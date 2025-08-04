@@ -10,6 +10,17 @@ import { ConnectionManagerPanel } from './ConnectionManagerPanel'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
 
+interface LoginStatus {
+  status: string
+  readOnlyAccess: boolean
+  authenticationRequired: boolean
+  allowNewUserRegistration: boolean
+  allowDeviceAccessRequests: boolean
+  userLevel: string
+  username: string
+  securityWasEnabled: boolean
+}
+
 const LOCALSTORAGE_KEY = 'visual_analyzer_settings'
 
 const saveFilterSettings = (filter: Filter, doFiltering: boolean) => {
@@ -101,6 +112,17 @@ const AppPanel = (props: any) => {
     lastUpdate: new Date().toISOString(),
     error: undefined,
   })
+  const [authStatus, setAuthStatus] = useState<{
+    isAuthenticated: boolean
+    isAdmin: boolean
+    username?: string
+    error?: string
+    loading: boolean
+  }>({
+    isAuthenticated: false,
+    isAdmin: false,
+    loading: true,
+  })
   const sentInfoReq: number[] = []
 
   // Debug function to test error display
@@ -122,6 +144,76 @@ const AppPanel = (props: any) => {
 
   // Check if we're in embedded mode (SignalK plugin) vs standalone mode
   const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
+
+  // Make debugging functions available globally
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Also make authentication status available for debugging
+      ;(window as any).getAuthStatus = () => authStatus
+      ;(window as any).forceAuthCheck = () => {
+        if (isEmbedded) {
+          // Force re-check authentication
+          setAuthStatus((prev) => ({ ...prev, loading: true }))
+          // The useEffect will re-run the authentication check
+        }
+      }
+    }
+  }, [authStatus, isEmbedded])
+
+  // Check authentication status when in embedded mode
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      if (!isEmbedded) {
+        // In standalone mode, skip authentication check
+        setAuthStatus({
+          isAuthenticated: true,
+          isAdmin: true,
+          loading: false,
+        })
+        return
+      }
+
+      try {
+        console.log('Checking authentication status...')
+        const response = await fetch('/loginStatus')
+        if (response.ok) {
+          const loginStatus: LoginStatus = await response.json()
+          console.log('Login status received:', loginStatus)
+
+          const isAuthenticated = loginStatus.status === 'loggedIn'
+          const isAdmin = loginStatus.userLevel === 'admin'
+
+          setAuthStatus({
+            isAuthenticated,
+            isAdmin,
+            username: loginStatus.username,
+            loading: false,
+            error: !isAuthenticated ? 'Not logged in' : !isAdmin ? 'Admin access required' : undefined,
+          })
+
+          if (!isAuthenticated) {
+            console.warn('User is not logged in')
+          } else if (!isAdmin) {
+            console.warn('User does not have admin privileges')
+          } else {
+            console.log('User authenticated with admin privileges')
+          }
+        } else {
+          throw new Error(`Authentication check failed: ${response.status}`)
+        }
+      } catch (error) {
+        console.error('Failed to check authentication:', error)
+        setAuthStatus({
+          isAuthenticated: false,
+          isAdmin: false,
+          loading: false,
+          error: `Authentication check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        })
+      }
+    }
+
+    checkAuthentication()
+  }, [isEmbedded])
 
   const parser = new FromPgn({
     returnNulls: true,
@@ -387,6 +479,48 @@ const AppPanel = (props: any) => {
   const selectedPgnValue = useObservableState<PGN | undefined>(selectedPgn, undefined)
   const info = selectedPgnValue ? dinfo[selectedPgnValue.src!] : { src: 0, info: {} }
 */
+
+  // Show loading spinner while checking authentication in embedded mode
+  if (isEmbedded && authStatus.loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+        <div className="text-center">
+          <div className="spinner-border text-primary mb-3" role="status">
+            <span className="sr-only">Loading...</span>
+          </div>
+          <p>Checking authentication...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error message if authentication failed in embedded mode
+  if (isEmbedded && (!authStatus.isAuthenticated || !authStatus.isAdmin)) {
+    return (
+      <div className="container-fluid mt-4">
+        <div className="alert alert-danger" role="alert">
+          <h4 className="alert-heading">
+            <i className="fas fa-exclamation-triangle"></i> Access Denied
+          </h4>
+          <p className="mb-0">
+            {!authStatus.isAuthenticated
+              ? 'You must be logged in to access the Visual Analyzer.'
+              : 'Admin privileges are required to access the Visual Analyzer.'}
+          </p>
+          {authStatus.error && (
+            <>
+              <hr />
+              <p className="mb-0 small text-muted">Error: {authStatus.error}</p>
+            </>
+          )}
+          <hr />
+          <p className="mb-0">
+            Please {!authStatus.isAuthenticated ? 'log in' : 'contact your system administrator'} and try again.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
