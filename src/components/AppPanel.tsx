@@ -158,7 +158,7 @@ const AppPanel = (props: any) => {
       ;(window as any).forceAuthCheck = () => {
         if (isEmbedded) {
           // Force re-check authentication
-          setAuthStatus(prev => ({ ...prev, loading: true }))
+          setAuthStatus((prev) => ({ ...prev, loading: true }))
           // The useEffect will re-run the authentication check
         }
       }
@@ -184,10 +184,10 @@ const AppPanel = (props: any) => {
         if (response.ok) {
           const loginStatus: LoginStatus = await response.json()
           console.log('Login status received:', loginStatus)
-          
+
           const isAuthenticated = loginStatus.status === 'loggedIn'
           const isAdmin = loginStatus.userLevel === 'admin'
-          
+
           setAuthStatus({
             isAuthenticated,
             isAdmin,
@@ -195,7 +195,7 @@ const AppPanel = (props: any) => {
             loading: false,
             error: !isAuthenticated ? 'Not logged in' : !isAdmin ? 'Admin access required' : undefined,
           })
-          
+
           if (!isAuthenticated) {
             console.warn('User is not logged in')
           } else if (!isAdmin) {
@@ -508,17 +508,14 @@ const AppPanel = (props: any) => {
             <i className="fas fa-exclamation-triangle"></i> Access Denied
           </h4>
           <p className="mb-0">
-            {!authStatus.isAuthenticated 
+            {!authStatus.isAuthenticated
               ? 'You must be logged in to access the Visual Analyzer.'
-              : 'Admin privileges are required to access the Visual Analyzer.'
-            }
+              : 'Admin privileges are required to access the Visual Analyzer.'}
           </p>
           {authStatus.error && (
             <>
               <hr />
-              <p className="mb-0 small text-muted">
-                Error: {authStatus.error}
-              </p>
+              <p className="mb-0 small text-muted">Error: {authStatus.error}</p>
             </>
           )}
           <hr />
