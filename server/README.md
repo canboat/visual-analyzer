@@ -22,11 +22,13 @@ The server dependencies are included in the main package.json. After running `np
 ### Quick Start
 
 1. Build the web application:
+
 ```bash
 npm run build
 ```
 
 2. Start the server:
+
 ```bash
 npm run server
 ```
@@ -38,11 +40,13 @@ The server will start with a default configuration. You can create connection pr
 ### Development Mode
 
 Run both the webpack dev server and the WebSocket server:
+
 ```bash
 npm run dev
 ```
 
 This will:
+
 - Start webpack in watch mode to rebuild on changes
 - Start the WebSocket server for data streaming
 - The web app will be available at `http://localhost:8080`
@@ -70,7 +74,7 @@ The server uses a `server/config.json` file for persistent configuration. The se
         "deviceType": "Yacht Devices RAW"
       },
       "local-signalk": {
-        "name": "Local SignalK Server", 
+        "name": "Local SignalK Server",
         "type": "signalk",
         "signalkUrl": "http://localhost:3000"
       },
@@ -89,6 +93,7 @@ The server uses a `server/config.json` file for persistent configuration. The se
 #### Environment Variables
 
 Basic server configuration can be overridden with environment variables:
+
 - `PORT`: Server port (default: 8080)
 - `PUBLIC_DIR`: Directory containing built web assets (default: ./public)
 
@@ -97,21 +102,25 @@ Basic server configuration can be overridden with environment variables:
 For backward compatibility, you can still configure data sources using environment variables (though the web interface is recommended):
 
 **SignalK Server:**
+
 ```bash
 SIGNALK_URL=http://localhost:3000 npm run server
 ```
 
 **Serial Port (NMEA 2000 Gateway):**
+
 ```bash
 SERIAL_PORT=/dev/ttyUSB0 BAUD_RATE=115200 npm run server
 ```
 
 **Network Source (TCP):**
+
 ```bash
 NETWORK_HOST=192.168.1.100 NETWORK_PORT=2000 NETWORK_PROTOCOL=tcp npm run server
 ```
 
 **Network Source (UDP):**
+
 ```bash
 NETWORK_HOST=192.168.1.100 NETWORK_PORT=2000 NETWORK_PROTOCOL=udp npm run server
 ```
@@ -137,17 +146,20 @@ The server provides a web-based configuration interface accessible at `http://lo
 The server exposes a REST API for programmatic configuration management:
 
 #### Configuration Endpoints
+
 - `GET /api/config`: Get current server configuration
 - `POST /api/config`: Update server configuration
 
 #### Connection Profile Endpoints
+
 - `GET /api/connections`: List all connection profiles
-- `POST /api/connections`: Create a new connection profile  
+- `POST /api/connections`: Create a new connection profile
 - `DELETE /api/connections/:profileId`: Delete a connection profile
 - `POST /api/connections/:profileId/activate`: Activate a connection profile
 - `POST /api/restart-connection`: Restart the current active connection
 
 #### SignalK Integration
+
 - `POST /skServer/inputTest`: Test SignalK server connectivity
 
 ## WebSocket API
@@ -157,12 +169,14 @@ The server exposes a REST API for programmatic configuration management:
 The server sends the following events to connected WebSocket clients:
 
 #### Data Events
+
 - `canboatjs:rawoutput`: Raw NMEA 2000 data string
 - `canboatjs:parsed`: Parsed NMEA 2000 data object with full field information
 - `signalk:delta`: SignalK delta format data (when connected to SignalK)
 - `canboatjs:synthetic`: Synthetic NMEA data generated from SignalK
 
 #### Status Events
+
 - `connection`: Initial connection confirmation with server information
 - `nmea:connected`: NMEA data source connected successfully
 - `nmea:disconnected`: NMEA data source disconnected
@@ -173,6 +187,7 @@ The server sends the following events to connected WebSocket clients:
 Clients can send commands to the server via WebSocket:
 
 **Subscribe to data stream:**
+
 ```json
 {
   "type": "subscribe",
@@ -181,14 +196,16 @@ Clients can send commands to the server via WebSocket:
 ```
 
 **Unsubscribe from data stream:**
+
 ```json
 {
-  "type": "unsubscribe", 
+  "type": "unsubscribe",
   "subscription": "nmea2000"
 }
 ```
 
 **Start heartbeat monitoring:**
+
 ```json
 {
   "type": "startHeartbeat"
@@ -196,6 +213,7 @@ Clients can send commands to the server via WebSocket:
 ```
 
 **Stop heartbeat monitoring:**
+
 ```json
 {
   "type": "stopHeartbeat"
@@ -205,47 +223,57 @@ Clients can send commands to the server via WebSocket:
 ## Supported Data Sources
 
 ### SignalK Server
+
 Connect to a SignalK server to receive NMEA 2000 data that has already been parsed and converted to SignalK format. The server will subscribe to all vessel data and can convert relevant updates back to NMEA 2000 format for visualization.
 
 **Features:**
+
 - WebSocket connection to SignalK server
 - Automatic subscription to vessel data streams
 - Bidirectional data conversion
 - Real-time delta message processing
 
 ### Serial Devices
+
 Connect directly to serial NMEA 2000 gateway devices to receive raw NMEA 2000 data with device-specific optimizations.
 
 **Supported Devices:**
+
 - **Actisense NGT-1**: Full support with ActisenseStream for optimal message handling
 - **Digital Yacht iKonvert**: Specialized iKonvertStream with device-specific formatting
 - **Yacht Devices YDWG-02**: Generic serial support with configurable delimiters
 - **Arduino-based gateways**: Configurable support for custom implementations
 
 **Features:**
+
 - Device-specific stream processors
 - Automatic baud rate detection
 - Robust error handling and reconnection
 - Custom delimiter support for different protocols
 
 ### Network Sources
+
 Connect to network-based NMEA 2000 data sources via TCP or UDP with automatic reconnection.
 
 **Supported Protocols:**
+
 - **TCP**: Reliable connection for stable network sources
 - **UDP**: Low-latency connection for broadcast data
 - **Yacht Devices RAW format**: Native support for YDWG network gateways
 
 **Examples:**
+
 - NMEA 2000 gateways with Ethernet connectivity
 - WiFi-enabled marine electronics
 - Network data loggers and concentrators
 - Yacht Devices YDWG-02 WiFi Gateway
 
 ### SocketCAN (Linux Only)
+
 Direct connection to Linux SocketCAN interfaces for native CAN bus access.
 
 **Features:**
+
 - Native Linux CAN support
 - Direct hardware interface access
 - Low-level CAN frame processing
@@ -301,6 +329,7 @@ Direct connection to Linux SocketCAN interfaces for native CAN bus access.
 ## Troubleshooting
 
 ### No Data Received
+
 1. **Check Connection Status**: Use the web interface to verify your data source is connected
 2. **Verify Data Source**: Ensure your NMEA 2000 source is actively transmitting data
 3. **Network Connectivity**: Test network connectivity to remote data sources
@@ -308,6 +337,7 @@ Direct connection to Linux SocketCAN interfaces for native CAN bus access.
 5. **Device Compatibility**: Verify your device type is correctly configured in the connection profile
 
 ### Serial Port Issues
+
 1. **Device Recognition**: Verify the device is connected and recognized by the system (`ls /dev/tty*` on Linux/macOS)
 2. **Permissions**: Check permissions on the serial device
    - Linux: Add user to `dialout` group: `sudo usermod -a -G dialout $USER`
@@ -317,6 +347,7 @@ Direct connection to Linux SocketCAN interfaces for native CAN bus access.
 5. **USB Driver**: Ensure proper USB drivers are installed for your device
 
 ### WebSocket Connection Issues
+
 1. **Server Status**: Verify the server is running and accessible at the configured port
 2. **Firewall Settings**: Check that the port is not blocked by firewall rules
 3. **Browser Console**: Check browser developer console for WebSocket error messages
@@ -324,12 +355,14 @@ Direct connection to Linux SocketCAN interfaces for native CAN bus access.
 5. **Network Configuration**: Verify network routing if accessing remotely
 
 ### Configuration Problems
+
 1. **File Permissions**: Ensure the server can read/write to the config.json file
 2. **JSON Validation**: Verify config.json syntax is valid JSON
 3. **Profile Validation**: Check that all required fields are present in connection profiles
 4. **Path Issues**: Verify file paths are correct and accessible
 
 ### Performance Issues
+
 1. **Data Rate**: Monitor incoming data rate - very high-frequency sources may need filtering
 2. **WebSocket Backpressure**: Check for WebSocket message queuing in high-data scenarios
 3. **Memory Usage**: Monitor server memory usage with high-frequency data streams
@@ -341,12 +374,12 @@ Direct connection to Linux SocketCAN interfaces for native CAN bus access.
 
 To extend the server with additional functionality:
 
-1. **Adding New Data Sources**: 
+1. **Adding New Data Sources**:
    - Extend the `NMEADataProvider` class in `nmea-provider.js`
    - Add connection logic for your specific data source type
    - Implement proper error handling and reconnection logic
 
-2. **Custom Message Processing**: 
+2. **Custom Message Processing**:
    - Modify WebSocket message handlers in `server.js`
    - Add new client command types and responses
    - Implement custom data filtering or transformation

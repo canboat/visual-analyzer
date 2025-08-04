@@ -20,7 +20,7 @@ export const SettingsPanel: React.FC = () => {
   const [config, setConfig] = useState<ServerConfig | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [formData, setFormData] = useState({
     signalkUrl: '',
     serialPort: '',
@@ -28,7 +28,7 @@ export const SettingsPanel: React.FC = () => {
     deviceType: 'Actisense' as 'Actisense' | 'iKonvert' | 'Yacht Devices',
     networkHost: '',
     networkPort: 2000,
-    networkProtocol: 'tcp' as 'tcp' | 'udp'
+    networkProtocol: 'tcp' as 'tcp' | 'udp',
   })
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export const SettingsPanel: React.FC = () => {
       if (response.ok) {
         const data = await response.json()
         setConfig(data)
-        
+
         // Get the active profile data to populate the form
         const activeProfile = data.connection.activeProfile
         if (activeProfile) {
@@ -53,7 +53,7 @@ export const SettingsPanel: React.FC = () => {
             deviceType: activeProfile.type === 'serial' ? activeProfile.deviceType || 'Actisense' : 'Actisense',
             networkHost: activeProfile.type === 'network' ? activeProfile.networkHost || '' : '',
             networkPort: activeProfile.type === 'network' ? activeProfile.networkPort || 2000 : 2000,
-            networkProtocol: activeProfile.type === 'network' ? activeProfile.networkProtocol || 'tcp' : 'tcp'
+            networkProtocol: activeProfile.type === 'network' ? activeProfile.networkProtocol || 'tcp' : 'tcp',
           })
         }
       } else {
@@ -69,23 +69,27 @@ export const SettingsPanel: React.FC = () => {
   const saveConfiguration = async () => {
     setSaving(true)
     setMessage(null)
-    
+
     try {
       // Note: This now uses the connection profiles API
       // Create a temporary profile for immediate use
       const profileData = {
         id: 'settings-temp',
         name: 'Settings Panel Configuration',
-        type: formData.signalkUrl ? 'signalk' : 
-              formData.serialPort ? 'serial' : 
-              formData.networkHost ? 'network' : 'network',
+        type: formData.signalkUrl
+          ? 'signalk'
+          : formData.serialPort
+            ? 'serial'
+            : formData.networkHost
+              ? 'network'
+              : 'network',
         signalkUrl: formData.signalkUrl || undefined,
         serialPort: formData.serialPort || undefined,
         baudRate: formData.baudRate,
         deviceType: formData.deviceType,
         networkHost: formData.networkHost || undefined,
         networkPort: formData.networkPort,
-        networkProtocol: formData.networkProtocol
+        networkProtocol: formData.networkProtocol,
       }
 
       // Save as a connection profile
@@ -98,13 +102,13 @@ export const SettingsPanel: React.FC = () => {
       })
 
       const result = await response.json()
-      
+
       if (response.ok && result.success) {
         // Activate the profile
         const activateResponse = await fetch(`/api/connections/${profileData.id}/activate`, {
-          method: 'POST'
+          method: 'POST',
         })
-        
+
         if (activateResponse.ok) {
           setMessage({ type: 'success', text: 'Configuration saved and activated successfully!' })
           setTimeout(() => {
@@ -126,7 +130,7 @@ export const SettingsPanel: React.FC = () => {
   const restartConnection = async () => {
     setLoading(true)
     setMessage(null)
-    
+
     try {
       const response = await fetch('/api/restart-connection', {
         method: 'POST',
@@ -136,7 +140,7 @@ export const SettingsPanel: React.FC = () => {
       })
 
       const result = await response.json()
-      
+
       if (response.ok && result.success) {
         setMessage({ type: 'success', text: 'Connection restart initiated!' })
         // Reload configuration after restart
@@ -154,22 +158,22 @@ export const SettingsPanel: React.FC = () => {
   }
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }))
   }
 
   const clearDataSource = (type: 'signalk' | 'serial' | 'network') => {
     switch (type) {
       case 'signalk':
-        setFormData(prev => ({ ...prev, signalkUrl: '' }))
+        setFormData((prev) => ({ ...prev, signalkUrl: '' }))
         break
       case 'serial':
-        setFormData(prev => ({ ...prev, serialPort: '', deviceType: 'Actisense' }))
+        setFormData((prev) => ({ ...prev, serialPort: '', deviceType: 'Actisense' }))
         break
       case 'network':
-        setFormData(prev => ({ ...prev, networkHost: '' }))
+        setFormData((prev) => ({ ...prev, networkHost: '' }))
         break
     }
   }
@@ -196,7 +200,8 @@ export const SettingsPanel: React.FC = () => {
         <p className="mb-3">Configure NMEA 2000 data sources and server settings.</p>
 
         <div className="alert alert-info mb-3" role="alert">
-          <strong>💡 New!</strong> For better connection management, use the <strong>Connections</strong> tab to create and manage multiple named connection profiles.
+          <strong>💡 New!</strong> For better connection management, use the <strong>Connections</strong> tab to create
+          and manage multiple named connection profiles.
         </div>
 
         {message && (
@@ -239,7 +244,9 @@ export const SettingsPanel: React.FC = () => {
                       id="signalkUrl"
                       placeholder="http://localhost:3000"
                       value={formData.signalkUrl}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('signalkUrl', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleInputChange('signalkUrl', e.target.value)
+                      }
                     />
                     <small className="form-text text-muted">
                       Connect to a SignalK server for converted NMEA 2000 data
@@ -264,7 +271,9 @@ export const SettingsPanel: React.FC = () => {
                       type="select"
                       id="deviceType"
                       value={formData.deviceType}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('deviceType', e.target.value as 'Actisense' | 'iKonvert' | 'Yacht Devices')}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleInputChange('deviceType', e.target.value as 'Actisense' | 'iKonvert' | 'Yacht Devices')
+                      }
                     >
                       <option value="Actisense">Actisense (NGT-1, NGT-1-ISO)</option>
                       <option value="iKonvert">iKonvert (NMEA 2000 Gateway)</option>
@@ -278,7 +287,9 @@ export const SettingsPanel: React.FC = () => {
                       id="serialPort"
                       placeholder="/dev/ttyUSB0 or COM3"
                       value={formData.serialPort}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('serialPort', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleInputChange('serialPort', e.target.value)
+                      }
                     />
                   </FormGroup>
                   <FormGroup>
@@ -287,7 +298,9 @@ export const SettingsPanel: React.FC = () => {
                       type="select"
                       id="baudRate"
                       value={formData.baudRate}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('baudRate', parseInt(e.target.value))}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleInputChange('baudRate', parseInt(e.target.value))
+                      }
                     >
                       <option value={9600}>9600</option>
                       <option value={38400}>38400</option>
@@ -320,7 +333,9 @@ export const SettingsPanel: React.FC = () => {
                       id="networkHost"
                       placeholder="192.168.1.100 or ydwg"
                       value={formData.networkHost}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('networkHost', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleInputChange('networkHost', e.target.value)
+                      }
                     />
                   </FormGroup>
                   <FormGroup>
@@ -329,7 +344,9 @@ export const SettingsPanel: React.FC = () => {
                       type="number"
                       id="networkPort"
                       value={formData.networkPort}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('networkPort', parseInt(e.target.value))}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleInputChange('networkPort', parseInt(e.target.value))
+                      }
                     />
                   </FormGroup>
                   <FormGroup>
@@ -338,15 +355,15 @@ export const SettingsPanel: React.FC = () => {
                       type="select"
                       id="networkProtocol"
                       value={formData.networkProtocol}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('networkProtocol', e.target.value as 'tcp' | 'udp')}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleInputChange('networkProtocol', e.target.value as 'tcp' | 'udp')
+                      }
                     >
                       <option value="tcp">TCP</option>
                       <option value="udp">UDP</option>
                     </Input>
                   </FormGroup>
-                  <small className="form-text text-muted">
-                    Connect to network-enabled NMEA 2000 gateways
-                  </small>
+                  <small className="form-text text-muted">Connect to network-enabled NMEA 2000 gateways</small>
                 </CardBody>
               </Card>
             </Col>
@@ -359,12 +376,16 @@ export const SettingsPanel: React.FC = () => {
                 <CardBody>
                   {config && (
                     <div>
-                      <p><strong>Port:</strong> {config.server.port}</p>
-                      <p><strong>Public Directory:</strong> {config.server.publicDir}</p>
+                      <p>
+                        <strong>Port:</strong> {config.server.port}
+                      </p>
+                      <p>
+                        <strong>Public Directory:</strong> {config.server.publicDir}
+                      </p>
                       <div className="alert alert-info">
                         <small>
-                          <strong>Note:</strong> Server port changes require a full server restart.
-                          Use environment variable PORT=8080 to change the port.
+                          <strong>Note:</strong> Server port changes require a full server restart. Use environment
+                          variable PORT=8080 to change the port.
                         </small>
                       </div>
                     </div>
@@ -375,27 +396,13 @@ export const SettingsPanel: React.FC = () => {
           </Row>
 
           <div className="text-center mt-4">
-            <Button 
-              color="primary" 
-              onClick={saveConfiguration} 
-              disabled={saving}
-              className="mr-2"
-            >
+            <Button color="primary" onClick={saveConfiguration} disabled={saving} className="mr-2">
               {saving ? 'Saving...' : 'Save Configuration'}
             </Button>
-            <Button 
-              color="secondary" 
-              onClick={restartConnection} 
-              disabled={loading}
-              className="mr-2"
-            >
+            <Button color="secondary" onClick={restartConnection} disabled={loading} className="mr-2">
               {loading ? 'Restarting...' : 'Restart Connection'}
             </Button>
-            <Button 
-              color="outline-secondary" 
-              onClick={loadConfiguration} 
-              disabled={loading}
-            >
+            <Button color="outline-secondary" onClick={loadConfiguration} disabled={loading}>
               Reload
             </Button>
           </div>

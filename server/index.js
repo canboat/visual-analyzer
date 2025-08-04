@@ -4,7 +4,6 @@ const VisualAnalyzerServer = require('./server')
 const path = require('path')
 const fs = require('fs')
 
-
 // Load configuration from file if it exists
 const configPath = process.env.VISUAL_ANALYZER_CONFIG || path.join(__dirname, 'config.json')
 let fileConfig = {}
@@ -20,12 +19,12 @@ if (fs.existsSync(configPath)) {
 // Configuration options (environment variables override config file)
 const config = {
   port: process.env.PORT || fileConfig.server?.port || 8080,
-  
+
   // Connection profiles system
   connections: fileConfig.connections || {
     activeConnection: null,
-    profiles: {}
-  }
+    profiles: {},
+  },
 }
 
 console.log('Starting Visual Analyzer Server with configuration:')

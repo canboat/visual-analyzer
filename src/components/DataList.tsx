@@ -22,41 +22,59 @@ export const DataList = (props: DataListProps) => {
 
   const filterConfig = getFilterConfig(filter)
 
-  const addToFilteredPgns = useCallback((i: string) => {
-    const safeFilteredPgns = filter?.pgn || []
-    if (safeFilteredPgns.indexOf(i) === -1) {
-      props.filter.next({ ...filter, pgn: [...safeFilteredPgns, i] })
-    }
-  }, [filter, props.filter])
+  const addToFilteredPgns = useCallback(
+    (i: string) => {
+      const safeFilteredPgns = filter?.pgn || []
+      if (safeFilteredPgns.indexOf(i) === -1) {
+        props.filter.next({ ...filter, pgn: [...safeFilteredPgns, i] })
+      }
+    },
+    [filter, props.filter],
+  )
 
-  const addToFilteredSrcs = useCallback((src: number) => {
-    const safeFilteredSrcs = filter?.src || []
-    if (safeFilteredSrcs.indexOf(src) === -1) {
-      props.filter.next({ ...filter, src: [...safeFilteredSrcs, src] })
-    }
-  }, [filter, props.filter])
+  const addToFilteredSrcs = useCallback(
+    (src: number) => {
+      const safeFilteredSrcs = filter?.src || []
+      if (safeFilteredSrcs.indexOf(src) === -1) {
+        props.filter.next({ ...filter, src: [...safeFilteredSrcs, src] })
+      }
+    },
+    [filter, props.filter],
+  )
 
-  const handleRowClick = useCallback((row: PGN) => {
-    props.onRowClicked(row)
-  }, [props.onRowClicked])
+  const handleRowClick = useCallback(
+    (row: PGN) => {
+      props.onRowClicked(row)
+    },
+    [props.onRowClicked],
+  )
 
-  const handlePgnClick = useCallback((e: React.MouseEvent, pgnString: string) => {
-    e.preventDefault()
-    e.stopPropagation()
-    addToFilteredPgns(pgnString)
-  }, [addToFilteredPgns])
+  const handlePgnClick = useCallback(
+    (e: React.MouseEvent, pgnString: string) => {
+      e.preventDefault()
+      e.stopPropagation()
+      addToFilteredPgns(pgnString)
+    },
+    [addToFilteredPgns],
+  )
 
-  const handleSrcClick = useCallback((e: React.MouseEvent, src: number) => {
-    e.preventDefault()
-    e.stopPropagation()
-    addToFilteredSrcs(src)
-  }, [addToFilteredSrcs])
+  const handleSrcClick = useCallback(
+    (e: React.MouseEvent, src: number) => {
+      e.preventDefault()
+      e.stopPropagation()
+      addToFilteredSrcs(src)
+    },
+    [addToFilteredSrcs],
+  )
 
-  const handleDescriptionClick = useCallback((e: React.MouseEvent, row: PGN) => {
-    e.preventDefault()
-    e.stopPropagation()
-    handleRowClick(row)
-  }, [handleRowClick])
+  const handleDescriptionClick = useCallback(
+    (e: React.MouseEvent, row: PGN) => {
+      e.preventDefault()
+      e.stopPropagation()
+      handleRowClick(row)
+    },
+    [handleRowClick],
+  )
   return (
     <div
       style={{
@@ -91,23 +109,17 @@ export const DataList = (props: DataListProps) => {
               return (
                 <tr key={getRowKey(row)} onClick={() => handleRowClick(row)}>
                   <td>{row.timestamp!.split('T')[1]}</td>
-                  <td 
-                    style={{ color: 'red', cursor: 'pointer' }} 
+                  <td
+                    style={{ color: 'red', cursor: 'pointer' }}
                     onMouseDown={(e) => handlePgnClick(e, row.pgn.toString())}
                   >
                     {row.pgn}
                   </td>
-                  <td 
-                    style={{ color: 'red', cursor: 'pointer' }} 
-                    onMouseDown={(e) => handleSrcClick(e, row.src!)}
-                  >
+                  <td style={{ color: 'red', cursor: 'pointer' }} onMouseDown={(e) => handleSrcClick(e, row.src!)}>
                     {row.src}
                   </td>
                   <td>{row.dst}</td>
-                  <td
-                    onMouseDown={(e) => handleDescriptionClick(e, row)}
-                    style={{ cursor: 'pointer' }}
-                  >
+                  <td onMouseDown={(e) => handleDescriptionClick(e, row)} style={{ cursor: 'pointer' }}>
                     <span style={{ fontFamily: 'monospace' }}>{row.getDefinition().Description}</span>
                   </td>
                 </tr>

@@ -1,18 +1,18 @@
 /**
  * NMEA Data Provider for Visual Analyzer
- * 
+ *
  * This module provides connectivity to various NMEA 2000 data sources including:
  * - SignalK WebSocket connections
  * - Serial devices (Actisense NGT-1, iKonvert, Yacht Devices)
  * - Network sources (TCP/UDP)
  * - SocketCAN interfaces (Linux only)
- * 
+ *
  * Updated to use specialized canboatjs streams:
  * - ActisenseStream for Actisense NGT-1 serial devices
- * - iKonvertStream for Digital Yacht iKonvert serial devices  
+ * - iKonvertStream for Digital Yacht iKonvert serial devices
  * - canbus for SocketCAN connections
  * - Proper message formatting with pgnToActisenseSerialFormat and pgnToiKonvertSerialFormat
- * 
+ *
  * Features:
  * - Robust NMEA 2000 message handling and parsing
  * - Automatic reconnection for SocketCAN
@@ -21,7 +21,14 @@
  */
 
 const EventEmitter = require('events')
-const { canbus, serial: ActisenseStream, iKonvert: iKonvertStream, pgnToYdgwRawFormat, pgnToiKonvertSerialFormat, pgnToActisenseN2KAsciiFormat } = require('@canboat/canboatjs')
+const {
+  canbus,
+  serial: ActisenseStream,
+  iKonvert: iKonvertStream,
+  pgnToYdgwRawFormat,
+  pgnToiKonvertSerialFormat,
+  pgnToActisenseN2KAsciiFormat,
+} = require('@canboat/canboatjs')
 const net = require('net')
 const dgram = require('dgram')
 const WebSocket = require('ws')
@@ -35,7 +42,7 @@ class NMEADataProvider extends EventEmitter {
 
   async connect() {
     try {
-      if ( this.options.type === 'signalk' ) {
+      if (this.options.type === 'signalk') {
         await this.connectToSignalK()
       } else if (this.options.type === 'serial') {
         await this.connectToSerial()
@@ -43,7 +50,7 @@ class NMEADataProvider extends EventEmitter {
         await this.connectToNetwork()
       } else if (this.options.type === 'socketcan') {
         await this.connectToSocketCAN()
-      }      
+      }
     } catch (error) {
       console.error('Failed to connect to NMEA source:', error)
       this.emit('error', error)
@@ -51,12 +58,13 @@ class NMEADataProvider extends EventEmitter {
   }
 
   async connectToSignalK() {
-    const url = this.options.signalkUrl.replace('http', 'ws') + '/signalk/v1/stream?subscribe=none&events=canboatjs:rawoutput'
-    
+    const url =
+      this.options.signalkUrl.replace('http', 'ws') + '/signalk/v1/stream?subscribe=none&events=canboatjs:rawoutput'
+
     console.log('Connecting to SignalK WebSocket:', url)
 
     this.signalKWs = new WebSocket(url, {
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
     })
 
     this.signalKWs.on('open', () => {
@@ -64,7 +72,7 @@ class NMEADataProvider extends EventEmitter {
       this.isConnected = true
       this.emit('connected')
     })
-      
+
     this.signalKWs.on('message', (data) => {
       try {
         const message = JSON.parse(data.toString())
@@ -111,7 +119,7 @@ class NMEADataProvider extends EventEmitter {
       },
       listenerCount: (event) => {
         return this.listenerCount(event === 'canboatjs:rawoutput' ? 'raw-nmea' : event)
-      }
+      },
     }
   }
 
@@ -119,26 +127,25 @@ class NMEADataProvider extends EventEmitter {
     try {
       const deviceType = this.options.deviceType || 'Actisense'
       console.log(`Connecting to serial port: ${this.options.serialPort} (${deviceType})`)
-      
+
       if (deviceType === 'Actisense') {
         // Use ActisenseStream from canboatjs for Actisense NGT-1 devices
         this.serialStream = new ActisenseStream({
           device: this.options.serialPort,
           baudrate: this.options.baudRate,
           reconnect: false,
-          app: this.getServerApp()
+          app: this.getServerApp(),
         })
 
         console.log('Actisense serial connection established using canboatjs ActisenseStream')
         this.isConnected = true
         this.emit('connected')
-
       } else if (deviceType === 'iKonvert') {
         // Use iKonvertStream from canboatjs for Digital Yacht iKonvert devices
         this.serialStream = new iKonvertStream({
           device: this.options.serialPort,
           baudrate: this.options.baudRate || 230400,
-          app: this.getServerApp()
+          app: this.getServerApp(),
         })
 
         console.log('iKonvert serial connection established using canboatjs iKonvertStream')
@@ -148,16 +155,16 @@ class NMEADataProvider extends EventEmitter {
         // Fall back to generic serial port handling for other devices
         const SerialPort = require('serialport')
         const { ReadlineParser } = require('@serialport/parser-readline')
-        
+
         this.serialPort = new SerialPort({
           path: this.options.serialPort,
-          baudRate: this.options.baudRate || 115200
+          baudRate: this.options.baudRate || 115200,
         })
 
         // Configure parser based on device type
         const delimiter = this.getDelimiterForDevice(deviceType)
         const parser = this.serialPort.pipe(new ReadlineParser({ delimiter }))
-        
+
         parser.on('data', (line) => {
           const trimmed = line.trim()
           if (trimmed) {
@@ -172,7 +179,6 @@ class NMEADataProvider extends EventEmitter {
 
         console.log(`Generic serial port connected successfully for ${deviceType}`)
       }
-      
     } catch (error) {
       console.error('Failed to connect to serial port:', error)
       throw error
@@ -189,10 +195,10 @@ class NMEADataProvider extends EventEmitter {
 
   async connectToTCP() {
     console.log(`Connecting to TCP source: ${this.options.networkHost}:${this.options.networkPort}`)
-    
+
     this.tcpClient = net.createConnection({
       host: this.options.networkHost,
-      port: this.options.networkPort
+      port: this.options.networkPort,
     })
 
     this.tcpClient.on('connect', () => {
@@ -203,7 +209,7 @@ class NMEADataProvider extends EventEmitter {
 
     this.tcpClient.on('data', (data) => {
       const lines = data.toString().split('\n')
-      lines.forEach(line => {
+      lines.forEach((line) => {
         const trimmed = line.trim()
         if (trimmed) {
           this.emit('raw-nmea', trimmed)
@@ -225,12 +231,12 @@ class NMEADataProvider extends EventEmitter {
 
   async connectToUDP() {
     console.log(`Listening for UDP data on port: ${this.options.networkPort}`)
-    
+
     this.udpSocket = dgram.createSocket('udp4')
 
-    this.udpSocket.on('message', (msg, rinfo) => {
+    this.udpSocket.on('message', (msg) => {
       const lines = msg.toString().split('\n')
-      lines.forEach(line => {
+      lines.forEach((line) => {
         const trimmed = line.trim()
         if (trimmed) {
           this.emit('raw-nmea', trimmed)
@@ -244,14 +250,14 @@ class NMEADataProvider extends EventEmitter {
     })
 
     this.udpSocket.bind(this.options.networkPort)
-      this.isConnected = true
-      this.emit('connected')
+    this.isConnected = true
+    this.emit('connected')
   }
 
   async connectToSocketCAN() {
     try {
       console.log(`Connecting to SocketCAN interface: ${this.options.socketcanInterface}`)
-      
+
       // Create canbus stream with SocketCAN interface using canboatjs
       // This replaces the direct socketcan implementation with the more robust
       // canboatjs canbus class which handles:
@@ -264,9 +270,9 @@ class NMEADataProvider extends EventEmitter {
         canDevice: this.options.socketcanInterface || 'can0',
         app: this.getServerApp(),
       }
-      
+
       this.canbusStream = new canbus(canbusOptions)
-      
+
       // Start the canbus stream
       this.canbusStream.start()
       console.log('SocketCAN connection established using canboatjs canbus')
@@ -289,7 +295,7 @@ class NMEADataProvider extends EventEmitter {
     if (update.source && update.source.pgn) {
       const pgn = update.source.pgn
       const timestamp = new Date(update.timestamp || Date.now()).toISOString()
-      
+
       // Create a synthetic NMEA 2000 message for visualization
       const syntheticMessage = `${timestamp},2,${pgn},1,255,8,00,00,00,00,00,00,00,00`
       this.emit('synthetic-nmea', syntheticMessage)
@@ -298,42 +304,42 @@ class NMEADataProvider extends EventEmitter {
 
   disconnect() {
     this.isConnected = false
-    
+
     if (this.signalKWs) {
       this.signalKWs.close()
     }
-    
+
     if (this.serialPort && this.serialPort.isOpen) {
       this.serialPort.close()
     }
-    
+
     if (this.serialStream) {
       this.serialStream.end()
     }
-    
+
     if (this.tcpClient) {
       this.tcpClient.destroy()
     }
-    
+
     if (this.udpSocket) {
       this.udpSocket.close()
     }
-    
+
     if (this.canbusStream) {
       this.canbusStream.end()
     }
-    
+
     this.emit('disconnected')
   }
 
   getDelimiterForDevice(deviceType) {
     switch (deviceType) {
       case 'Actisense':
-        return '\n'  // Actisense uses newline
+        return '\n' // Actisense uses newline
       case 'iKonvert':
-        return '\r\n'  // iKonvert typically uses CRLF
+        return '\r\n' // iKonvert typically uses CRLF
       case 'Yacht Devices':
-        return '\n'  // Yacht Devices uses newline
+        return '\n' // Yacht Devices uses newline
       default:
         return '\n'
     }
@@ -348,16 +354,16 @@ class NMEADataProvider extends EventEmitter {
     if (!this.isConnected) {
       throw new Error('No active connection to send message')
     }
-    
+
     console.log('Sending NMEA 2000 message:', {
       pgn: pgnData.pgn,
       src: pgnData.src,
       dest: pgnData.dest,
-      data: pgnData
+      data: pgnData,
     })
 
     // If we have a canbus connection (SocketCAN), send through it
-    if (this.canbusStream ) {
+    if (this.canbusStream) {
       try {
         this.canbusStream.sendPGN(pgnData)
         console.log('Message sent via SocketCAN connection')
@@ -366,7 +372,7 @@ class NMEADataProvider extends EventEmitter {
         console.error('Error sending message via SocketCAN:', error)
         throw error
       }
-    } else if (this.serialStream ) {
+    } else if (this.serialStream) {
       this.emit('nmea2000JsonOut', pgnData)
     } else if (this.tcpClient && this.tcpClient.readyState === 'open') {
       try {
@@ -380,7 +386,7 @@ class NMEADataProvider extends EventEmitter {
         console.error('Error sending message via TCP:', error)
         throw error
       }
-    }/*else if (this.udpClient) {
+    } /*else if (this.udpClient) {
       try {
         const message = this.formatMessageForDevice(pgnData)
         if (message) {
@@ -406,7 +412,7 @@ class NMEADataProvider extends EventEmitter {
     } else if (deviceType === 'Yacht Devices RAW') {
       return pgnToYdgwRawFormat(pgnData)
     }
-   }
+  }
 }
 
 module.exports = NMEADataProvider
