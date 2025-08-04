@@ -58,12 +58,7 @@ export const getRowKey = (pgn: PGN): string => {
 const createFieldDataHash = (fields: any): string => {
   try {
     // Serialize the fields object to a stable string representation
-    const serialized = JSON.stringify(
-      fields,
-      Object.keys(fields)
-        .filter((key) => key !== 'data')
-        .sort(),
-    )
+    const serialized = JSON.stringify(fields, (key, value) => (key !== 'data' ? value : undefined))
 
     // Simple djb2 hash algorithm implementation
     let hash = 5381
