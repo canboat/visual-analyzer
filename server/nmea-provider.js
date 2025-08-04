@@ -15,8 +15,6 @@
  *
  * SignalK Authentication Features:
  * - WebSocket-based authentication using login/logout messages
- * - Automatic token renewal before expiration
- * - Token validation and renewal
  * - Authenticated message sending with token inclusion
  * - Graceful handling of servers without authentication
  *
@@ -47,7 +45,6 @@ class NMEADataProvider extends EventEmitter {
     this.options = options
     this.isConnected = false
     this.authToken = null
-    this.tokenExpiry = null
     this.authRequestId = 0
     this.pendingAuthResolve = null
   }
@@ -100,12 +97,6 @@ class NMEADataProvider extends EventEmitter {
           return
         }
 
-        // Handle token validation responses
-        if (message.requestId && message.requestId.startsWith('validate-')) {
-          this.handleValidationResponse(message)
-          return
-        }
-
         // Handle logout responses
         if (message.requestId && message.requestId.startsWith('logout-')) {
           this.handleLogoutResponse(message)
@@ -131,12 +122,6 @@ class NMEADataProvider extends EventEmitter {
       this.isConnected = false
       this.emit('disconnected')
 
-      // Clear token renewal timer and auth state
-      if (this.tokenRenewalTimer) {
-        clearTimeout(this.tokenRenewalTimer)
-        this.tokenRenewalTimer = null
-      }
-      
       // Reject any pending authentication promise
       if (this.pendingAuthResolve) {
         this.pendingAuthResolve(false)
@@ -179,9 +164,7 @@ class NMEADataProvider extends EventEmitter {
   handleAuthenticationResponse(message) {
     if (message.statusCode === 200 && message.login && message.login.token) {
       this.authToken = message.login.token
-      this.tokenExpiry = Date.now() + (message.login.timeToLive * 1000)
-      console.log(`SignalK WebSocket authentication successful. Token expires in ${message.login.timeToLive} seconds.`)
-      this.setupTokenRenewal()
+      console.log('SignalK WebSocket authentication successful.')
       
       if (this.pendingAuthResolve) {
         this.pendingAuthResolve(true)
@@ -197,19 +180,6 @@ class NMEADataProvider extends EventEmitter {
     }
   }
 
-  handleValidationResponse(message) {
-    if (message.statusCode === 200 && message.validate && message.validate.token) {
-      this.authToken = message.validate.token
-      this.tokenExpiry = Date.now() + (message.validate.timeToLive * 1000 || 86400000)
-      console.log(`SignalK token validated and renewed. New expiry: ${new Date(this.tokenExpiry).toISOString()}`)
-      this.setupTokenRenewal()
-    } else {
-      console.error(`SignalK token validation failed with status ${message.statusCode}`)
-      this.authToken = null
-      this.tokenExpiry = null
-    }
-  }
-
   handleLogoutResponse(message) {
     if (message.statusCode === 200) {
       console.log('SignalK logout successful')
@@ -218,51 +188,6 @@ class NMEADataProvider extends EventEmitter {
     }
     // Clear token regardless of result
     this.authToken = null
-    this.tokenExpiry = null
-  }
-
-  setupTokenRenewal() {
-    if (this.tokenRenewalTimer) {
-      clearTimeout(this.tokenRenewalTimer)
-    }
-
-    if (!this.tokenExpiry) {
-      return
-    }
-
-    // Schedule renewal 5 minutes before expiry
-    const renewalTime = this.tokenExpiry - Date.now() - 300000
-    if (renewalTime > 0) {
-      this.tokenRenewalTimer = setTimeout(() => {
-        console.log('Attempting to renew SignalK token')
-        this.validateAndRenewToken()
-      }, renewalTime)
-    }
-  }
-
-  async validateAndRenewToken() {
-    if (!this.authToken || !this.isConnected) {
-      return false
-    }
-
-    const requestId = `validate-${++this.authRequestId}`
-    
-    const validateMessage = {
-      requestId: requestId,
-      validate: {
-        token: this.authToken
-      }
-    }
-
-    console.log('Sending token validation message')
-    this.signalKWs.send(JSON.stringify(validateMessage))
-  }
-
-  isTokenExpired() {
-    if (!this.authToken || !this.tokenExpiry) {
-      return true
-    }
-    return Date.now() >= (this.tokenExpiry - 60000) // Consider expired 1 minute before actual expiry
   }
 
   getServerApp() {
@@ -473,12 +398,6 @@ class NMEADataProvider extends EventEmitter {
   disconnect() {
     this.isConnected = false
 
-    // Clear token renewal timer
-    if (this.tokenRenewalTimer) {
-      clearTimeout(this.tokenRenewalTimer)
-      this.tokenRenewalTimer = null
-    }
-
     // Logout from SignalK if we have a token
     if (this.signalKWs && this.authToken && this.signalKWs.readyState === WebSocket.OPEN) {
       this.logoutFromSignalK()
@@ -510,7 +429,6 @@ class NMEADataProvider extends EventEmitter {
 
     // Clear authentication data
     this.authToken = null
-    this.tokenExpiry = null
 
     this.emit('disconnected')
   }
@@ -550,15 +468,13 @@ class NMEADataProvider extends EventEmitter {
   }
 
   isAuthenticated() {
-    return this.authToken && !this.isTokenExpired()
+    return !!this.authToken
   }
 
   getAuthStatus() {
     return {
       isAuthenticated: this.isAuthenticated(),
-      hasToken: !!this.authToken,
-      tokenExpiry: this.tokenExpiry,
-      timeUntilExpiry: this.tokenExpiry ? Math.max(0, this.tokenExpiry - Date.now()) : null
+      hasToken: !!this.authToken
     }
   }
 
@@ -582,11 +498,6 @@ class NMEADataProvider extends EventEmitter {
         const messagePayload = {
           context: "*",
           ...pgnData
-        }
-
-        // Include token if we have one (for non-HTTP clients as per SignalK spec)
-        if (this.authToken) {
-          messagePayload.token = this.authToken
         }
 
         this.signalKWs.send(JSON.stringify(messagePayload))
