@@ -109,7 +109,7 @@ export const FilterPanel = (props: FilterPanelProps) => {
     }
     return false
   })
-  
+
   const filter = useObservableState(props.filter)
   const availableSrcs = useObservableState(props.availableSrcs)
   const deviceInfo = useObservableState(props.deviceInfo)
@@ -128,22 +128,14 @@ export const FilterPanel = (props: FilterPanelProps) => {
 
   return (
     <Card>
-      <CardHeader
-        className="d-flex justify-content-between align-items-center py-2"
-        style={{ cursor: 'pointer' }}
-      >
-        <div 
-          className="d-flex align-items-center flex-grow-1"
-          onClick={() => setIsOpen(!isOpen)}
-        >
+      <CardHeader className="d-flex justify-content-between align-items-center py-2" style={{ cursor: 'pointer' }}>
+        <div className="d-flex align-items-center flex-grow-1" onClick={() => setIsOpen(!isOpen)}>
           <h6 className="mb-0" style={{ fontWeight: 'bold' }}>
             Filters
           </h6>
         </div>
         <div className="d-flex align-items-center">
-          <span style={{ fontSize: '14px', fontWeight: '500', marginRight: '8px' }}>
-            Enable Filtering
-          </span>
+          <span style={{ fontSize: '14px', fontWeight: '500', marginRight: '8px' }}>Enable Filtering</span>
           <Label className="switch switch-text switch-primary mb-0 me-3">
             <Input
               type="checkbox"

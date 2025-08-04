@@ -10,7 +10,7 @@ class VisualAnalyzerServer {
   constructor(options = {}) {
     this.port = options.port || 8080
     this.publicDir = path.join(__dirname, '../public')
-    
+
     // Platform-appropriate config file location
     let configDir
     if (process.platform === 'win32') {
@@ -20,7 +20,7 @@ class VisualAnalyzerServer {
       // On Unix-like systems, use ~/.visual-analyzer
       configDir = path.join(os.homedir(), '.visual-analyzer')
     }
-    
+
     const defaultConfigPath = path.join(configDir, 'config.json')
     this.configFile = process.env.VISUAL_ANALYZER_CONFIG || defaultConfigPath
     this.app = express()
@@ -28,17 +28,17 @@ class VisualAnalyzerServer {
     this.wss = new WebSocket.Server({ server: this.server })
     this.nmeaProvider = null
     this.currentConfig = { connections: { activeConnection: null, profiles: {} } }
-    
+
     // Track current connection state including errors
     this.connectionState = {
       isConnected: false,
       lastUpdate: new Date().toISOString(),
-      error: null
+      error: null,
     }
-    
+
     // Load configuration on startup
     this.loadConfiguration()
-    
+
     this.setupRoutes()
     this.setupWebSocket()
   }
@@ -49,18 +49,18 @@ class VisualAnalyzerServer {
       if (fs.existsSync(this.configFile)) {
         const data = fs.readFileSync(this.configFile, 'utf8')
         const config = JSON.parse(data)
-        
+
         // Merge with defaults
         this.currentConfig = {
           connections: {
             activeConnection: null,
-            profiles: {}
+            profiles: {},
           },
-          ...config
+          ...config,
         }
-        
+
         console.log(`Configuration loaded from ${this.configFile}`)
-        
+
         // Auto-connect to active connection if specified
         if (this.currentConfig.connections.activeConnection) {
           setTimeout(() => {
@@ -70,7 +70,7 @@ class VisualAnalyzerServer {
       } else {
         console.log(`No configuration file found at ${this.configFile}`)
         console.log('Using default configuration. Settings will be saved to this location when modified.')
-        
+
         // Create the config directory if it doesn't exist
         const configDir = path.dirname(this.configFile)
         if (!fs.existsSync(configDir)) {
@@ -94,12 +94,12 @@ class VisualAnalyzerServer {
   setupRoutes() {
     // Add JSON parsing middleware
     this.app.use(express.json())
-    
+
     // API routes for configuration
     this.app.get('/api/config', (req, res) => {
       res.json(this.getConfiguration())
     })
-    
+
     this.app.post('/api/config', (req, res) => {
       try {
         this.updateConfiguration(req.body)
@@ -108,11 +108,11 @@ class VisualAnalyzerServer {
         res.status(400).json({ success: false, error: error.message })
       }
     })
-    
+
     this.app.get('/api/connections', (req, res) => {
       res.json(this.getConnectionProfiles())
     })
-    
+
     this.app.post('/api/connections', (req, res) => {
       try {
         this.saveConnectionProfile(req.body)
@@ -121,7 +121,7 @@ class VisualAnalyzerServer {
         res.status(400).json({ success: false, error: error.message })
       }
     })
-    
+
     this.app.delete('/api/connections/:profileId', (req, res) => {
       try {
         this.deleteConnectionProfile(req.params.profileId)
@@ -130,7 +130,7 @@ class VisualAnalyzerServer {
         res.status(400).json({ success: false, error: error.message })
       }
     })
-    
+
     this.app.post('/api/connections/:profileId/activate', (req, res) => {
       try {
         this.activateConnectionProfile(req.params.profileId)
@@ -139,7 +139,7 @@ class VisualAnalyzerServer {
         res.status(400).json({ success: false, error: error.message })
       }
     })
-    
+
     this.app.post('/api/restart-connection', (req, res) => {
       try {
         this.restartNMEAConnection()
@@ -153,11 +153,11 @@ class VisualAnalyzerServer {
     this.app.post('/skServer/inputTest', (req, res) => {
       try {
         const { value, sendToN2K } = req.body
-        
+
         if (!value) {
-          return res.status(400).json({ 
-            success: false, 
-            error: 'Missing required field: value' 
+          return res.status(400).json({
+            success: false,
+            error: 'Missing required field: value',
           })
         }
 
@@ -166,16 +166,16 @@ class VisualAnalyzerServer {
         try {
           pgnData = JSON.parse(value)
         } catch (parseError) {
-          return res.status(400).json({ 
-            success: false, 
-            error: 'Invalid JSON in value field: ' + parseError.message 
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid JSON in value field: ' + parseError.message,
           })
         }
 
         console.log('Received NMEA 2000 message for transmission:', {
           pgn: pgnData.pgn,
           sendToN2K: sendToN2K,
-          data: pgnData
+          data: pgnData,
         })
 
         // If we have an active NMEA provider, attempt to send the message
@@ -197,21 +197,20 @@ class VisualAnalyzerServer {
         }
 
         // Return success response in SignalK format
-        res.json({ 
+        res.json({
           success: true,
           message: 'Message processed successfully',
-          transmitted: sendToN2K && this.nmeaProvider ? true : false
+          transmitted: sendToN2K && this.nmeaProvider ? true : false,
         })
-
       } catch (error) {
         console.error('Error processing input test request:', error)
-        res.status(500).json({ 
-          success: false, 
-          error: error.message 
+        res.status(500).json({
+          success: false,
+          error: error.message,
         })
       }
     })
-    
+
     // Serve static files from public directory
     this.app.use(express.static(this.publicDir))
 
@@ -229,19 +228,21 @@ class VisualAnalyzerServer {
   setupWebSocket() {
     this.wss.on('connection', (ws, req) => {
       console.log('WebSocket client connected from:', req.socket.remoteAddress)
-      
+
       // Send initial connection message
-      ws.send(JSON.stringify({
-        event: 'connection',
-        message: 'Connected to Visual Analyzer WebSocket server'
-      }))
+      ws.send(
+        JSON.stringify({
+          event: 'connection',
+          message: 'Connected to Visual Analyzer WebSocket server',
+        }),
+      )
 
       // Handle incoming messages
       ws.on('message', (message) => {
         try {
           const data = JSON.parse(message)
           console.log('Received WebSocket message:', data)
-          
+
           // Echo back for now - can be extended for specific message handling
           this.handleWebSocketMessage(ws, data)
         } catch (error) {
@@ -265,62 +266,70 @@ class VisualAnalyzerServer {
     switch (data.type) {
       case 'subscribe':
         console.log('Client subscribing to:', data.subscription)
-        
+
         // If subscribing to status, send current connection state immediately
         if (data.subscription === 'status') {
           console.log('Sending current connection state to new status subscriber')
-          
+
           // Send current connection status
           if (this.connectionState.isConnected) {
-            ws.send(JSON.stringify({
-              event: 'nmea:connected',
-              timestamp: this.connectionState.lastUpdate
-            }))
+            ws.send(
+              JSON.stringify({
+                event: 'nmea:connected',
+                timestamp: this.connectionState.lastUpdate,
+              }),
+            )
           } else {
-            ws.send(JSON.stringify({
-              event: 'nmea:disconnected', 
-              timestamp: this.connectionState.lastUpdate
-            }))
+            ws.send(
+              JSON.stringify({
+                event: 'nmea:disconnected',
+                timestamp: this.connectionState.lastUpdate,
+              }),
+            )
           }
-          
+
           // Send current error if any
           if (this.connectionState.error) {
             console.log('Sending current error to new status subscriber:', this.connectionState.error)
-            ws.send(JSON.stringify({
-              event: 'error',
-              error: this.connectionState.error,
-              timestamp: this.connectionState.lastUpdate
-            }))
+            ws.send(
+              JSON.stringify({
+                event: 'error',
+                error: this.connectionState.error,
+                timestamp: this.connectionState.lastUpdate,
+              }),
+            )
           }
         }
-        
+
         // Start sending data for the requested subscription
         //this.startDataStream(ws, data.subscription)
         break
-      
+
       case 'unsubscribe':
         console.log('Client unsubscribing from:', data.subscription)
         // Stop sending data for the subscription
         //this.stopDataStream(ws, data.subscription)
         break
-      
+
       default:
         console.log('Unknown message type:', data.type)
     }
   }
 
-  startDataStream(ws, subscription) {
+  startDataStream(ws) {
     // If we have a real NMEA provider, the data will come through events
     // For fallback, we'll still provide sample data if no real source is connected
     if (!this.nmeaProvider || !this.nmeaProvider.isConnectionActive()) {
       const interval = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
           const sampleData = this.generateSampleNMEAData()
-          ws.send(JSON.stringify({
-            event: 'canboatjs:rawoutput',
-            data: sampleData,
-            timestamp: new Date().toISOString()
-          }))
+          ws.send(
+            JSON.stringify({
+              event: 'canboatjs:rawoutput',
+              data: sampleData,
+              timestamp: new Date().toISOString(),
+            }),
+          )
         } else {
           clearInterval(interval)
         }
@@ -332,10 +341,10 @@ class VisualAnalyzerServer {
     }
   }
 
-  stopDataStream(ws, subscription) {
+  stopDataStream(ws) {
     // Clean up intervals when unsubscribing
     if (ws.intervals) {
-      ws.intervals.forEach(interval => clearInterval(interval))
+      ws.intervals.forEach((interval) => clearInterval(interval))
       ws.intervals = []
     }
   }
@@ -349,7 +358,7 @@ class VisualAnalyzerServer {
       '129026,1,255,8,ff,ff,00,00,ff,7f,ff,ff', // COG & SOG
       '127258,1,255,8,ff,7f,ff,ff,ff,ff,ff,ff', // Magnetic Variation
     ]
-    
+
     const randomPgn = pgns[Math.floor(Math.random() * pgns.length)]
     return `${timestamp},2,${randomPgn}`
   }
@@ -357,15 +366,15 @@ class VisualAnalyzerServer {
   // Method to integrate with actual NMEA 2000 data sources
   connectToNMEASource(options) {
     console.log('Connecting to NMEA 2000 source with options:', options)
-    
+
     this.nmeaProvider = new NMEADataProvider(options)
-    
+
     // Set up event listeners for NMEA data
     this.nmeaProvider.on('nmea-data', (data) => {
       this.broadcast({
         event: 'canboatjs:parsed',
         data: data,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       })
     })
 
@@ -373,7 +382,7 @@ class VisualAnalyzerServer {
       this.broadcast({
         event: 'canboatjs:rawoutput',
         data: rawData,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       })
     })
 
@@ -381,7 +390,7 @@ class VisualAnalyzerServer {
       this.broadcast({
         event: 'signalk:delta',
         data: data,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       })
     })
 
@@ -389,7 +398,7 @@ class VisualAnalyzerServer {
       this.broadcast({
         event: 'canboatjs:synthetic',
         data: data,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       })
     })
 
@@ -402,60 +411,60 @@ class VisualAnalyzerServer {
       }
       if (error.errors && Array.isArray(error.errors)) {
         // Handle AggregateError with multiple underlying errors
-        errorMessage = error.errors.map(e => e.message || e.toString()).join(', ')
+        errorMessage = error.errors.map((e) => e.message || e.toString()).join(', ')
         if (error.code) {
           errorMessage = `${error.code}: ${errorMessage}`
         }
       }
-      
+
       // Update persistent connection state
       this.connectionState = {
         isConnected: false,
         error: errorMessage || 'Unknown connection error',
-        lastUpdate: new Date().toISOString()
+        lastUpdate: new Date().toISOString(),
       }
-      
+
       this.broadcast({
         event: 'error',
         error: errorMessage || 'Unknown connection error',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       })
     })
 
     this.nmeaProvider.on('connected', () => {
       console.log('NMEA data source connected')
-      
+
       // Update persistent connection state
       this.connectionState = {
         isConnected: true,
         error: null, // Clear any previous errors on successful connection
-        lastUpdate: new Date().toISOString()
+        lastUpdate: new Date().toISOString(),
       }
-      
+
       this.broadcast({
         event: 'nmea:connected',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       })
     })
 
     this.nmeaProvider.on('disconnected', () => {
       console.log('NMEA data source disconnected')
-      
+
       // Update persistent connection state
       this.connectionState = {
         isConnected: false,
         error: this.connectionState.error, // Keep existing error if any
-        lastUpdate: new Date().toISOString()
+        lastUpdate: new Date().toISOString(),
       }
-      
+
       this.broadcast({
         event: 'nmea:disconnected',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       })
     })
 
     // Connect to the NMEA source
-    this.nmeaProvider.connect().catch(error => {
+    this.nmeaProvider.connect().catch((error) => {
       console.error('Failed to connect to NMEA source:', error)
     })
   }
@@ -474,15 +483,15 @@ class VisualAnalyzerServer {
   getConfiguration() {
     return {
       server: {
-          port: this.port
+        port: this.port,
       },
       connections: this.currentConfig.connections || { activeConnection: null, profiles: {} },
       connection: {
         isConnected: this.connectionState.isConnected,
         error: this.connectionState.error,
         lastUpdate: this.connectionState.lastUpdate,
-        activeProfile: this.getActiveConnectionProfile()
-      }
+        activeProfile: this.getActiveConnectionProfile(),
+      },
     }
   }
 
@@ -493,7 +502,7 @@ class VisualAnalyzerServer {
   getActiveConnectionProfile() {
     const connections = this.currentConfig.connections
     if (!connections || !connections.activeConnection) return null
-    
+
     const profile = connections.profiles[connections.activeConnection]
     return profile ? { id: connections.activeConnection, ...profile } : null
   }
@@ -550,7 +559,7 @@ class VisualAnalyzerServer {
         if (!profile.baudRate) throw new Error('Baud rate is required for serial connection')
         if (!profile.deviceType) throw new Error('Device type is required for serial connection')
         break
-      
+
       case 'network':
         if (!profile.networkHost) throw new Error('Network host is required for network connection')
         if (!profile.networkPort) throw new Error('Network port is required for network connection')
@@ -558,15 +567,15 @@ class VisualAnalyzerServer {
           throw new Error('Network protocol must be tcp or udp')
         }
         break
-      
+
       case 'signalk':
         if (!profile.signalkUrl) throw new Error('SignalK URL is required for SignalK connection')
         break
-      
+
       case 'socketcan':
         if (!profile.socketcanInterface) throw new Error('SocketCAN interface is required for SocketCAN connection')
         break
-      
+
       default:
         throw new Error('Connection type must be serial, network, signalk, or socketcan')
     }
@@ -589,19 +598,19 @@ class VisualAnalyzerServer {
     try {
       const configData = {
         server: {
-          port: this.port
+          port: this.port,
         },
         connections: this.currentConfig.connections,
-        logging: { level: 'info' }
+        logging: { level: 'info' },
       }
-      
+
       // Ensure the config directory exists
       const configDir = path.dirname(this.configFile)
       if (!fs.existsSync(configDir)) {
         fs.mkdirSync(configDir, { recursive: true })
         console.log(`Created config directory: ${configDir}`)
       }
-      
+
       fs.writeFileSync(this.configFile, JSON.stringify(configData, null, 2))
       console.log(`Configuration saved to ${this.configFile}`)
     } catch (error) {
@@ -611,26 +620,26 @@ class VisualAnalyzerServer {
 
   restartNMEAConnection() {
     console.log('Restarting NMEA connection...')
-    
+
     // Reset connection state on manual restart
     this.connectionState = {
       isConnected: false,
       error: null, // Clear any previous errors on manual restart
-      lastUpdate: new Date().toISOString()
+      lastUpdate: new Date().toISOString(),
     }
-    
+
     // Disconnect existing connection
     if (this.nmeaProvider) {
       this.nmeaProvider.disconnect()
       this.nmeaProvider = null
     }
-    
+
     // Broadcast disconnection status
     this.broadcast({
       event: 'nmea:disconnected',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     })
-    
+
     // Connect to active profile
     const activeProfile = this.getActiveConnectionProfile()
     if (activeProfile) {
@@ -646,7 +655,7 @@ class VisualAnalyzerServer {
       console.log(`Visual Analyzer server started on port ${this.port}`)
       console.log(`Access the application at: http://localhost:${this.port}`)
       console.log(`WebSocket endpoint available at: ws://localhost:${this.port}`)
-      
+
       // Open browser if requested via environment variable
       if (process.env.VISUAL_ANALYZER_OPEN_BROWSER === 'true') {
         this.openBrowser(`http://localhost:${this.port}`)
@@ -656,12 +665,12 @@ class VisualAnalyzerServer {
 
   openBrowser(url) {
     const { spawn } = require('child_process')
-    
+
     console.log(`Opening browser at: ${url}`)
-    
+
     let command
     let args = [url]
-    
+
     // Determine the appropriate command for the platform
     if (process.platform === 'darwin') {
       // macOS
@@ -674,16 +683,16 @@ class VisualAnalyzerServer {
       // Linux and others
       command = 'xdg-open'
     }
-    
+
     try {
-      const child = spawn(command, args, { 
-        detached: true, 
-        stdio: 'ignore' 
+      const child = spawn(command, args, {
+        detached: true,
+        stdio: 'ignore',
       })
-      
+
       // Allow the parent process to exit independently
       child.unref()
-      
+
       setTimeout(() => {
         console.log('Browser should have opened. If not, please visit the URL manually.')
       }, 1000)
@@ -698,7 +707,7 @@ class VisualAnalyzerServer {
     if (this.nmeaProvider) {
       this.nmeaProvider.disconnect()
     }
-    
+
     this.server.close(() => {
       console.log('Visual Analyzer server stopped')
     })
@@ -710,9 +719,9 @@ module.exports = VisualAnalyzerServer
 // If this file is run directly, start the server
 if (require.main === module) {
   const server = new VisualAnalyzerServer({
-    port: process.env.PORT || 8080
+    port: process.env.PORT || 8080,
   })
-  
+
   server.start()
 
   // Graceful shutdown

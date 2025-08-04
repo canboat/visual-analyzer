@@ -18,7 +18,7 @@ const saveFilterSettings = (filter: Filter, doFiltering: boolean) => {
       const settings = {
         filter,
         doFiltering,
-        lastSaved: new Date().toISOString()
+        lastSaved: new Date().toISOString(),
       }
       window.localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(settings))
     }
@@ -35,7 +35,7 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean } | null =
         const settings = JSON.parse(saved)
         return {
           filter: settings.filter || {},
-          doFiltering: settings.doFiltering || false
+          doFiltering: settings.doFiltering || false,
         }
       }
     }
@@ -43,6 +43,40 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean } | null =
     console.warn('Failed to load filter settings from localStorage:', e)
   }
   return null
+}
+
+export const getRowKey = (pgn: PGN): string => {
+  let key = `${pgn.getDefinition().Id}-${pgn.pgn}-${pgn.src}`
+  if (pgn.getDefinition().Fallback === true || pgn.pgn === 126208) {
+    const fieldHash = createFieldDataHash(pgn.fields)
+    key = `${key}-${fieldHash}`
+  }
+  return key
+}
+
+// Simple hash function for creating consistent hashes from field data
+const createFieldDataHash = (fields: any): string => {
+  try {
+    // Serialize the fields object to a stable string representation
+    const serialized = JSON.stringify(
+      fields,
+      Object.keys(fields)
+        .filter((key) => key !== 'data')
+        .sort(),
+    )
+
+    // Simple djb2 hash algorithm implementation
+    let hash = 5381
+    for (let i = 0; i < serialized.length; i++) {
+      hash = (hash << 5) + hash + serialized.charCodeAt(i)
+      hash = hash >>> 0 // Convert to 32-bit unsigned integer
+    }
+
+    return hash.toString(16) // Return as hexadecimal string
+  } catch (error) {
+    console.warn('Failed to create field data hash:', error)
+    return 'hash-error'
+  }
 }
 
 const infoPGNS: number[] = [60928, 126998, 126996]
@@ -63,10 +97,14 @@ const AppPanel = (props: any) => {
   const [currentSrcs, setCurrentSrcs] = useState<number[]>([])
   const [deviceInfo] = useState(new ReplaySubject<DeviceMap>())
   const [currentInfo, setCurrentInfo] = useState<DeviceMap>({})
-  const [connectionStatus, setConnectionStatus] = useState<{isConnected: boolean, lastUpdate: string, error?: string}>({
+  const [connectionStatus, setConnectionStatus] = useState<{
+    isConnected: boolean
+    lastUpdate: string
+    error?: string
+  }>({
     isConnected: false,
     lastUpdate: new Date().toISOString(),
-    error: undefined
+    error: undefined,
   })
   const sentInfoReq: number[] = []
 
@@ -76,14 +114,14 @@ const AppPanel = (props: any) => {
     setConnectionStatus({
       isConnected: false,
       lastUpdate: new Date().toISOString(),
-      error: 'Test connection error: Connection refused to localhost:60002 (ECONNREFUSED)'
+      error: 'Test connection error: Connection refused to localhost:60002 (ECONNREFUSED)',
     })
   }
 
   // Make it available globally for testing
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      (window as any).testErrorDisplay = testErrorDisplay
+      ;(window as any).testErrorDisplay = testErrorDisplay
     }
   }, [])
 
@@ -117,21 +155,21 @@ const AppPanel = (props: any) => {
           const initialStatus = {
             isConnected: config.connection?.isConnected || false,
             lastUpdate: config.connection?.lastUpdate || new Date().toISOString(),
-            error: config.connection?.error || undefined // Include any persisted error
+            error: config.connection?.error || undefined, // Include any persisted error
           }
           console.log('Initial connection status loaded:', initialStatus)
           setConnectionStatus(initialStatus)
         }
       } catch (error) {
         console.error('Failed to load initial connection status:', error)
-        setConnectionStatus(prev => ({
+        setConnectionStatus((prev) => ({
           ...prev,
           error: `Failed to load configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          lastUpdate: new Date().toISOString()
+          lastUpdate: new Date().toISOString(),
         }))
       }
     }
-    
+
     // Only load initial status in standalone mode (not embedded)
     if (!isEmbedded) {
       loadInitialStatus()
@@ -141,20 +179,22 @@ const AppPanel = (props: any) => {
   useEffect(() => {
     // Create a dedicated WebSocket connection for monitoring connection status and errors
     let statusWebSocket: WebSocket | null = null
-    
+
     const connectStatusWebSocket = () => {
       try {
         statusWebSocket = new WebSocket(`ws://${window.location.host}`)
-        
+
         statusWebSocket.onopen = () => {
           console.log('Status WebSocket connected')
           // Subscribe to connection events
-          statusWebSocket?.send(JSON.stringify({
-            type: 'subscribe',
-            subscription: 'status'
-          }))
+          statusWebSocket?.send(
+            JSON.stringify({
+              type: 'subscribe',
+              subscription: 'status',
+            }),
+          )
         }
-        
+
         statusWebSocket.onmessage = (event) => {
           //console.log('=== STATUS WEBSOCKET MESSAGE ===')
           //console.log('Raw message:', event.data)
@@ -162,26 +202,26 @@ const AppPanel = (props: any) => {
             const data = JSON.parse(event.data)
             //console.log('Parsed data:', data)
             //console.log('Event type:', data.event)
-            
+
             if (data.event === 'nmea:connected') {
-              setConnectionStatus(prev => {
+              setConnectionStatus((prev) => {
                 //console.log('>>> STATUS WS: Processing nmea:connected event')
                 const newStatus = {
                   ...prev,
                   isConnected: true,
                   lastUpdate: new Date().toISOString(),
-                  error: undefined
+                  error: undefined,
                 }
                 //console.log('>>> STATUS WS: Setting connected status:', newStatus)
                 return newStatus
               })
             } else if (data.event === 'nmea:disconnected') {
               //console.log('>>> STATUS WS: Processing nmea:disconnected event')
-              setConnectionStatus(prev => {
+              setConnectionStatus((prev) => {
                 const newStatus = {
                   ...prev,
                   isConnected: false,
-                  lastUpdate: new Date().toISOString()
+                  lastUpdate: new Date().toISOString(),
                 }
                 console.log('>>> STATUS WS: Setting disconnected status:', newStatus)
                 return newStatus
@@ -189,12 +229,12 @@ const AppPanel = (props: any) => {
             } else if (data.event === 'error') {
               console.log('>>> STATUS WS: Processing ERROR event:', data.error)
               console.log('>>> STATUS WS: Current connectionStatus before update:', connectionStatus)
-              setConnectionStatus(prev => {
+              setConnectionStatus((prev) => {
                 const newStatus = {
                   ...prev,
                   isConnected: false,
                   error: data.error,
-                  lastUpdate: new Date().toISOString()
+                  lastUpdate: new Date().toISOString(),
                 }
                 console.log('>>> STATUS WS: Setting ERROR status:', newStatus)
                 return newStatus
@@ -206,13 +246,13 @@ const AppPanel = (props: any) => {
             console.error('Error parsing status WebSocket message:', error)
           }
         }
-        
+
         statusWebSocket.onclose = () => {
           console.log('Status WebSocket disconnected')
           // Attempt to reconnect after a delay
           setTimeout(connectStatusWebSocket, 3000)
         }
-        
+
         statusWebSocket.onerror = (error) => {
           console.error('Status WebSocket error:', error)
         }
@@ -221,12 +261,12 @@ const AppPanel = (props: any) => {
         setTimeout(connectStatusWebSocket, 3000)
       }
     }
-    
+
     // Only create status WebSocket in standalone mode
     if (!isEmbedded) {
       connectStatusWebSocket()
     }
-    
+
     return () => {
       if (statusWebSocket) {
         statusWebSocket.close()
@@ -241,43 +281,43 @@ const AppPanel = (props: any) => {
     })
 
     ws.onmessage = (x: any) => {
-     // console.log('Received WebSocket message:', x.data)
+      // console.log('Received WebSocket message:', x.data)
 
       const parsed = JSON.parse(x.data)
       //console.log('Parsed WebSocket event:', parsed.event, parsed)
-      
+
       // Handle connection status events (keep as backup)
       if (parsed.event === 'nmea:connected') {
         //console.log('NMEA connection established')
         setConnectionStatus({
           isConnected: true,
           lastUpdate: new Date().toISOString(),
-          error: undefined // Clear any previous errors
+          error: undefined, // Clear any previous errors
         })
         return
       }
-      
+
       if (parsed.event === 'nmea:disconnected') {
         console.log('NMEA connection lost')
         setConnectionStatus({
           isConnected: false,
           lastUpdate: new Date().toISOString(),
-          error: undefined // Disconnection isn't necessarily an error
+          error: undefined, // Disconnection isn't necessarily an error
         })
         return
       }
-      
-      // Also handle error events that might affect connection status  
+
+      // Also handle error events that might affect connection status
       if (parsed.event === 'error') {
         console.error('NMEA connection error received via WebSocket:', parsed.error)
-        setConnectionStatus(prev => ({
+        setConnectionStatus((prev) => ({
           ...prev,
           error: parsed.error || 'Unknown connection error',
-          lastUpdate: new Date().toISOString()
+          lastUpdate: new Date().toISOString(),
         }))
         return
       }
-      
+
       // Handle NMEA data events
       if (parsed.event !== 'canboatjs:rawoutput') {
         return
@@ -288,7 +328,7 @@ const AppPanel = (props: any) => {
         //console.log('pgn', pgn)
         if (infoPGNS.indexOf(pgn!.pgn) === -1) {
           setList((prev: any) => {
-            prev[`${pgn!.getDefinition().Id}-${pgn!.pgn}-${pgn!.src}`] = pgn
+            prev[getRowKey(pgn!)] = pgn
             data.next({ ...prev })
             return prev
           })
@@ -503,10 +543,7 @@ const AppPanel = (props: any) => {
         </TabPane>
         {!isEmbedded && (
           <TabPane tabId={CONNECTIONS_TAB_ID}>
-            <ConnectionManagerPanel 
-              connectionStatus={connectionStatus} 
-              onStatusUpdate={setConnectionStatus}
-            />
+            <ConnectionManagerPanel connectionStatus={connectionStatus} onStatusUpdate={setConnectionStatus} />
           </TabPane>
         )}
       </TabContent>

@@ -14,6 +14,7 @@ The Visual Analyzer is designed to be used as an embeddable webapp within Signal
 ### Standalone Server
 
 The Visual Analyzer can also be run as a standalone web server, making it perfect for:
+
 - Direct connection to NMEA 2000 networks via serial/USB adapters
 - Independent analysis without requiring Signal K Server
 - Quick troubleshooting and debugging of NMEA 2000 systems
@@ -30,6 +31,7 @@ visual-analyzer --open
 ```
 
 This will:
+
 1. Install the Visual Analyzer as a global command
 2. Start the web server on port 8080
 3. Open your browser to `http://localhost:8080`
@@ -39,6 +41,7 @@ This will:
 - **Node.js** version 22 or higher
 
 To check if you have Node.js installed:
+
 ```bash
 node --version
 ```
@@ -48,6 +51,7 @@ If you don't have Node.js, download it from [nodejs.org](https://nodejs.org/).
 #### Basic Usage
 
 The web interface will be available at `http://localhost:8080` where you can:
+
 - Configure data source connections (serial, TCP, file)
 - View real-time NMEA 2000 messages
 - Filter and search message data
@@ -109,6 +113,7 @@ The server automatically creates and uses a configuration file at:
 You can override this location using the `--config` option or the `VISUAL_ANALYZER_CONFIG` environment variable.
 
 Example `config.json`:
+
 ```json
 {
   "server": {
@@ -124,7 +129,7 @@ Example `config.json`:
         "baudRate": 115200
       },
       "tcp": {
-        "name": "TCP Connection", 
+        "name": "TCP Connection",
         "type": "tcp",
         "host": "localhost",
         "port": 10110

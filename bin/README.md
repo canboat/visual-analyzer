@@ -82,6 +82,7 @@ The server looks for a `config.json` file at platform-specific locations:
 You can specify a custom configuration file with the `--config` option.
 
 Example config.json:
+
 ```json
 {
   "server": {

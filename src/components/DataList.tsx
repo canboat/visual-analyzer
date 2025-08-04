@@ -6,6 +6,7 @@ import { PGN } from '@canboat/ts-pgns'
 import { Subject } from 'rxjs'
 import { PgnNumber, PGNDataMap } from '../types'
 import { Filter, filterFor, getFilterConfig } from './Filters'
+import { getRowKey } from './AppPanel'
 
 interface DataListProps {
   data: Subject<PGNDataMap>
@@ -21,41 +22,59 @@ export const DataList = (props: DataListProps) => {
 
   const filterConfig = getFilterConfig(filter)
 
-  const addToFilteredPgns = useCallback((i: string) => {
-    const safeFilteredPgns = filter?.pgn || []
-    if (safeFilteredPgns.indexOf(i) === -1) {
-      props.filter.next({ ...filter, pgn: [...safeFilteredPgns, i] })
-    }
-  }, [filter, props.filter])
+  const addToFilteredPgns = useCallback(
+    (i: string) => {
+      const safeFilteredPgns = filter?.pgn || []
+      if (safeFilteredPgns.indexOf(i) === -1) {
+        props.filter.next({ ...filter, pgn: [...safeFilteredPgns, i] })
+      }
+    },
+    [filter, props.filter],
+  )
 
-  const addToFilteredSrcs = useCallback((src: number) => {
-    const safeFilteredSrcs = filter?.src || []
-    if (safeFilteredSrcs.indexOf(src) === -1) {
-      props.filter.next({ ...filter, src: [...safeFilteredSrcs, src] })
-    }
-  }, [filter, props.filter])
+  const addToFilteredSrcs = useCallback(
+    (src: number) => {
+      const safeFilteredSrcs = filter?.src || []
+      if (safeFilteredSrcs.indexOf(src) === -1) {
+        props.filter.next({ ...filter, src: [...safeFilteredSrcs, src] })
+      }
+    },
+    [filter, props.filter],
+  )
 
-  const handleRowClick = useCallback((row: PGN) => {
-    props.onRowClicked(row)
-  }, [props.onRowClicked])
+  const handleRowClick = useCallback(
+    (row: PGN) => {
+      props.onRowClicked(row)
+    },
+    [props.onRowClicked],
+  )
 
-  const handlePgnClick = useCallback((e: React.MouseEvent, pgnString: string) => {
-    e.preventDefault()
-    e.stopPropagation()
-    addToFilteredPgns(pgnString)
-  }, [addToFilteredPgns])
+  const handlePgnClick = useCallback(
+    (e: React.MouseEvent, pgnString: string) => {
+      e.preventDefault()
+      e.stopPropagation()
+      addToFilteredPgns(pgnString)
+    },
+    [addToFilteredPgns],
+  )
 
-  const handleSrcClick = useCallback((e: React.MouseEvent, src: number) => {
-    e.preventDefault()
-    e.stopPropagation()
-    addToFilteredSrcs(src)
-  }, [addToFilteredSrcs])
+  const handleSrcClick = useCallback(
+    (e: React.MouseEvent, src: number) => {
+      e.preventDefault()
+      e.stopPropagation()
+      addToFilteredSrcs(src)
+    },
+    [addToFilteredSrcs],
+  )
 
-  const handleDescriptionClick = useCallback((e: React.MouseEvent, row: PGN) => {
-    e.preventDefault()
-    e.stopPropagation()
-    handleRowClick(row)
-  }, [handleRowClick])
+  const handleDescriptionClick = useCallback(
+    (e: React.MouseEvent, row: PGN) => {
+      e.preventDefault()
+      e.stopPropagation()
+      handleRowClick(row)
+    },
+    [handleRowClick],
+  )
   return (
     <div
       style={{
@@ -79,28 +98,28 @@ export const DataList = (props: DataListProps) => {
         <tbody>
           {(data != undefined ? Object.values(data) : [])
             .filter(filterFor(doFiltering, filterConfig))
-            .sort((a, b) => a.src! - b.src!)
+            .sort((a, b) => {
+              // Sort by PGN first, then by src
+              if (a.src !== b.src) {
+                return a.src! - b.src!
+              }
+              return a.pgn - b.pgn
+            })
             .map((row: PGN, i: number) => {
               return (
-                <tr key={`${(row as any).id}-${row.pgn}-${row.src}`}>
+                <tr key={getRowKey(row)} onClick={() => handleRowClick(row)}>
                   <td>{row.timestamp!.split('T')[1]}</td>
-                  <td 
-                    style={{ color: 'red', cursor: 'pointer' }} 
+                  <td
+                    style={{ color: 'red', cursor: 'pointer' }}
                     onMouseDown={(e) => handlePgnClick(e, row.pgn.toString())}
                   >
                     {row.pgn}
                   </td>
-                  <td 
-                    style={{ color: 'red', cursor: 'pointer' }} 
-                    onMouseDown={(e) => handleSrcClick(e, row.src!)}
-                  >
+                  <td style={{ color: 'red', cursor: 'pointer' }} onMouseDown={(e) => handleSrcClick(e, row.src!)}>
                     {row.src}
                   </td>
                   <td>{row.dst}</td>
-                  <td
-                    onMouseDown={(e) => handleDescriptionClick(e, row)}
-                    style={{ cursor: 'pointer' }}
-                  >
+                  <td onMouseDown={(e) => handleDescriptionClick(e, row)} style={{ cursor: 'pointer' }}>
                     <span style={{ fontFamily: 'monospace' }}>{row.getDefinition().Description}</span>
                   </td>
                 </tr>
