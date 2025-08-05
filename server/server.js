@@ -63,6 +63,11 @@ class VisualAnalyzerServer {
           ...config,
         }
 
+        // Update port if specified in config
+        if (config.server && config.server.port) {
+          this.port = config.server.port
+        }
+
         console.log(`Configuration loaded from ${this.configFile}`)
 
         // Auto-connect to active connection if specified

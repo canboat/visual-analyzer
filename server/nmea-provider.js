@@ -38,6 +38,8 @@ const {
 const net = require('net')
 const dgram = require('dgram')
 const WebSocket = require('ws')
+const fs = require('fs')
+const readline = require('readline')
 
 class NMEADataProvider extends EventEmitter {
   constructor(options = {}) {
@@ -47,6 +49,12 @@ class NMEADataProvider extends EventEmitter {
     this.authToken = null
     this.authRequestId = 0
     this.pendingAuthResolve = null
+    
+    // File playback specific properties
+    this.fileStream = null
+    this.playbackTimer = null
+    this.fileLines = []
+    this.currentLineIndex = 0
   }
 
   async connect() {
@@ -59,6 +67,8 @@ class NMEADataProvider extends EventEmitter {
         await this.connectToNetwork()
       } else if (this.options.type === 'socketcan') {
         await this.connectToSocketCAN()
+      } else if (this.options.type === 'file') {
+        await this.connectToFile()
       }
     } catch (error) {
       console.error('Failed to connect to NMEA source:', error)
@@ -382,6 +392,121 @@ class NMEADataProvider extends EventEmitter {
     }
   }
 
+  async connectToFile() {
+    try {
+      const filePath = this.options.filePath
+      if (!filePath) {
+        throw new Error('File path is required for file connections')
+      }
+
+      console.log(`Connecting to file: ${filePath}`)
+
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`File not found: ${filePath}`)
+      }
+
+      // Read file stats
+      const stats = fs.statSync(filePath)
+      if (!stats.isFile()) {
+        throw new Error(`Path is not a file: ${filePath}`)
+      }
+
+      console.log(`File size: ${(stats.size / 1024).toFixed(2)} KB`)
+
+      // Read the entire file into memory for playback
+      await this.loadFileData(filePath)
+      
+      this.isConnected = true
+      this.emit('connected')
+      
+      // Start playback
+      this.startFilePlayback()
+
+    } catch (error) {
+      console.error('Failed to connect to file:', error)
+      throw error
+    }
+  }
+
+  async loadFileData(filePath) {
+    return new Promise((resolve, reject) => {
+      const fileStream = fs.createReadStream(filePath)
+      const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity // Handle Windows line endings
+      })
+
+      this.fileLines = []
+      let lineCount = 0
+
+      rl.on('line', (line) => {
+        line = line.trim()
+        if (line && !line.startsWith('#')) { // Skip empty lines and comments
+          this.fileLines.push(line)
+        }
+        lineCount++
+      })
+
+      rl.on('close', () => {
+        console.log(`Loaded ${this.fileLines.length} valid lines from ${lineCount} total lines`)
+        resolve()
+      })
+
+      rl.on('error', (error) => {
+        console.error('Error reading file:', error)
+        reject(error)
+      })
+    })
+  }
+
+  startFilePlayback() {
+    if (this.fileLines.length === 0) {
+      console.warn('No valid lines to play back')
+      return
+    }
+
+    this.currentLineIndex = 0
+    const playbackSpeed = this.options.playbackSpeed || 1.0
+    const baseInterval = playbackSpeed === 0 ? 0 : 100 / playbackSpeed // Base 100ms interval
+
+    console.log(`Starting file playback with ${this.fileLines.length} lines at ${playbackSpeed}x speed`)
+    
+    this.scheduleNextLine(baseInterval)
+  }
+
+  scheduleNextLine(baseInterval) {
+    if (!this.isConnected) {
+      return // Stop if disconnected
+    }
+
+    if (this.currentLineIndex >= this.fileLines.length) {
+      // End of file reached
+      if (this.options.loopPlayback) {
+        console.log('End of file reached, looping back to start')
+        this.currentLineIndex = 0
+      } else {
+        console.log('End of file reached, playback complete')
+        return
+      }
+    }
+
+    const currentLine = this.fileLines[this.currentLineIndex]
+    
+    // Process current line - simply emit as raw NMEA
+    this.emit('raw-nmea', currentLine)
+    this.currentLineIndex++
+
+    // Schedule next line with base interval
+    const delay = baseInterval
+    if (delay === 0) {
+      // No delay - use setImmediate for maximum speed
+      setImmediate(() => this.scheduleNextLine(baseInterval))
+    } else {
+      this.playbackTimer = setTimeout(() => this.scheduleNextLine(baseInterval), delay)
+    }
+  }
+
   processSignalKUpdate(update) {
     // Convert SignalK update back to NMEA 2000 format if possible
     // This is a simplified conversion - in practice, you might want more sophisticated handling
@@ -426,6 +551,21 @@ class NMEADataProvider extends EventEmitter {
     if (this.canbusStream) {
       this.canbusStream.end()
     }
+
+    // Clean up file playback resources
+    if (this.playbackTimer) {
+      clearTimeout(this.playbackTimer)
+      this.playbackTimer = null
+    }
+
+    if (this.fileStream) {
+      this.fileStream.close()
+      this.fileStream = null
+    }
+
+    // Clear file data
+    this.fileLines = []
+    this.currentLineIndex = 0
 
     // Clear authentication data
     this.authToken = null
