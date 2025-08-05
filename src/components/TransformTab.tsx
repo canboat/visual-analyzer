@@ -3,9 +3,14 @@ import { Card, CardBody } from 'reactstrap'
 import { 
   FromPgn, 
   pgnToActisenseSerialFormat,
+  pgnToActisenseN2KAsciiFormat,
   pgnToiKonvertSerialFormat,
   pgnToYdgwRawFormat,
-  pgnToPCDIN
+  pgnToPCDIN,
+  pgnToMXPGN,
+  pgnToCandump1,
+  pgnToCandump2,
+  pgnToCandump3
 } from '@canboat/canboatjs'
 import { PGN } from '@canboat/ts-pgns'
 
@@ -59,14 +64,9 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
           return ydwgResult || 'Unable to format to YDWG Raw format'
         
         case 'actisense-n2k-ascii':
-          // Actisense N2K ASCII format: A764027.880 CCF52 1F10D FC10FF7FFF7FFFFF
-          const inputData = (pgn as any).inputData
-          if (inputData) {
-            const canId = ((pgn.prio || 0) << 26) | (pgn.pgn << 8) | (pgn.src || 0)
-            const dataStr = Array.from(inputData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join('')
-            return `A${Date.now().toString().slice(-9)} ${canId.toString(16).toUpperCase()} ${pgn.pgn.toString(16).toUpperCase()} ${dataStr}`
-          }
-          return 'No input data available for N2K ASCII format'
+          // Use canboatjs built-in function
+          const n2kAsciiResult = pgnToActisenseN2KAsciiFormat(pgn)
+          return n2kAsciiResult || 'Unable to format to Actisense N2K ASCII format'
         
         case 'pcdin':
           // Use canboatjs built-in function
@@ -74,46 +74,33 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
           return pcdinResult || 'Unable to format to PCDIN format'
         
         case 'mxpgn':
-          // MiniPlex-3 MXPGN format: $MXPGN,01F801,2801,C1308AC40C5DE343*19
-          const mxpgnData = (pgn as any).inputData
-          if (mxpgnData) {
-            const pgnHex = pgn.pgn.toString(16).padStart(6, '0').toUpperCase()
-            const srcDst = ((pgn.src || 0) << 8) | (pgn.dst || 255)
-            const dataHex = Array.from(mxpgnData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join('')
-            return `$MXPGN,${pgnHex},${srcDst.toString(16).padStart(4, '0').toUpperCase()},${dataHex}*00`
-          }
-          return 'No input data available for MXPGN format'
+          // Use canboatjs built-in function
+          const mxpgnResult = pgnToMXPGN(pgn)
+          return mxpgnResult || 'Unable to format to MXPGN format'
         
         case 'candump1':
-          // Linux CAN utils format (Angstrom): <0x18eeff01> [8] 05 a0 be 1c 00 a0 a0 c0
-          const candump1Data = (pgn as any).inputData
-          if (candump1Data) {
-            const canId = ((pgn.prio || 0) << 26) | (pgn.pgn << 8) | (pgn.src || 0)
-            const dataHex = Array.from(candump1Data as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0')).join(' ')
-            return `<0x${canId.toString(16).padStart(8, '0')}> [${candump1Data.length}] ${dataHex}`
+          // Use canboatjs built-in function - this returns an array of strings
+          const candump1Result = pgnToCandump1(pgn)
+          if (Array.isArray(candump1Result)) {
+            return candump1Result.join('\n')
           }
-          return 'No input data available for candump1 format'
+          return candump1Result || 'Unable to format to candump1 format'
         
         case 'candump2':
-          // Linux CAN utils format (Debian): can0 09F8027F [8] 00 FC FF FF 00 00 FF FF
-          const candump2Data = (pgn as any).inputData
-          if (candump2Data) {
-            const canId = ((pgn.prio || 0) << 26) | (pgn.pgn << 8) | (pgn.src || 0)
-            const dataHex = Array.from(candump2Data as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join(' ')
-            return `can0 ${canId.toString(16).padStart(8, '0').toUpperCase()} [${candump2Data.length}] ${dataHex}`
+          // Use canboatjs built-in function - this returns an array of strings
+          const candump2Result = pgnToCandump2(pgn)
+          if (Array.isArray(candump2Result)) {
+            return candump2Result.join('\n')
           }
-          return 'No input data available for candump2 format'
+          return candump2Result || 'Unable to format to candump2 format'
         
         case 'candump3':
-          // Linux CAN utils format (log): (1502979132.106111) slcan0 09F50374#000A00FFFF00FFFF
-          const candump3Data = (pgn as any).inputData
-          if (candump3Data) {
-            const canId = ((pgn.prio || 0) << 26) | (pgn.pgn << 8) | (pgn.src || 0)
-            const dataHex = Array.from(candump3Data as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join('')
-            const timestamp = (Date.now() / 1000).toFixed(6)
-            return `(${timestamp}) slcan0 ${canId.toString(16).padStart(8, '0').toUpperCase()}#${dataHex}`
+          // Use canboatjs built-in function - this returns an array of strings
+          const candump3Result = pgnToCandump3(pgn)
+          if (Array.isArray(candump3Result)) {
+            return candump3Result.join('\n')
           }
-          return 'No input data available for candump3 format'
+          return candump3Result || 'Unable to format to candump3 format'
         
         default:
           return JSON.stringify(pgn, null, 2)
