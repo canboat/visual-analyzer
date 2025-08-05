@@ -317,7 +317,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
         <div className="mb-4">
           <FormGroup>
             <Label for="connectionName" className="font-weight-bold">
-              <i className="fas fa-tag mr-2"></i>Connection Name
+              Connection Name
             </Label>
             <Input
               type="text"
@@ -333,7 +333,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
 
           <FormGroup>
             <Label for="connectionType" className="font-weight-bold">
-              <i className="fas fa-plug mr-2"></i>Connection Type
+              Connection Type
             </Label>
             <Input
               type="select"
@@ -342,11 +342,11 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('type', e.target.value)}
               className="form-control-lg"
             >
-              <option value="network">🌐 Network (TCP/UDP)</option>
-              <option value="serial">🔌 Serial Port</option>
-              <option value="signalk">⚓ SignalK Server</option>
-              <option value="socketcan">🚗 SocketCAN (Linux CAN)</option>
-              <option value="file">📁 File Playback</option>
+              <option value="network">Network (TCP/UDP)</option>
+              <option value="serial">Serial Port</option>
+              <option value="signalk">SignalK Server</option>
+              <option value="socketcan">SocketCAN (Linux CAN)</option>
+              <option value="file">File Playback</option>
             </Input>
           </FormGroup>
         </div>
@@ -354,7 +354,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
         {formData.type === 'signalk' && (
           <div className="border rounded p-3 bg-light">
             <h6 className="text-primary mb-3">
-              <i className="fas fa-anchor mr-2"></i>SignalK Server Configuration
+              SignalK Server Configuration
             </h6>
             <FormGroup>
               <Label for="signalkUrl" className="font-weight-bold">
@@ -415,7 +415,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
         {formData.type === 'serial' && (
           <div className="border rounded p-3 bg-light">
             <h6 className="text-success mb-3">
-              <i className="fas fa-usb mr-2"></i>Serial Port Configuration
+              Serial Port Configuration
             </h6>
             <FormGroup>
               <Label for="deviceType" className="font-weight-bold">
@@ -428,9 +428,9 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('deviceType', e.target.value)}
                 className="form-control-lg"
               >
-                <option value="Actisense">🔹 Actisense (NGT-1 Compatible)</option>
-                <option value="iKonvert">🔹 iKonvert (NMEA 2000 Gateway)</option>
-                <option value="Yacht Devices">🔹 Yacht Devices RAW (YDNU-02)</option>
+                <option value="Actisense">Actisense (NGT-1 Compatible)</option>
+                <option value="iKonvert">iKonvert (NMEA 2000 Gateway)</option>
+                <option value="Yacht Devices">Yacht Devices RAW (YDNU-02)</option>
               </Input>
               <small className="form-text text-muted">Select your specific NMEA 2000 gateway device</small>
             </FormGroup>
@@ -481,7 +481,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
         {formData.type === 'network' && (
           <div className="border rounded p-3 bg-light">
             <h6 className="text-info mb-3">
-              <i className="fas fa-network-wired mr-2"></i>Network Configuration
+              Network Configuration
             </h6>
             <FormGroup>
               <Label for="networkDeviceType" className="font-weight-bold">
@@ -494,9 +494,9 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('deviceType', e.target.value)}
                 className="form-control-lg"
               >
-                <option value="Yacht Devices RAW">🔹 Yacht Devices RAW (YDWG-02)</option>
-                <option value="NavLink2">🔹 NavLink2 Gateway</option>
-                <option value="Actisense ASCII">🔹 Actisense ASCII (W2K-1)</option>
+                <option value="Yacht Devices RAW">Yacht Devices RAW (YDWG-02)</option>
+                <option value="NavLink2">NavLink2 Gateway</option>
+                <option value="Actisense ASCII">Actisense ASCII (W2K-1)</option>
               </Input>
               <small className="form-text text-muted">Select your specific NMEA 2000 network gateway device</small>
             </FormGroup>
@@ -561,10 +561,9 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
         {formData.type === 'socketcan' && (
           <div className="border rounded p-3 bg-light">
             <h6 className="text-warning mb-3">
-              <i className="fas fa-car mr-2"></i>SocketCAN Configuration
+              SocketCAN Configuration
             </h6>
             <div className="alert alert-info mb-3">
-              <i className="fas fa-info-circle mr-2"></i>
               <strong>Linux Only:</strong> SocketCAN requires a Linux system with CAN interface support. Commonly used
               with USB-CAN adapters or built-in CAN controllers.
             </div>
@@ -588,7 +587,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
 
             <div className="mt-3">
               <h6 className="text-muted mb-2">
-                <i className="fas fa-terminal mr-2"></i>Setup Commands
+                Setup Commands
               </h6>
               <div className="bg-dark text-light p-3 rounded">
                 <small>
@@ -611,10 +610,9 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
         {formData.type === 'file' && (
           <div className="border rounded p-3 bg-light">
             <h6 className="text-dark mb-3">
-              <i className="fas fa-file-alt mr-2"></i>File Playback Configuration
+              File Playback Configuration
             </h6>
             <div className="alert alert-info mb-3">
-              <i className="fas fa-info-circle mr-2"></i>
               <strong>File Playback:</strong> Play back recorded NMEA 2000 data from various file formats for testing
               and analysis.
             </div>
@@ -674,7 +672,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                         className="custom-control-input"
                       />
                       <Label className="custom-control-label" htmlFor="loopPlayback">
-                        <i className="fas fa-redo mr-2"></i>Loop Playback
+                        Loop Playback
                       </Label>
                     </div>
                     <small className="form-text text-muted">Automatically restart playback when file ends</small>
@@ -709,12 +707,11 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h4 className="text-sk-primary mb-1">
-              <i className="fas mr-2"></i>Connection Manager
+              Connection Manager
             </h4>
             <p className="mb-0 text-muted">Manage multiple NMEA 2000 data source connections</p>
           </div>
           <Button color="primary" onClick={openCreateModal} size="lg" className="px-4">
-            <i className="fas fa-plus mr-2"></i>
             Add Connection
           </Button>
         </div>
@@ -733,7 +730,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
                     <h6 className="mb-1">
-                      <i className="fas mr-2"></i>Current Connection
+                      Current Connection
                     </h6>
                     <div className="d-flex align-items-center">
                       <span
@@ -767,7 +764,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                       return connectionStatus?.error ? (
                         <div className="mt-2">
                           <div className="alert alert-danger alert-sm mb-0" role="alert">
-                            <i className="fas fa-exclamation-triangle mr-2"></i>
                             <strong>Connection Error:</strong> {connectionStatus.error}
                           </div>
                         </div>
@@ -784,7 +780,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                         disabled={saving}
                         className="mb-1"
                       >
-                        <i className="fas mr-1"></i>
                         {saving ? 'Restarting...' : 'Restart Connection'}
                       </Button>
                       {connectionStatus?.error && (
@@ -796,7 +791,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                             setMessage(null)
                           }}
                         >
-                          <i className="fas fa-times mr-1"></i>
                           Clear Error
                         </Button>
                       )}
@@ -810,7 +804,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
             <Card className="shadow-sm">
               <div className="card-header bg-light d-flex justify-content-between align-items-center">
                 <strong>
-                  <i className="fas fa-list mr-2"></i>Connection Profiles
+                  Connection Profiles
                 </strong>
                 <span className="badge badge-secondary">
                   {Object.keys(config.connections.profiles).length} profiles
@@ -819,11 +813,10 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
               <CardBody className="p-0">
                 {Object.keys(config.connections.profiles).length === 0 ? (
                   <div className="text-center p-5">
-                    <i className="fas fa-plug fa-3x text-muted mb-3"></i>
                     <h6 className="text-muted mb-2">No connection profiles configured</h6>
                     <p className="text-muted mb-3">Create your first connection profile to get started</p>
                     <Button color="primary" onClick={openCreateModal}>
-                      <i className="fas fa-plus mr-2"></i>Create First Profile
+                      Create First Profile
                     </Button>
                   </div>
                 ) : (
@@ -831,19 +824,19 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                     <thead className="thead-light">
                       <tr>
                         <th style={{ width: '28%' }}>
-                          <i className="fas mr-1"></i>Connection Name
+                          Connection Name
                         </th>
                         <th style={{ width: '12%' }}>
-                          <i className="fas mr-1"></i>Type
+                          Type
                         </th>
                         <th style={{ width: '35%' }}>
-                          <i className="fas mr-1"></i>Connection Details
+                          Connection Details
                         </th>
                         <th style={{ width: '12%' }}>
-                          <i className="fas mr-1"></i>Status
+                          Status
                         </th>
                         <th style={{ width: '13%' }}>
-                          <i className="fas mr-1"></i>Actions
+                          Actions
                         </th>
                       </tr>
                     </thead>
@@ -859,7 +852,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                 <strong>{profile.name}</strong>
                                 {config.connections.activeConnection === profileId && (
                                   <span className="badge badge-primary ml-2">
-                                    <i className="fas mr-1"></i>Active
+                                    Active
                                   </span>
                                 )}
                               </div>
@@ -886,49 +879,43 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                             <small className="text-muted">
                               {profile.type === 'signalk' && (
                                 <>
-                                  <i className="fas mr-1"></i>
                                   {profile.signalkUrl}
                                   {profile.signalkUsername && (
                                     <span className="ml-2 badge badge-outline-info">
-                                      <i className="fas fa-user mr-1"></i>Auth
+                                      Auth
                                     </span>
                                   )}
                                 </>
                               )}
                               {profile.type === 'serial' && (
                                 <>
-                                  <i className="fas mr-1"></i>
                                   {profile.serialPort} ({profile.deviceType})
                                 </>
                               )}
                               {profile.type === 'network' && (
                                 <>
-                                  <i className="fas mr-1"></i>
                                   {profile.networkHost}:{profile.networkPort} ({profile.networkProtocol?.toUpperCase()})
                                   - {profile.deviceType}
                                 </>
                               )}
                               {profile.type === 'socketcan' && (
                                 <>
-                                  <i className="fas mr-1"></i>
                                   {profile.socketcanInterface}
                                 </>
                               )}
                               {profile.type === 'file' && (
                                 <>
-                                  <i className="fas-open mr-1"></i>
                                   {profile.filePath
                                     ? profile.filePath.split('/').pop() || profile.filePath.split('\\').pop()
                                     : 'No file'}
                                   {profile.playbackSpeed !== 1.0 && (
                                     <span className="ml-2 badge badge-outline-secondary">
-                                      <i className="fas mr-1"></i>
                                       {profile.playbackSpeed}x
                                     </span>
                                   )}
                                   {profile.loopPlayback && (
                                     <span className="ml-2 badge badge-outline-info">
-                                      <i className="fas mr-1"></i>Loop
+                                      Loop
                                     </span>
                                   )}
                                 </>
@@ -944,7 +931,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                               </span>
                             ) : (
                               <span className="badge badge-secondary">
-                                <i className="fas mr-1"></i>Inactive
+                                Inactive
                               </span>
                             )}
                           </td>
@@ -959,7 +946,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                   className="d-flex align-items-center justify-content-center"
                                   style={{ minWidth: '50px', fontSize: '0.7rem', padding: '2px 4px' }}
                                 >
-                                  <i className="fas fa-play" style={{ fontSize: '9px', marginRight: '2px' }}></i>
                                   Activate
                                 </Button>
                               )}
@@ -970,7 +956,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                 className="d-flex align-items-center justify-content-center"
                                 style={{ minWidth: '40px', fontSize: '0.7rem', padding: '2px 4px' }}
                               >
-                                <i className="fas fa-edit" style={{ fontSize: '9px', marginRight: '2px' }}></i>
                                 Edit
                               </Button>
                               <Button
@@ -981,7 +966,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                 className="d-flex align-items-center justify-content-center"
                                 style={{ minWidth: '45px', fontSize: '0.7rem', padding: '2px 4px' }}
                               >
-                                <i className="fas fa-trash" style={{ fontSize: '9px', marginRight: '2px' }}></i>
                                 Delete
                               </Button>
                             </div>
@@ -1003,7 +987,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
             style={{ border: 'none' }}
           >
             <div className="d-flex align-items-center">
-              <i className={`fas ${editingProfile ? 'fa-edit' : 'fa-plus-circle'} mr-2`}></i>
               <span>{editingProfile ? 'Edit Connection Profile' : 'Create New Connection Profile'}</span>
             </div>
             <button
@@ -1032,19 +1015,11 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                 e.currentTarget.style.transform = 'scale(1)'
               }}
             >
-              <i className="fas fa-times"></i>
+              ×
             </button>
           </ModalHeader>
           <ModalBody className="p-4">
-            <div className="mb-3">
-              <div className="alert alert-info d-flex align-items-center">
-                <i className="fas fa-info-circle mr-2"></i>
-                <div>
-                  <strong>Connection Profile:</strong> Save multiple gateway configurations for easy switching between
-                  different NMEA 2000 data sources.
-                </div>
-              </div>
-            </div>
+            
             {renderConnectionForm()}
           </ModalBody>
           <ModalFooter className="bg-light">
@@ -1057,18 +1032,15 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
             >
               {saving ? (
                 <>
-                  <i className="fas fa-spinner fa-spin mr-2"></i>
                   Saving...
                 </>
               ) : (
                 <>
-                  <i className={`fas ${editingProfile ? 'fa-save' : 'fa-plus'} mr-2`}></i>
                   {editingProfile ? 'Update Profile' : 'Create Profile'}
                 </>
               )}
             </Button>
             <Button color="secondary" onClick={() => setShowModal(false)} size="lg" className="px-4">
-              <i className="fas fa-times mr-2"></i>
               Cancel
             </Button>
           </ModalFooter>
@@ -1078,21 +1050,18 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
           <Card className="bg-light border-0">
             <CardBody>
               <h6 className="text-primary mb-3">
-                <i className="fas fa-lightbulb mr-2"></i>Usage Tips
+                Usage Tips
               </h6>
               <div className="row">
                 <div className="col-md-6">
                   <ul className="list-unstyled">
                     <li className="mb-2">
-                      <i className="fas fa-check text-success mr-2"></i>
                       <small>Create multiple connection profiles for different environments or devices</small>
                     </li>
                     <li className="mb-2">
-                      <i className="fas fa-check text-success mr-2"></i>
                       <small>Only one connection can be active at a time</small>
                     </li>
                     <li className="mb-2">
-                      <i className="fas fa-check text-success mr-2"></i>
                       <small>Switching connections will automatically disconnect the current one</small>
                     </li>
                   </ul>
@@ -1100,15 +1069,12 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                 <div className="col-md-6">
                   <ul className="list-unstyled">
                     <li className="mb-2">
-                      <i className="fas fa-info text-info mr-2"></i>
                       <small>Connection profiles are saved automatically and persist across server restarts</small>
                     </li>
                     <li className="mb-2">
-                      <i className="fas fa-info text-info mr-2"></i>
                       <small>Use descriptive names to easily identify your connections</small>
                     </li>
                     <li className="mb-2">
-                      <i className="fas fa-info text-info mr-2"></i>
                       <small>Test your connection after creating a new profile</small>
                     </li>
                   </ul>
