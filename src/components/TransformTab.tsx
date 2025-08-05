@@ -1,6 +1,12 @@
 import React, { useState } from 'react'
 import { Card, CardBody } from 'reactstrap'
-import { FromPgn } from '@canboat/canboatjs'
+import { 
+  FromPgn, 
+  pgnToActisenseSerialFormat,
+  pgnToiKonvertSerialFormat,
+  pgnToYdgwRawFormat,
+  pgnToPCDIN
+} from '@canboat/canboatjs'
 import { PGN } from '@canboat/ts-pgns'
 
 interface TransformTabProps {
@@ -35,54 +41,37 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
           return JSON.stringify(pgn, null, 2)
         
         case 'actisense':
-          // Standard Actisense Serial Format: timestamp,prio,pgn,src,dst,len,data
-          const timestamp = pgn.timestamp || new Date().toISOString()
-          const inputData = (pgn as any).inputData
-          if (inputData) {
-            const dataHex = Array.from(inputData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0')).join(',')
-            return `${timestamp},${pgn.prio || 0},${pgn.pgn},${pgn.src || 0},${pgn.dst || 255},${inputData.length},${dataHex}`
+          // Use canboatjs built-in function
+          const actisenseResult = pgnToActisenseSerialFormat(pgn)
+          return actisenseResult || 'Unable to format to Actisense format'
+        
+        case 'ikonvert':
+          // Use canboatjs built-in function
+          const ikonvertResult = pgnToiKonvertSerialFormat(pgn)
+          return ikonvertResult || 'Unable to format to iKonvert format'
+        
+        case 'ydwg-raw':
+          // Use canboatjs built-in function - this returns an array of strings
+          const ydwgResult = pgnToYdgwRawFormat(pgn)
+          if (Array.isArray(ydwgResult)) {
+            return ydwgResult.join('\n')
           }
-          return `${timestamp},${pgn.prio || 0},${pgn.pgn},${pgn.src || 0},${pgn.dst || 255},0,`
+          return ydwgResult || 'Unable to format to YDWG Raw format'
         
         case 'actisense-n2k-ascii':
           // Actisense N2K ASCII format: A764027.880 CCF52 1F10D FC10FF7FFF7FFFFF
-          const nmeaInputData = (pgn as any).inputData
-          if (nmeaInputData) {
+          const inputData = (pgn as any).inputData
+          if (inputData) {
             const canId = ((pgn.prio || 0) << 26) | (pgn.pgn << 8) | (pgn.src || 0)
-            const dataStr = Array.from(nmeaInputData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join('')
+            const dataStr = Array.from(inputData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join('')
             return `A${Date.now().toString().slice(-9)} ${canId.toString(16).toUpperCase()} ${pgn.pgn.toString(16).toUpperCase()} ${dataStr}`
           }
-          return ''
-        
-        case 'ikonvert':
-          // iKonvert format: !PDGY,127245,255,/Pj/f/9///8=
-          const ikonvertData = (pgn as any).inputData
-          if (ikonvertData) {
-            const base64Data = Buffer.from(ikonvertData).toString('base64')
-            return `!PDGY,${pgn.pgn},${pgn.dst || 255},${base64Data}`
-          }
-          return `!PDGY,${pgn.pgn},${pgn.dst || 255},`
-        
-        case 'ydwg-raw':
-          // YDWG Raw format: 16:29:27.082 R 09F8017F 50 C3 B8 13 47 D8 2B C6
-          const ydwgData = (pgn as any).inputData
-          if (ydwgData) {
-            const time = new Date().toTimeString().split(' ')[0] + '.000'
-            const canId = ((pgn.prio || 0) << 26) | (pgn.pgn << 8) | (pgn.src || 0)
-            const dataHex = Array.from(ydwgData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join(' ')
-            return `${time} R ${canId.toString(16).padStart(8, '0').toUpperCase()} ${dataHex}`
-          }
-          return ''
+          return 'No input data available for N2K ASCII format'
         
         case 'pcdin':
-          // PCDIN format: $PCDIN,01F119,00000000,0F,2AAF00D1067414FF*59
-          const pcdinData = (pgn as any).inputData
-          if (pcdinData) {
-            const pgnHex = pgn.pgn.toString(16).padStart(6, '0').toUpperCase()
-            const dataHex = Array.from(pcdinData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join('')
-            return `$PCDIN,${pgnHex},00000000,${(pgn.src || 0).toString(16).padStart(2, '0').toUpperCase()},${dataHex}*00`
-          }
-          return ''
+          // Use canboatjs built-in function
+          const pcdinResult = pgnToPCDIN(pgn)
+          return pcdinResult || 'Unable to format to PCDIN format'
         
         case 'mxpgn':
           // MiniPlex-3 MXPGN format: $MXPGN,01F801,2801,C1308AC40C5DE343*19
@@ -93,7 +82,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
             const dataHex = Array.from(mxpgnData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join('')
             return `$MXPGN,${pgnHex},${srcDst.toString(16).padStart(4, '0').toUpperCase()},${dataHex}*00`
           }
-          return ''
+          return 'No input data available for MXPGN format'
         
         case 'candump1':
           // Linux CAN utils format (Angstrom): <0x18eeff01> [8] 05 a0 be 1c 00 a0 a0 c0
@@ -103,7 +92,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
             const dataHex = Array.from(candump1Data as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0')).join(' ')
             return `<0x${canId.toString(16).padStart(8, '0')}> [${candump1Data.length}] ${dataHex}`
           }
-          return ''
+          return 'No input data available for candump1 format'
         
         case 'candump2':
           // Linux CAN utils format (Debian): can0 09F8027F [8] 00 FC FF FF 00 00 FF FF
@@ -113,7 +102,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
             const dataHex = Array.from(candump2Data as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join(' ')
             return `can0 ${canId.toString(16).padStart(8, '0').toUpperCase()} [${candump2Data.length}] ${dataHex}`
           }
-          return ''
+          return 'No input data available for candump2 format'
         
         case 'candump3':
           // Linux CAN utils format (log): (1502979132.106111) slcan0 09F50374#000A00FFFF00FFFF
@@ -124,7 +113,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
             const timestamp = (Date.now() / 1000).toFixed(6)
             return `(${timestamp}) slcan0 ${canId.toString(16).padStart(8, '0').toUpperCase()}#${dataHex}`
           }
-          return ''
+          return 'No input data available for candump3 format'
         
         default:
           return JSON.stringify(pgn, null, 2)
@@ -146,15 +135,19 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
       // Try to parse as JSON first
       if (inputValue.trim().startsWith('{')) {
         const jsonData = JSON.parse(inputValue)
-        // TODO: Handle JSON format parsing
-        console.log('JSON format detected:', jsonData)
-        setParseError('JSON format parsing not yet implemented')
+        // If it's already a valid PGN JSON object, use it directly
+        if (jsonData.pgn && typeof jsonData.pgn === 'number') {
+          setParsedResult(jsonData as PGN)
+          console.log('JSON PGN loaded:', jsonData)
+        } else {
+          setParseError('Invalid PGN JSON format - missing required pgn field')
+        }
         return
       }
       
       // Try to parse as string format using the parser if available
       if (parser) {
-        const result = parser.parse(inputValue.trim())
+        const result = parser.parseString(inputValue.trim())
         if (result) {
           setParsedResult(result)
           console.log('Parsed PGN:', result)
@@ -176,21 +169,8 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
   }
 
   const handleLoadExample = () => {
-    const exampleMessage = `{
-  "timestamp": "2023-10-15T10:30:45.123Z",
-  "prio": 2,
-  "src": 17,
-  "dst": 255,
-  "pgn": 127250,
-  "description": "Vessel Heading",
-  "fields": {
-    "SID": 0,
-    "Heading": 1.5708,
-    "Deviation": null,
-    "Variation": null,
-    "Reference": "Magnetic"
-  }
-}`
+    // Load an Actisense format example to demonstrate string parsing
+    const exampleMessage = '2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,00'
     setInputValue(exampleMessage)
     setParsedResult(null)
     setParseError(null)
