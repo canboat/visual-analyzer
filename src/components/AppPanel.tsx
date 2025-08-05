@@ -123,6 +123,13 @@ const AppPanel = (props: any) => {
     isAdmin: false,
     loading: true,
   })
+  const [sendStatus, setSendStatus] = useState<{
+    sending: boolean
+    lastSent?: string
+    error?: string
+  }>({
+    sending: false,
+  })
   const sentInfoReq: number[] = []
 
   // Debug function to test error display
@@ -474,6 +481,86 @@ const AppPanel = (props: any) => {
     }
   }, [])
 
+  // Function to handle sending NMEA 2000 messages
+  const handleSendMessage = async () => {
+    const textarea = document.getElementById('nmea2000Message') as HTMLTextAreaElement
+    if (!textarea || !textarea.value.trim()) {
+      setSendStatus({
+        sending: false,
+        error: 'Please enter a message to send'
+      })
+      return
+    }
+
+    setSendStatus({ sending: true, error: undefined })
+
+    try {
+      const messages = textarea.value.trim().split('\n').filter(line => line.trim())
+      
+      for (const message of messages) {
+        const trimmedMessage = message.trim()
+        if (!trimmedMessage) continue
+
+        let messageData: any
+
+        // Detect format and prepare message data
+        if (trimmedMessage.startsWith('{') && trimmedMessage.endsWith('}')) {
+          // JSON format - parse and validate
+          try {
+            messageData = JSON.parse(trimmedMessage)
+            // Validate required fields for JSON format
+            if (!messageData.pgn || !messageData.src) {
+              throw new Error('JSON message must contain at least pgn and src fields')
+            }
+          } catch (parseError) {
+            throw new Error(`Invalid JSON format: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`)
+          }
+        } else {
+          // Assume Actisense format - validate basic structure
+          if (!trimmedMessage.includes(',')) {
+            throw new Error('Actisense format must contain comma-separated values')
+          }
+          messageData = { value: trimmedMessage, sendToN2K: true }
+        }
+
+        // Send the message
+        const endpoint = isEmbedded ? '/skServer/inputTest' : '/api/send'
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(messageData),
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`Send failed (${response.status}): ${errorText}`)
+        }
+
+        const result = await response.json()
+        if (result.error) {
+          throw new Error(result.error)
+        }
+      }
+
+      setSendStatus({
+        sending: false,
+        lastSent: new Date().toLocaleTimeString(),
+        error: undefined
+      })
+
+      console.log(`Successfully sent ${messages.length} message(s)`)
+    } catch (error) {
+      console.error('Error sending message:', error)
+      setSendStatus({
+        sending: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred while sending message'
+      })
+    }
+  }
+
   /*
   const dinfo = useObservableState<DeviceMap>(deviceInfo, {})
   const selectedPgnValue = useObservableState<PGN | undefined>(selectedPgn, undefined)
@@ -604,9 +691,84 @@ const AppPanel = (props: any) => {
               <h4 className="text-sk-primary">Send NMEA 2000 Messages</h4>
               <p className="mb-3">Send custom NMEA 2000 messages to the network for testing and debugging purposes.</p>
 
-              <div className="alert alert-info" role="alert">
-                <strong>Coming Soon:</strong> PGN composition and transmission interface will be available in a future
-                version.
+              <div className="row mb-4">
+                <div className="col-12">
+                  <div className="card">
+                    <div className="card-body">
+                      <h6 className="card-title">Send Raw NMEA 2000 Message</h6>
+                      <p className="card-text small mb-3">
+                        Enter NMEA 2000 messages in Actisense format or Canboat JSON format. Multiple messages can be entered, one per line.
+                      </p>
+                      
+                      <div className="form-group mb-3">
+                        <label htmlFor="nmea2000Message" className="form-label">
+                          <strong>NMEA 2000 Message:</strong>
+                        </label>
+                        <textarea
+                          id="nmea2000Message"
+                          className="form-control font-monospace"
+                          rows={8}
+                          placeholder="Enter NMEA 2000 message here...&#10;&#10;Actisense format:&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;&#10;Canboat JSON format:&#10;{&quot;timestamp&quot;:&quot;2023-10-15T10:30:00.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127251,&quot;description&quot;:&quot;Rate of Turn&quot;,&quot;fields&quot;:{&quot;Rate&quot;:0}}&#10;&#10;You can enter multiple messages, one per line."
+                          style={{
+                            fontSize: '14px',
+                            lineHeight: '1.4'
+                          }}
+                        />
+                      </div>
+                      
+                      <div className="d-flex gap-2 mb-3">
+                        <button 
+                          type="button" 
+                          className="btn btn-primary"
+                          disabled={sendStatus.sending}
+                          onClick={handleSendMessage}
+                        >
+                          {sendStatus.sending ? (
+                            <>
+                              <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-paper-plane me-2"></i>
+                              Send Message
+                            </>
+                          )}
+                        </button>
+                        <button 
+                          type="button" 
+                          className="btn btn-secondary"
+                          disabled={sendStatus.sending}
+                          onClick={() => {
+                            const textarea = document.getElementById('nmea2000Message') as HTMLTextAreaElement
+                            if (textarea) {
+                              textarea.value = ''
+                            }
+                            setSendStatus({ sending: false })
+                          }}
+                        >
+                          <i className="fas fa-eraser me-2"></i>
+                          Clear
+                        </button>
+                      </div>
+
+                      {/* Status feedback */}
+                      {sendStatus.error && (
+                        <div className="alert alert-danger" role="alert">
+                          <i className="fas fa-exclamation-triangle me-2"></i>
+                          <strong>Send Error:</strong> {sendStatus.error}
+                        </div>
+                      )}
+                      
+                      {sendStatus.lastSent && !sendStatus.error && (
+                        <div className="alert alert-success" role="alert">
+                          <i className="fas fa-check-circle me-2"></i>
+                          <strong>Success:</strong> Message(s) sent successfully at {sendStatus.lastSent}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="row">
@@ -615,6 +777,9 @@ const AppPanel = (props: any) => {
                     <div className="card-body">
                       <h6 className="card-title">Quick Send</h6>
                       <p className="card-text small">Send predefined PGNs with custom data fields.</p>
+                      <div className="alert alert-info small" role="alert">
+                        <strong>Coming Soon:</strong> Quick send interface will be available in a future version.
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -623,6 +788,9 @@ const AppPanel = (props: any) => {
                     <div className="card-body">
                       <h6 className="card-title">Custom PGN</h6>
                       <p className="card-text small">Compose and send custom PGN messages.</p>
+                      <div className="alert alert-info small" role="alert">
+                        <strong>Coming Soon:</strong> PGN composer will be available in a future version.
+                      </div>
                     </div>
                   </div>
                 </div>
