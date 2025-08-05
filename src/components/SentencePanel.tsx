@@ -495,11 +495,25 @@ export const SentencePanel = (props: SentencePanelProps) => {
         </TabPane>
         {definition !== undefined && (
           <TabPane tabId={PGNDEF_TAB_ID}>
-            <pre>{JSON.stringify(definition, null, 2)}</pre>
+            <Card className="mt-3">
+              <CardHeader>
+                <h5 className="mb-0">PGN Definition</h5>
+              </CardHeader>
+              <CardBody>
+                <pre>{JSON.stringify(definition, null, 2)}</pre>
+              </CardBody>
+            </Card>
           </TabPane>
         )}
         <TabPane tabId={DEVICE_TAB_ID}>
-          <pre>{JSON.stringify(info[pgnData.src!]?.info, null, 2)}</pre>
+          <Card className="mt-3">
+            <CardHeader>
+              <h5 className="mb-0">Device Information</h5>
+            </CardHeader>
+            <CardBody>
+              <pre>{JSON.stringify(info[pgnData.src!]?.info, null, 2)}</pre>
+            </CardBody>
+          </Card>
         </TabPane>
         <TabPane tabId={INPUT_TAB_ID}>
           <Card className="mt-3">
@@ -521,7 +535,14 @@ export const SentencePanel = (props: SentencePanelProps) => {
           </Card>
         </TabPane>
         <TabPane tabId={MAPPING_TAB_ID}>
-          <ByteMapping pgnData={pgnData} definition={definition} />
+          <Card className="mt-3">
+            <CardHeader>
+              <h5 className="mb-0">Byte Mapping</h5>
+            </CardHeader>
+            <CardBody>
+              <ByteMapping pgnData={pgnData} definition={definition} />
+            </CardBody>
+          </Card>
         </TabPane>
       </TabContent>
     </div>
