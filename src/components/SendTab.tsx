@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Card, CardBody } from 'reactstrap'
+import { Card, CardHeader, CardBody } from 'reactstrap'
 import { FromPgn } from '@canboat/canboatjs'
 
 interface SendStatus {
@@ -285,25 +285,19 @@ export const SendTab: React.FC = () => {
   }
 
   return (
-    <Card>
-      <CardBody>
-        <h4 className="text-sk-primary">Send NMEA 2000 Messages</h4>
-        <p className="mb-3">
-          Send NMEA 2000 messages to the network for testing and debugging purposes using any format supported by
-          canboatjs.
-        </p>
+    <div className="row mb-4">
+      <div className="col-12">
+        <Card>
+          <CardHeader>
+            <h6 className="mb-0">Send Raw NMEA 2000 Message</h6>
+          </CardHeader>
+          <CardBody>
+            <p className="card-text small mb-3">
+              Enter NMEA 2000 messages in any format supported by canboatjs (Actisense, YDRAW, Canboat JSON, etc.).
+              Multiple messages can be entered on separate lines.
+            </p>
 
-        <div className="row mb-4">
-          <div className="col-12">
-            <div className="card">
-              <div className="card-body">
-                <h6 className="card-title">Send Raw NMEA 2000 Message</h6>
-                <p className="card-text small mb-3">
-                  Enter NMEA 2000 messages in any format supported by canboatjs (Actisense, YDRAW, Canboat JSON, etc.).
-                  Multiple messages can be entered on separate lines.
-                </p>
-
-                <div className="row mb-3">
+            <div className="row mb-3">
                   <div className={convertedJson ? 'col-md-6' : 'col-12'}>
                     <div className="form-group">
                       <div className="d-flex justify-content-between align-items-center mb-2">
@@ -457,7 +451,7 @@ export const SendTab: React.FC = () => {
                   )}
                 </div>
 
-                <div className="d-flex mb-3">
+            <div className="d-flex mb-3">
                   <button
                     type="button"
                     className="btn btn-primary me-3"
@@ -502,25 +496,23 @@ export const SendTab: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Status feedback */}
-                {sendStatus.error && (
+            {/* Status feedback */}
+            {sendStatus.error && (
                   <div className="alert alert-danger" role="alert">
                     <i className="fas fa-exclamation-triangle me-2"></i>
                     <strong>Send Error:</strong> {sendStatus.error}
                   </div>
-                )}
+            )}
 
-                {sendStatus.lastSent && !sendStatus.error && (
+            {sendStatus.lastSent && !sendStatus.error && (
                   <div className="alert alert-success" role="alert">
                     <i className="fas fa-check-circle me-2"></i>
                     <strong>Success:</strong> Message(s) sent successfully at {sendStatus.lastSent}
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardBody>
-    </Card>
+            )}
+          </CardBody>
+        </Card>
+      </div>
+    </div>
   )
 }
