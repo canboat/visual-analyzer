@@ -624,6 +624,9 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
       case 'serial':
         this.sendToSerial(data)
         break
+      case 'network':
+        this.sendToNetwork(data)
+        break
       case 'socketcan':
         this.sendToSocketCAN(data)
         break
@@ -680,6 +683,63 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
       this.serialStream.write(formattedData)
     } else if (this.serialPort && typeof (this.serialPort as any).write === 'function') {
       ;(this.serialPort as any).write(formattedData)
+    }
+  }
+
+  private sendToNetwork(data: any): void {
+    // Format data based on device type, similar to serial formatting
+    let formattedData: string
+    if (typeof data === 'string') {
+      formattedData = data
+    } else {
+      // Use canboatjs formatting functions based on device type
+      const supportedDeviceTypes = ['actisense', 'ikonvert', 'ydgw']
+      const deviceType = this.options.deviceType
+      
+      if (deviceType && !supportedDeviceTypes.includes(deviceType)) {
+        throw new Error(`Unsupported device type for network transmission: ${deviceType}. Supported types: ${supportedDeviceTypes.join(', ')}`)
+      }
+
+      switch (deviceType) {
+        case 'actisense':
+          formattedData = pgnToActisenseN2KAsciiFormat(data) || ''
+          break
+        case 'ikonvert':
+          formattedData = pgnToiKonvertSerialFormat(data) || ''
+          break
+        case 'ydgw':
+          const ydgwResult = pgnToYdgwRawFormat(data)
+          formattedData = Array.isArray(ydgwResult) ? ydgwResult.join('\n') : ydgwResult || ''
+          break
+        default:
+          // Default to JSON format if no device type specified
+          formattedData = JSON.stringify(data) + '\n'
+      }
+    }
+
+    // Ensure message ends with newline if not already present
+    if (!formattedData.endsWith('\n')) {
+      formattedData += '\n'
+    }
+
+    if (this.options.networkProtocol === 'tcp') {
+      if (!this.tcpClient || this.tcpClient.destroyed) {
+        throw new Error('TCP connection not available')
+      }
+      this.tcpClient.write(formattedData)
+    } else if (this.options.networkProtocol === 'udp') {
+      if (!this.udpSocket) {
+        throw new Error('UDP socket not available')
+      }
+      const buffer = Buffer.from(formattedData)
+      this.udpSocket.send(buffer, this.options.networkPort!, this.options.networkHost!, (error) => {
+        if (error) {
+          console.error('Error sending UDP message:', error)
+          throw error
+        }
+      })
+    } else {
+      throw new Error(`Unsupported network protocol: ${this.options.networkProtocol}`)
     }
   }
 
