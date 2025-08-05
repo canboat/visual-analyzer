@@ -28,7 +28,12 @@ export const SendTab: React.FC = () => {
     try {
       const input = textarea.value.trim()
 
-      // For JSON format, validate the structure but send as-is
+      // Basic validation - just ensure there's content
+      if (!input) {
+        throw new Error('No message content provided')
+      }
+
+      // For JSON format, validate the structure
       if ((input.startsWith('{') && input.endsWith('}')) || (input.startsWith('[') && input.endsWith(']'))) {
         try {
           const parsedJson = JSON.parse(input)
@@ -49,21 +54,8 @@ export const SendTab: React.FC = () => {
         } catch (parseError) {
           throw new Error(`Invalid JSON format: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`)
         }
-      } else {
-        // For Actisense format, do basic validation
-        const lines = input.split('\n').filter(line => line.trim())
-        
-        for (const line of lines) {
-          const trimmedLine = line.trim()
-          if (trimmedLine && !trimmedLine.includes(',')) {
-            throw new Error(`Actisense format must contain comma-separated values: "${trimmedLine}"`)
-          }
-        }
-        
-        if (lines.length === 0) {
-          throw new Error('No valid messages found to send')
-        }
       }
+      // For other formats (Actisense, YDRAW, etc.), let canboatjs handle the parsing
 
       // Send the entire input to the endpoint
       const messageData = { value: input, sendToN2K: true }
@@ -106,7 +98,7 @@ export const SendTab: React.FC = () => {
     <Card>
       <CardBody>
         <h4 className="text-sk-primary">Send NMEA 2000 Messages</h4>
-        <p className="mb-3">Send custom NMEA 2000 messages to the network for testing and debugging purposes.</p>
+        <p className="mb-3">Send NMEA 2000 messages to the network for testing and debugging purposes using any format supported by canboatjs.</p>
 
         <div className="row mb-4">
           <div className="col-12">
@@ -114,7 +106,7 @@ export const SendTab: React.FC = () => {
               <div className="card-body">
                 <h6 className="card-title">Send Raw NMEA 2000 Message</h6>
                 <p className="card-text small mb-3">
-                  Enter NMEA 2000 messages in Actisense format or Canboat JSON format. Multiple messages can be entered, one per line for Actisense format, or as a JSON array for JSON format.
+                  Enter NMEA 2000 messages in any format supported by canboatjs (Actisense, YDRAW, Canboat JSON, etc.). Multiple messages can be entered on separate lines.
                 </p>
                 
                 <div className="form-group mb-3">
@@ -125,7 +117,7 @@ export const SendTab: React.FC = () => {
                     id="nmea2000Message"
                     className="form-control font-monospace"
                     rows={10}
-                    placeholder="Enter NMEA 2000 message here...&#10;&#10;Actisense format (one per line):&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;2023-10-15T10:30:01.000Z,2,127250,1,255,8,01,02,03,04,05,06,07,08&#10;&#10;Canboat JSON format (single message):&#10;{&quot;timestamp&quot;:&quot;2023-10-15T10:30:00.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127251,&quot;description&quot;:&quot;Rate of Turn&quot;,&quot;fields&quot;:{&quot;Rate&quot;:0}}&#10;&#10;Canboat JSON array format (multiple messages):&#10;[{&quot;timestamp&quot;:&quot;2023-10-15T10:30:00.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127251,&quot;description&quot;:&quot;Rate of Turn&quot;,&quot;fields&quot;:{&quot;Rate&quot;:0}},{&quot;timestamp&quot;:&quot;2023-10-15T10:30:01.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127250,&quot;description&quot;:&quot;Heading&quot;,&quot;fields&quot;:{&quot;Heading&quot;:1.5708}}]"
+                    placeholder="Enter NMEA 2000 message here...&#10;&#10;Actisense format:&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;&#10;YDRAW format:&#10;21:53:15.000 R 0DF80503 FF FF FF FF FF FF FF FF&#10;&#10;Canboat JSON format:&#10;{&quot;timestamp&quot;:&quot;2023-10-15T10:30:00.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127251,&quot;description&quot;:&quot;Rate of Turn&quot;,&quot;fields&quot;:{&quot;Rate&quot;:0}}&#10;&#10;JSON array (multiple messages):&#10;[{&quot;pgn&quot;:127251,&quot;src&quot;:1,&quot;fields&quot;:{&quot;Rate&quot;:0}},{&quot;pgn&quot;:127250,&quot;src&quot;:1,&quot;fields&quot;:{&quot;Heading&quot;:1.5708}}]&#10;&#10;Multiple messages (any format, one per line):&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;21:53:16.000 R 0DF80503 01 02 03 04 05 06 07 08"
                     style={{
                       fontSize: '14px',
                       lineHeight: '1.4'
