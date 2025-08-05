@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardBody } from 'reactstrap'
 import { 
   FromPgn, 
@@ -19,10 +19,41 @@ interface TransformTabProps {
 }
 
 const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
-  const [inputValue, setInputValue] = useState<string>('')
+  // Load initial values from localStorage
+  const [inputValue, setInputValue] = useState<string>(() => {
+    try {
+      return localStorage.getItem('transformTab-inputValue') || ''
+    } catch {
+      return ''
+    }
+  })
   const [parsedResult, setParsedResult] = useState<PGN | null>(null)
   const [parseError, setParseError] = useState<string | null>(null)
-  const [outputFormat, setOutputFormat] = useState<string>('canboat-json')
+  const [outputFormat, setOutputFormat] = useState<string>(() => {
+    try {
+      return localStorage.getItem('transformTab-outputFormat') || 'canboat-json'
+    } catch {
+      return 'canboat-json'
+    }
+  })
+
+  // Save inputValue to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('transformTab-inputValue', inputValue)
+    } catch (error) {
+      console.warn('Failed to save input value to localStorage:', error)
+    }
+  }, [inputValue])
+
+  // Save outputFormat to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('transformTab-outputFormat', outputFormat)
+    } catch (error) {
+      console.warn('Failed to save output format to localStorage:', error)
+    }
+  }, [outputFormat])
 
   const outputFormats = [
     { value: 'canboat-json', label: 'Canboat JSON' },
