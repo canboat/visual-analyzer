@@ -45,12 +45,9 @@ export const SendTab: React.FC = () => {
     const trimmed = message.trim()
     if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
       return 'JSON'
-    } else if (trimmed.match(/^\d{2}:\d{2}:\d{2}\.\d{3}\s+[RT]\s+[0-9A-Fa-f]+/)) {
-      return 'YDRAW'
-    } else if (trimmed.includes(',')) {
-      return 'Actisense'
+    } else {
+      return 'String'
     }
-    return 'Unknown'
   }
 
   // Function to get a readable description for a message
