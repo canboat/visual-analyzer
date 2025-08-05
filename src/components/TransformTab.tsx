@@ -155,13 +155,27 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
     setParseError(null)
   }
 
-  const handleLoadExample = () => {
-    // Load an Actisense format example to demonstrate string parsing
-    const exampleMessage = '2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,00'
-    setInputValue(exampleMessage)
-    setParsedResult(null)
-    setParseError(null)
+  const handleCopyOutput = async () => {
+    if (!parsedResult) return
+    
+    const outputText = formatOutput(parsedResult, outputFormat)
+    try {
+      await navigator.clipboard.writeText(outputText)
+      // Optional: You could add a toast notification here
+      console.log('Output copied to clipboard')
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error)
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = outputText
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+    }
   }
+
+
 
   return (
     <Card>
@@ -182,7 +196,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
                   </label>
                   <textarea
                     id="nmea2000Input"
-                    className="form-control"
+                    className="form-control mb-3"
                     rows={12}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
@@ -199,9 +213,6 @@ Canboat JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot
                   </button>
                   <button className="btn btn-secondary" type="button" onClick={handleClear}>
                     Clear
-                  </button>
-                  <button className="btn btn-outline-secondary" type="button" onClick={handleLoadExample}>
-                    Load Example
                   </button>
                 </div>
 
@@ -239,9 +250,21 @@ Canboat JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot
                 </div>
                 
                 <div className="form-group">
-                  <label htmlFor="transformOutput" className="form-label">
-                    Parsed Result:
-                  </label>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <label htmlFor="transformOutput" className="form-label mb-0">
+                      Parsed Result:
+                    </label>
+                    {parsedResult && (
+                      <button 
+                        className="btn btn-outline-primary btn-sm" 
+                        type="button" 
+                        onClick={handleCopyOutput}
+                        title="Copy output to clipboard"
+                      >
+                        Copy
+                      </button>
+                    )}
+                  </div>
                   <textarea
                     id="transformOutput"
                     className="form-control"
