@@ -1,4 +1,5 @@
 [![npm version](https://img.shields.io/npm/v/@canboat/visual-analyzer.svg)](https://www.npmjs.com/@canboat/visual-analyzer)
+[![Node.js CI & Test](https://github.com/canboat/visual-analyzer/actions/workflows/test.yml/badge.svg)](https://github.com/canboat/visual-analyzer/actions/workflows/test.yml)
 
 # @canboat/visual-analyzer
 
