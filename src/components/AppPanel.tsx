@@ -600,7 +600,7 @@ const AppPanel = (props: any) => {
           </Card>
         </TabPane>
         <TabPane tabId={SEND_TAB_ID}>
-          <SendTab isEmbedded={isEmbedded} />
+          <SendTab />
         </TabPane>
         <TabPane tabId={TRANSFORM_TAB_ID}>
           <Card>

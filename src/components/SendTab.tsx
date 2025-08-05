@@ -1,17 +1,13 @@
 import React, { useState } from 'react'
 import { Card, CardBody } from 'reactstrap'
 
-interface SendTabProps {
-  isEmbedded: boolean
-}
-
 interface SendStatus {
   sending: boolean
   lastSent?: string
   error?: string
 }
 
-export const SendTab: React.FC<SendTabProps> = ({ isEmbedded }) => {
+export const SendTab: React.FC = () => {
   const [sendStatus, setSendStatus] = useState<SendStatus>({
     sending: false,
   })
@@ -78,8 +74,7 @@ export const SendTab: React.FC<SendTabProps> = ({ isEmbedded }) => {
 
       // Send each message
       for (const messageData of messagesToSend) {
-        const endpoint = isEmbedded ? '/skServer/inputTest' : '/api/send'
-        const response = await fetch(endpoint, {
+        const response = await fetch('/skServer/inputTest', {
           method: 'POST',
           credentials: 'include',
           headers: {
