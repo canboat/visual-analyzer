@@ -5,6 +5,7 @@ const path = require('path')
 const fs = require('fs')
 const os = require('os')
 const NMEADataProvider = require('./nmea-provider')
+const { FromPgn } = require('@canboat/canboatjs')
 
 class VisualAnalyzerServer {
   constructor(options = {}) {
@@ -28,6 +29,9 @@ class VisualAnalyzerServer {
     this.wss = new WebSocket.Server({ server: this.server })
     this.nmeaProvider = null
     this.currentConfig = { connections: { activeConnection: null, profiles: {} } }
+
+    // Initialize canboatjs parser for string input parsing
+    this.canboatParser = new FromPgn()
 
     // Track current connection state including errors
     this.connectionState = {
@@ -161,46 +165,134 @@ class VisualAnalyzerServer {
           })
         }
 
-        // Parse the PGN data from the value field
-        let pgnData
-        try {
-          pgnData = JSON.parse(value)
-        } catch (parseError) {
+        let pgnDataArray = []
+
+        // Check if input is a string (NMEA 2000 format) or JSON
+        if (typeof value === 'string') {
+          // Try to parse as JSON first
+          try {
+            const jsonParsed = JSON.parse(value)
+            pgnDataArray = [jsonParsed]
+            console.log('Parsed as JSON from string value')
+          } catch (jsonParseError) {
+            // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
+            // Split by newlines to handle multiple lines
+            const lines = value.split(/\r?\n/).filter(line => line.trim())
+            
+            if (lines.length === 0) {
+              return res.status(400).json({
+                success: false,
+                error: 'No valid lines found in input',
+              })
+            }
+
+            try {
+              for (const line of lines) {
+                const trimmedLine = line.trim()
+                if (trimmedLine) {
+                  try {
+                    const parsed = this.canboatParser.parseString(trimmedLine)
+                    if (parsed) {
+                      pgnDataArray.push(parsed)
+                    } else {
+                      console.warn(`Unable to parse line: ${trimmedLine}`)
+                    }
+                  } catch (lineParseError) {
+                    console.warn(`Error parsing line "${trimmedLine}": ${lineParseError.message}`)
+                    // Continue processing other lines instead of failing
+                  }
+                }
+              }
+              
+              if (pgnDataArray.length === 0) {
+                return res.status(400).json({
+                  success: false,
+                  error: 'Unable to parse any NMEA 2000 strings from input',
+                })
+              }
+              
+              console.log(`Parsed ${pgnDataArray.length} NMEA 2000 messages from ${lines.length} lines using canboatjs`)
+            } catch (canboatParseError) {
+              return res.status(400).json({
+                success: false,
+                error: 'Error parsing NMEA 2000 strings: ' + canboatParseError.message,
+              })
+            }
+          }
+        } else if (typeof value === 'object') {
+          // Value is already a JSON object
+          pgnDataArray = [value]
+          console.log('Using direct JSON object value')
+        } else {
           return res.status(400).json({
             success: false,
-            error: 'Invalid JSON in value field: ' + parseError.message,
+            error: 'Value must be a string (JSON or NMEA 2000 format) or object',
           })
         }
 
-        console.log('Received NMEA 2000 message for transmission:', {
-          pgn: pgnData.pgn,
-          sendToN2K: sendToN2K,
-          data: pgnData,
-        })
+        // Process each parsed message
+        const results = []
+        for (const pgnData of pgnDataArray) {
+          console.log('Processing NMEA 2000 message for transmission:', {
+            pgn: pgnData.pgn,
+            sendToN2K: sendToN2K,
+            data: pgnData,
+          })
 
-        // If we have an active NMEA provider, attempt to send the message
-        if (this.nmeaProvider && sendToN2K) {
-          try {
-            // Convert PGN object to raw NMEA 2000 format if the provider supports it
-            if (typeof this.nmeaProvider.sendMessage === 'function') {
-              this.nmeaProvider.sendMessage(pgnData)
-              console.log('Message sent to NMEA 2000 network')
-            } else {
-              console.log('NMEA provider does not support message transmission')
+          // If we have an active NMEA provider, attempt to send the message
+          if (this.nmeaProvider && sendToN2K) {
+            try {
+              // Convert PGN object to raw NMEA 2000 format if the provider supports it
+              if (typeof this.nmeaProvider.sendMessage === 'function') {
+                this.nmeaProvider.sendMessage(pgnData)
+                console.log('Message sent to NMEA 2000 network')
+                results.push({
+                  pgn: pgnData.pgn,
+                  transmitted: true,
+                  parsedData: pgnData
+                })
+              } else {
+                console.log('NMEA provider does not support message transmission')
+                results.push({
+                  pgn: pgnData.pgn,
+                  transmitted: false,
+                  error: 'NMEA provider does not support message transmission',
+                  parsedData: pgnData
+                })
+              }
+            } catch (sendError) {
+              console.error('Error sending message to NMEA 2000 network:', sendError)
+              results.push({
+                pgn: pgnData.pgn,
+                transmitted: false,
+                error: 'Error sending message: ' + sendError.message,
+                parsedData: pgnData
+              })
             }
-          } catch (sendError) {
-            console.error('Error sending message to NMEA 2000 network:', sendError)
-            // Don't fail the request - just log the error
+          } else if (sendToN2K) {
+            console.log('No active NMEA connection - message not transmitted')
+            results.push({
+              pgn: pgnData.pgn,
+              transmitted: false,
+              error: 'No active NMEA connection',
+              parsedData: pgnData
+            })
+          } else {
+            results.push({
+              pgn: pgnData.pgn,
+              transmitted: false,
+              parsedData: pgnData
+            })
           }
-        } else if (sendToN2K) {
-          console.log('No active NMEA connection - message not transmitted')
         }
 
         // Return success response in SignalK format
         res.json({
           success: true,
-          message: 'Message processed successfully',
-          transmitted: sendToN2K && this.nmeaProvider ? true : false,
+          message: `${pgnDataArray.length} message(s) processed successfully`,
+          messagesProcessed: pgnDataArray.length,
+          transmitted: sendToN2K && this.nmeaProvider ? results.filter(r => r.transmitted).length : 0,
+          results: results, // Include detailed results for each message
         })
       } catch (error) {
         console.error('Error processing input test request:', error)
