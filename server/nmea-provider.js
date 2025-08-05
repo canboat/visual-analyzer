@@ -49,7 +49,7 @@ class NMEADataProvider extends EventEmitter {
     this.authToken = null
     this.authRequestId = 0
     this.pendingAuthResolve = null
-    
+
     // File playback specific properties
     this.fileStream = null
     this.playbackTimer = null
@@ -417,13 +417,12 @@ class NMEADataProvider extends EventEmitter {
 
       // Set up streaming file reader
       this.setupFileStream(filePath)
-      
+
       this.isConnected = true
       this.emit('connected')
-      
+
       // Start playback
       this.startFilePlayback()
-
     } catch (error) {
       console.error('Failed to connect to file:', error)
       throw error
@@ -434,7 +433,7 @@ class NMEADataProvider extends EventEmitter {
     this.fileStream = fs.createReadStream(filePath)
     this.readline = readline.createInterface({
       input: this.fileStream,
-      crlfDelay: Infinity // Handle Windows line endings
+      crlfDelay: Infinity, // Handle Windows line endings
     })
 
     // Handle each line as it's read
@@ -444,7 +443,8 @@ class NMEADataProvider extends EventEmitter {
       }
 
       line = line.trim()
-      if (line && !line.startsWith('#')) { // Skip empty lines and comments
+      if (line && !line.startsWith('#')) {
+        // Skip empty lines and comments
 
         if (line.length > 15 && line.charAt(13) === ';' && line.charAt(15) === ';') {
           // SignalK Multiplexed format
@@ -457,7 +457,7 @@ class NMEADataProvider extends EventEmitter {
 
         // Add line to queue for processing
         this.lineQueue.push(line)
-        
+
         // Start processing queue if not already processing
         if (!this.isProcessingQueue) {
           this.processQueue()
@@ -491,7 +491,7 @@ class NMEADataProvider extends EventEmitter {
           setTimeout(checkQueue, 100)
         }
       }
-      
+
       checkQueue()
     })
 
@@ -509,14 +509,14 @@ class NMEADataProvider extends EventEmitter {
 
     this.isProcessingQueue = true
     const line = this.lineQueue.shift()
-    
+
     // Simply emit each line as raw NMEA data
     this.emit('raw-nmea', line)
 
     // Schedule next line based on playback speed
     const playbackSpeed = this.options.playbackSpeed || 1.0
     let delay = 0
-    
+
     if (playbackSpeed === 0) {
       // Maximum speed - no delay
       delay = 0
@@ -537,7 +537,7 @@ class NMEADataProvider extends EventEmitter {
   startFilePlayback() {
     const playbackSpeed = this.options.playbackSpeed || 1.0
     console.log(`Starting file playback at ${playbackSpeed}x speed`)
-    
+
     // Processing will start automatically when lines are added to queue
     // No need to do anything special here
   }

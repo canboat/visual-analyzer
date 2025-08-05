@@ -615,7 +615,8 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
             </h6>
             <div className="alert alert-info mb-3">
               <i className="fas fa-info-circle mr-2"></i>
-              <strong>File Playback:</strong> Play back recorded NMEA 2000 data from various file formats for testing and analysis.
+              <strong>File Playback:</strong> Play back recorded NMEA 2000 data from various file formats for testing
+              and analysis.
             </div>
 
             <FormGroup>
@@ -627,9 +628,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                 id="filePath"
                 placeholder="/path/to/nmea2000.log or C:\logs\data.raw"
                 value={formData.filePath}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  handleInputChange('filePath', e.target.value)
-                }
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('filePath', e.target.value)}
                 className="form-control-lg"
               />
               <small className="form-text text-muted">Full path to the NMEA 2000 data file</small>
@@ -662,9 +661,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
               </div>
               <div className="col-md-6">
                 <FormGroup>
-                  <Label className="font-weight-bold">
-                    Playback Options
-                  </Label>
+                  <Label className="font-weight-bold">Playback Options</Label>
                   <div className="mt-2">
                     <div className="custom-control custom-checkbox">
                       <Input
@@ -869,22 +866,22 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                   profile.type === 'network'
                                     ? 'fa-network-wired'
                                     : profile.type === 'serial'
-                                    ? 'fa-usb'
-                                    : profile.type === 'socketcan'
-                                    ? 'fa-car'
-                                    : profile.type === 'file'
-                                    ? 'fa-file-alt'
-                                    : 'fa-anchor'
+                                      ? 'fa-usb'
+                                      : profile.type === 'socketcan'
+                                        ? 'fa-car'
+                                        : profile.type === 'file'
+                                          ? 'fa-file-alt'
+                                          : 'fa-anchor'
                                 } mr-2 text-${
                                   profile.type === 'network'
                                     ? 'info'
                                     : profile.type === 'serial'
-                                    ? 'success'
-                                    : profile.type === 'socketcan'
-                                    ? 'warning'
-                                    : profile.type === 'file'
-                                    ? 'dark'
-                                    : 'primary'
+                                      ? 'success'
+                                      : profile.type === 'socketcan'
+                                        ? 'warning'
+                                        : profile.type === 'file'
+                                          ? 'dark'
+                                          : 'primary'
                                 }`}
                               ></i>
                               <div>
@@ -903,12 +900,12 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                 profile.type === 'network'
                                   ? 'info'
                                   : profile.type === 'serial'
-                                  ? 'success'
-                                  : profile.type === 'socketcan'
-                                  ? 'warning'
-                                  : profile.type === 'file'
-                                  ? 'dark'
-                                  : 'primary'
+                                    ? 'success'
+                                    : profile.type === 'socketcan'
+                                      ? 'warning'
+                                      : profile.type === 'file'
+                                        ? 'dark'
+                                        : 'primary'
                               }`}
                             >
                               {profile.type.toUpperCase()}
@@ -949,10 +946,13 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                               {profile.type === 'file' && (
                                 <>
                                   <i className="fas fa-folder-open mr-1"></i>
-                                  {profile.filePath ? profile.filePath.split('/').pop() || profile.filePath.split('\\').pop() : 'No file'}
+                                  {profile.filePath
+                                    ? profile.filePath.split('/').pop() || profile.filePath.split('\\').pop()
+                                    : 'No file'}
                                   {profile.playbackSpeed !== 1.0 && (
                                     <span className="ml-2 badge badge-outline-secondary">
-                                      <i className="fas fa-tachometer-alt mr-1"></i>{profile.playbackSpeed}x
+                                      <i className="fas fa-tachometer-alt mr-1"></i>
+                                      {profile.playbackSpeed}x
                                     </span>
                                   )}
                                   {profile.loopPlayback && (
