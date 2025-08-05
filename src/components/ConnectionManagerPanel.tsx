@@ -989,34 +989,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
             <div className="d-flex align-items-center">
               <span>{editingProfile ? 'Edit Connection Profile' : 'Create New Connection Profile'}</span>
             </div>
-            <button
-              type="button"
-              className="btn-close-modern"
-              onClick={() => setShowModal(false)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'white',
-                fontSize: '20px',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'
-                e.currentTarget.style.transform = 'scale(1.1)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.transform = 'scale(1)'
-              }}
-            >
-              ×
-            </button>
           </ModalHeader>
           <ModalBody className="p-4">
             
