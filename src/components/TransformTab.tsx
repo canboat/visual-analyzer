@@ -6,6 +6,7 @@ import {
   pgnToActisenseN2KAsciiFormat,
   pgnToiKonvertSerialFormat,
   pgnToYdgwRawFormat,
+  pgnToYdgwFullRawFormat,
   pgnToPCDIN,
   pgnToMXPGN,
   pgnToCandump1,
@@ -60,9 +61,10 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
     { value: 'actisense', label: 'Actisense Serial Format' },
     { value: 'actisense-n2k-ascii', label: 'Actisense N2K ASCII' },
     { value: 'ikonvert', label: 'iKonvert Format' },
-    { value: 'ydwg-raw', label: 'YDWG Raw Format' },
+    { value: 'ydwg-full-raw', label: 'Yacht Devices RAW Format' },
+    { value: 'ydwg-raw', label: 'Yacht Devices RAW Send Format' },
     { value: 'pcdin', label: 'PCDIN Format' },
-    { value: 'mxpgn', label: 'MiniPlex-3 MXPGN Format' },
+    { value: 'mxpgn', label: 'MXPGN Format' },
     { value: 'candump1', label: 'Linux CAN utils (Angstrom)' },
     { value: 'candump2', label: 'Linux CAN utils (Debian)' },
     { value: 'candump3', label: 'Linux CAN utils (log format)' },
@@ -93,6 +95,14 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
             return ydwgResult.join('\n')
           }
           return ydwgResult || 'Unable to format to YDWG Raw format'
+
+        case 'ydwg-full-raw':
+          // Use canboatjs built-in function - this returns an array of strings
+          const ydwgFullResult = pgnToYdgwFullRawFormat(pgn)
+          if (Array.isArray(ydwgFullResult)) {
+            return ydwgFullResult.join('\n')
+          }
+          return ydwgFullResult || 'Unable to format to YDWG Full Raw format'
 
         case 'actisense-n2k-ascii':
           // Use canboatjs built-in function
