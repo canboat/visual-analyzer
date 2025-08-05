@@ -20,7 +20,7 @@ import {
 interface ConnectionProfile {
   id: string
   name: string
-  type: 'serial' | 'network' | 'signalk' | 'socketcan'
+  type: 'serial' | 'network' | 'signalk' | 'socketcan' | 'file'
   signalkUrl?: string
   signalkUsername?: string
   signalkPassword?: string
@@ -38,6 +38,9 @@ interface ConnectionProfile {
   networkPort?: number
   networkProtocol?: 'tcp' | 'udp'
   socketcanInterface?: string
+  filePath?: string
+  playbackSpeed?: number
+  loopPlayback?: boolean
 }
 
 interface ServerConfig {
@@ -90,6 +93,9 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
     networkPort: 2000,
     networkProtocol: 'tcp',
     socketcanInterface: 'can0',
+    filePath: '',
+    playbackSpeed: 1.0,
+    loopPlayback: false,
   })
 
   // Helper function to get current connection status, prioritizing real-time data
@@ -168,6 +174,12 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
   const saveConnectionProfile = async () => {
     if (!formData.name.trim()) {
       setMessage({ type: 'error', text: 'Connection name is required' })
+      return
+    }
+
+    // Validate file path for file connections
+    if (formData.type === 'file' && !formData.filePath?.trim()) {
+      setMessage({ type: 'error', text: 'File path is required for file connections' })
       return
     }
 
@@ -285,6 +297,9 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
       networkPort: 2000,
       networkProtocol: 'tcp',
       socketcanInterface: 'can0',
+      filePath: '',
+      playbackSpeed: 1.0,
+      loopPlayback: false,
     })
     setEditingProfile(null)
   }
@@ -331,6 +346,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
               <option value="serial">🔌 Serial Port</option>
               <option value="signalk">⚓ SignalK Server</option>
               <option value="socketcan">🚗 SocketCAN (Linux CAN)</option>
+              <option value="file">📁 File Playback</option>
             </Input>
           </FormGroup>
         </div>
@@ -591,6 +607,86 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
             </div>
           </div>
         )}
+
+        {formData.type === 'file' && (
+          <div className="border rounded p-3 bg-light">
+            <h6 className="text-dark mb-3">
+              <i className="fas fa-file-alt mr-2"></i>File Playback Configuration
+            </h6>
+            <div className="alert alert-info mb-3">
+              <i className="fas fa-info-circle mr-2"></i>
+              <strong>File Playback:</strong> Play back recorded NMEA 2000 data from various file formats for testing and analysis.
+            </div>
+
+            <FormGroup>
+              <Label for="filePath" className="font-weight-bold">
+                File Path
+              </Label>
+              <Input
+                type="text"
+                id="filePath"
+                placeholder="/path/to/nmea2000.log or C:\logs\data.raw"
+                value={formData.filePath}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleInputChange('filePath', e.target.value)
+                }
+                className="form-control-lg"
+              />
+              <small className="form-text text-muted">Full path to the NMEA 2000 data file</small>
+            </FormGroup>
+
+            <div className="row">
+              <div className="col-md-6">
+                <FormGroup>
+                  <Label for="playbackSpeed" className="font-weight-bold">
+                    Playback Speed
+                  </Label>
+                  <Input
+                    type="select"
+                    id="playbackSpeed"
+                    value={formData.playbackSpeed}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleInputChange('playbackSpeed', parseFloat(e.target.value))
+                    }
+                    className="form-control-lg"
+                  >
+                    <option value={0.25}>0.25x (Quarter Speed)</option>
+                    <option value={0.5}>0.5x (Half Speed)</option>
+                    <option value={1.0}>1.0x (Real Time)</option>
+                    <option value={2.0}>2.0x (Double Speed)</option>
+                    <option value={5.0}>5.0x (Fast Forward)</option>
+                    <option value={0}>Maximum (No Delay)</option>
+                  </Input>
+                  <small className="form-text text-muted">Speed multiplier for data playback</small>
+                </FormGroup>
+              </div>
+              <div className="col-md-6">
+                <FormGroup>
+                  <Label className="font-weight-bold">
+                    Playback Options
+                  </Label>
+                  <div className="mt-2">
+                    <div className="custom-control custom-checkbox">
+                      <Input
+                        type="checkbox"
+                        id="loopPlayback"
+                        checked={formData.loopPlayback}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          handleInputChange('loopPlayback', e.target.checked)
+                        }
+                        className="custom-control-input"
+                      />
+                      <Label className="custom-control-label" htmlFor="loopPlayback">
+                        <i className="fas fa-redo mr-2"></i>Loop Playback
+                      </Label>
+                    </div>
+                    <small className="form-text text-muted">Automatically restart playback when file ends</small>
+                  </div>
+                </FormGroup>
+              </div>
+            </div>
+          </div>
+        )}
       </Form>
     )
   }
@@ -769,7 +865,27 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                           <td>
                             <div className="d-flex align-items-center">
                               <i
-                                className={`fas ${profile.type === 'network' ? 'fa-network-wired' : profile.type === 'serial' ? 'fa-usb' : profile.type === 'socketcan' ? 'fa-car' : 'fa-anchor'} mr-2 text-${profile.type === 'network' ? 'info' : profile.type === 'serial' ? 'success' : profile.type === 'socketcan' ? 'warning' : 'primary'}`}
+                                className={`fas ${
+                                  profile.type === 'network'
+                                    ? 'fa-network-wired'
+                                    : profile.type === 'serial'
+                                    ? 'fa-usb'
+                                    : profile.type === 'socketcan'
+                                    ? 'fa-car'
+                                    : profile.type === 'file'
+                                    ? 'fa-file-alt'
+                                    : 'fa-anchor'
+                                } mr-2 text-${
+                                  profile.type === 'network'
+                                    ? 'info'
+                                    : profile.type === 'serial'
+                                    ? 'success'
+                                    : profile.type === 'socketcan'
+                                    ? 'warning'
+                                    : profile.type === 'file'
+                                    ? 'dark'
+                                    : 'primary'
+                                }`}
                               ></i>
                               <div>
                                 <strong>{profile.name}</strong>
@@ -783,7 +899,17 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                           </td>
                           <td>
                             <span
-                              className={`badge badge-outline-${profile.type === 'network' ? 'info' : profile.type === 'serial' ? 'success' : profile.type === 'socketcan' ? 'warning' : 'primary'}`}
+                              className={`badge badge-outline-${
+                                profile.type === 'network'
+                                  ? 'info'
+                                  : profile.type === 'serial'
+                                  ? 'success'
+                                  : profile.type === 'socketcan'
+                                  ? 'warning'
+                                  : profile.type === 'file'
+                                  ? 'dark'
+                                  : 'primary'
+                              }`}
                             >
                               {profile.type.toUpperCase()}
                             </span>
@@ -818,6 +944,22 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                 <>
                                   <i className="fas fa-microchip mr-1"></i>
                                   {profile.socketcanInterface}
+                                </>
+                              )}
+                              {profile.type === 'file' && (
+                                <>
+                                  <i className="fas fa-folder-open mr-1"></i>
+                                  {profile.filePath ? profile.filePath.split('/').pop() || profile.filePath.split('\\').pop() : 'No file'}
+                                  {profile.playbackSpeed !== 1.0 && (
+                                    <span className="ml-2 badge badge-outline-secondary">
+                                      <i className="fas fa-tachometer-alt mr-1"></i>{profile.playbackSpeed}x
+                                    </span>
+                                  )}
+                                  {profile.loopPlayback && (
+                                    <span className="ml-2 badge badge-outline-info">
+                                      <i className="fas fa-redo mr-1"></i>Loop
+                                    </span>
+                                  )}
                                 </>
                               )}
                             </small>
@@ -941,7 +1083,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
             <Button
               color="primary"
               onClick={saveConnectionProfile}
-              disabled={saving || !formData.name.trim()}
+              disabled={saving || !formData.name.trim() || (formData.type === 'file' && !formData.filePath?.trim())}
               size="lg"
               className="px-4"
             >
