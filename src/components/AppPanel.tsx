@@ -8,6 +8,7 @@ import { FilterPanel, Filter } from './Filters'
 import { SentencePanel } from './SentencePanel'
 import { ConnectionManagerPanel } from './ConnectionManagerPanel'
 import { SendTab } from './SendTab'
+import TransformTab from './TransformTab'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
 
@@ -642,82 +643,7 @@ const AppPanel = (props: any) => {
           <SendTab />
         </TabPane>
         <TabPane tabId={TRANSFORM_TAB_ID}>
-          <Card>
-            <CardBody>
-              <h4 className="text-sk-primary">Data Transformation</h4>
-              <p className="mb-3">Transform and convert NMEA 2000 data between different formats and protocols.</p>
-
-              <div className="row mb-4">
-                <div className="col-12">
-                  <div className="card">
-                    <div className="card-header">
-                      <h6 className="mb-0">NMEA 2000 Message Input</h6>
-                    </div>
-                    <div className="card-body">
-                      <div className="form-group">
-                        <label htmlFor="nmea2000Input" className="form-label">
-                          Enter NMEA 2000 message (String or JSON format):
-                        </label>
-                        <textarea
-                          id="nmea2000Input"
-                          className="form-control"
-                          rows={6}
-                          placeholder="Enter your NMEA 2000 message here...
-Examples:
-String format: 2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,00
-JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot;, &quot;prio&quot;: 2, &quot;pgn&quot;: 127250, &quot;src&quot;: 17, &quot;dst&quot;: 255, &quot;len&quot;: 8, &quot;data&quot;: [0,252,105,151,0,0,0,0]}"
-                          style={{ fontFamily: 'monospace' }}
-                        />
-                      </div>
-                      <div className="d-flex gap-2">
-                        <button className="btn btn-primary" type="button">
-                          Parse Message
-                        </button>
-                        <button className="btn btn-secondary" type="button">
-                          Clear
-                        </button>
-                        <button className="btn btn-outline-secondary" type="button">
-                          Load Example
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="alert alert-info" role="alert">
-                <strong>Coming Soon:</strong> Data transformation tools and protocol converters will be available in a
-                future version.
-              </div>
-
-              <div className="row">
-                <div className="col-md-4">
-                  <div className="card bg-sk-light">
-                    <div className="card-body">
-                      <h6 className="card-title">Actisense → YDRAW</h6>
-                      <p className="card-text small">Convert Actisense messages to YDRAW format.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="card bg-sk-light">
-                    <div className="card-body">
-                      <h6 className="card-title">N2K → Signal K</h6>
-                      <p className="card-text small">Transform to Signal K JSON format.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="card bg-sk-light">
-                    <div className="card-body">
-                      <h6 className="card-title">Custom Format</h6>
-                      <p className="card-text small">Export to custom data formats.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
+          <TransformTab parser={parser} />
         </TabPane>
         {!isEmbedded && (
           <TabPane tabId={CONNECTIONS_TAB_ID}>
