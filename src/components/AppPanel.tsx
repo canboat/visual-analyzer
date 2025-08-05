@@ -23,6 +23,7 @@ interface LoginStatus {
 }
 
 const LOCALSTORAGE_KEY = 'visual_analyzer_settings'
+const ACTIVE_TAB_KEY = 'visual_analyzer_active_tab'
 
 const saveFilterSettings = (filter: Filter, doFiltering: boolean) => {
   try {
@@ -37,6 +38,27 @@ const saveFilterSettings = (filter: Filter, doFiltering: boolean) => {
   } catch (e) {
     console.warn('Failed to save filter settings to localStorage:', e)
   }
+}
+
+const saveActiveTab = (tabId: string) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(ACTIVE_TAB_KEY, tabId)
+    }
+  } catch (e) {
+    console.warn('Failed to save active tab to localStorage:', e)
+  }
+}
+
+const loadActiveTab = (): string | null => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem(ACTIVE_TAB_KEY)
+    }
+  } catch (e) {
+    console.warn('Failed to load active tab from localStorage:', e)
+  }
+  return null
 }
 
 const loadFilterSettings = (): { filter: Filter; doFiltering: boolean } | null => {
@@ -93,7 +115,21 @@ const TRANSFORM_TAB_ID = 'transform'
 const CONNECTIONS_TAB_ID = 'connections'
 
 const AppPanel = (props: any) => {
-  const [activeTab, setActiveTab] = useState(ANALYZER_TAB_ID)
+  // Check if we're in embedded mode (SignalK plugin) vs standalone mode
+  const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
+  
+  const [activeTab, setActiveTab] = useState(() => {
+    const savedTab = loadActiveTab()
+    // Validate the saved tab - if in embedded mode, don't allow connections tab
+    if (savedTab && (savedTab !== CONNECTIONS_TAB_ID || !isEmbedded)) {
+      const validTabs = [ANALYZER_TAB_ID, SEND_TAB_ID, TRANSFORM_TAB_ID]
+      if (!isEmbedded) {
+        validTabs.push(CONNECTIONS_TAB_ID)
+      }
+      return validTabs.includes(savedTab) ? savedTab : ANALYZER_TAB_ID
+    }
+    return ANALYZER_TAB_ID
+  })
   const [ws, setWs] = useState(null)
   const [data] = useState(new ReplaySubject<PGNDataMap>())
   const [list, setList] = useState<any>({})
@@ -126,6 +162,12 @@ const AppPanel = (props: any) => {
   })
   const sentInfoReq: number[] = []
 
+  // Handler for tab changes with persistence
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId)
+    saveActiveTab(tabId)
+  }
+
   // Debug function to test error display
   const testErrorDisplay = () => {
     console.log('Testing error display...')
@@ -142,9 +184,6 @@ const AppPanel = (props: any) => {
       ;(window as any).testErrorDisplay = testErrorDisplay
     }
   }, [])
-
-  // Check if we're in embedded mode (SignalK plugin) vs standalone mode
-  const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
 
   // Make debugging functions available globally
   React.useEffect(() => {
@@ -529,7 +568,7 @@ const AppPanel = (props: any) => {
         <NavItem>
           <NavLink
             className={activeTab === ANALYZER_TAB_ID ? 'active' : ''}
-            onClick={() => setActiveTab(ANALYZER_TAB_ID)}
+            onClick={() => handleTabChange(ANALYZER_TAB_ID)}
             style={{ cursor: 'pointer' }}
           >
             NMEA 2000 Analyzer
@@ -538,7 +577,7 @@ const AppPanel = (props: any) => {
         <NavItem>
           <NavLink
             className={activeTab === SEND_TAB_ID ? 'active' : ''}
-            onClick={() => setActiveTab(SEND_TAB_ID)}
+            onClick={() => handleTabChange(SEND_TAB_ID)}
             style={{ cursor: 'pointer' }}
           >
             Send
@@ -547,7 +586,7 @@ const AppPanel = (props: any) => {
         <NavItem>
           <NavLink
             className={activeTab === TRANSFORM_TAB_ID ? 'active' : ''}
-            onClick={() => setActiveTab(TRANSFORM_TAB_ID)}
+            onClick={() => handleTabChange(TRANSFORM_TAB_ID)}
             style={{ cursor: 'pointer' }}
           >
             Transform
@@ -557,7 +596,7 @@ const AppPanel = (props: any) => {
           <NavItem>
             <NavLink
               className={activeTab === CONNECTIONS_TAB_ID ? 'active' : ''}
-              onClick={() => setActiveTab(CONNECTIONS_TAB_ID)}
+              onClick={() => handleTabChange(CONNECTIONS_TAB_ID)}
               style={{ cursor: 'pointer' }}
             >
               Connections
