@@ -113,6 +113,12 @@ export const SendTab: React.FC = () => {
     setShowHistoryDropdown(false)
   }
 
+  // Function to delete a specific history item
+  const deleteHistoryItem = (index: number, event: React.MouseEvent) => {
+    event.stopPropagation() // Prevent selecting the item when deleting
+    setMessageHistory(prev => prev.filter((_, i) => i !== index))
+  }
+
   // Function to check if input is JSON and update state
   const checkJsonInput = (input: string) => {
     const trimmed = input.trim()
@@ -373,6 +379,27 @@ export const SendTab: React.FC = () => {
                                             {getMessageDescription(item.message, item.format)}
                                           </div>
                                         </div>
+                                        <button
+                                          type="button"
+                                          className="btn btn-sm text-danger p-1"
+                                          onClick={(e) => deleteHistoryItem(index, e)}
+                                          title="Delete this item"
+                                          style={{ 
+                                            fontSize: '14px', 
+                                            lineHeight: 1,
+                                            minWidth: '22px',
+                                            height: '22px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            border: '1px solid #dc3545',
+                                            borderRadius: '3px',
+                                            backgroundColor: 'white',
+                                            fontWeight: 'bold'
+                                          }}
+                                        >
+                                          ×
+                                        </button>
                                       </div>
                                     </div>
                                   ))}
