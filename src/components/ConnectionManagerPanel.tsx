@@ -353,9 +353,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
 
         {formData.type === 'signalk' && (
           <div className="border rounded p-3 bg-light">
-            <h6 className="text-primary mb-3">
-              SignalK Server Configuration
-            </h6>
+            <h6 className="text-primary mb-3">SignalK Server Configuration</h6>
             <FormGroup>
               <Label for="signalkUrl" className="font-weight-bold">
                 SignalK URL
@@ -414,9 +412,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
 
         {formData.type === 'serial' && (
           <div className="border rounded p-3 bg-light">
-            <h6 className="text-success mb-3">
-              Serial Port Configuration
-            </h6>
+            <h6 className="text-success mb-3">Serial Port Configuration</h6>
             <FormGroup>
               <Label for="deviceType" className="font-weight-bold">
                 Device Type
@@ -480,9 +476,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
 
         {formData.type === 'network' && (
           <div className="border rounded p-3 bg-light">
-            <h6 className="text-info mb-3">
-              Network Configuration
-            </h6>
+            <h6 className="text-info mb-3">Network Configuration</h6>
             <FormGroup>
               <Label for="networkDeviceType" className="font-weight-bold">
                 Device Type
@@ -560,9 +554,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
 
         {formData.type === 'socketcan' && (
           <div className="border rounded p-3 bg-light">
-            <h6 className="text-warning mb-3">
-              SocketCAN Configuration
-            </h6>
+            <h6 className="text-warning mb-3">SocketCAN Configuration</h6>
             <div className="alert alert-info mb-3">
               <strong>Linux Only:</strong> SocketCAN requires a Linux system with CAN interface support. Commonly used
               with USB-CAN adapters or built-in CAN controllers.
@@ -586,9 +578,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
             </FormGroup>
 
             <div className="mt-3">
-              <h6 className="text-muted mb-2">
-                Setup Commands
-              </h6>
+              <h6 className="text-muted mb-2">Setup Commands</h6>
               <div className="bg-dark text-light p-3 rounded">
                 <small>
                   <strong>Setup CAN interface:</strong>
@@ -609,9 +599,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
 
         {formData.type === 'file' && (
           <div className="border rounded p-3 bg-light">
-            <h6 className="text-dark mb-3">
-              File Playback Configuration
-            </h6>
+            <h6 className="text-dark mb-3">File Playback Configuration</h6>
             <div className="alert alert-info mb-3">
               <strong>File Playback:</strong> Play back recorded NMEA 2000 data from various file formats for testing
               and analysis.
@@ -706,9 +694,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
       <CardBody>
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <h4 className="text-sk-primary mb-1">
-              Connection Manager
-            </h4>
+            <h4 className="text-sk-primary mb-1">Connection Manager</h4>
             <p className="mb-0 text-muted">Manage multiple NMEA 2000 data source connections</p>
           </div>
           <Button color="primary" onClick={openCreateModal} size="lg" className="px-4">
@@ -729,14 +715,11 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
               <CardBody>
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
-                    <h6 className="mb-1">
-                      Current Connection
-                    </h6>
+                    <h6 className="mb-1">Current Connection</h6>
                     <div className="d-flex align-items-center">
                       <span
                         className={`badge badge-lg ${getCurrentConnectionStatus() ? 'badge-success' : 'badge-secondary'} mr-3`}
                       >
-                       
                         {getCurrentConnectionStatus() ? 'Connected' : 'Disconnected'}
                       </span>
                       {config.connection.activeProfile ? (
@@ -771,7 +754,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                     })()}
                   </div>
                   <div className="d-flex align-items-center">
-                    
                     <div className="d-flex flex-column">
                       <Button
                         color="outline-primary"
@@ -803,9 +785,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
             {/* Connection Profiles List */}
             <Card className="shadow-sm">
               <div className="card-header bg-light d-flex justify-content-between align-items-center">
-                <strong>
-                  Connection Profiles
-                </strong>
+                <strong>Connection Profiles</strong>
                 <span className="badge badge-secondary">
                   {Object.keys(config.connections.profiles).length} profiles
                 </span>
@@ -823,21 +803,11 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                   <Table className="mb-0 table-hover">
                     <thead className="thead-light">
                       <tr>
-                        <th style={{ width: '28%' }}>
-                          Connection Name
-                        </th>
-                        <th style={{ width: '12%' }}>
-                          Type
-                        </th>
-                        <th style={{ width: '35%' }}>
-                          Connection Details
-                        </th>
-                        <th style={{ width: '12%' }}>
-                          Status
-                        </th>
-                        <th style={{ width: '13%' }}>
-                          Actions
-                        </th>
+                        <th style={{ width: '28%' }}>Connection Name</th>
+                        <th style={{ width: '12%' }}>Type</th>
+                        <th style={{ width: '35%' }}>Connection Details</th>
+                        <th style={{ width: '12%' }}>Status</th>
+                        <th style={{ width: '13%' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -851,9 +821,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                               <div>
                                 <strong>{profile.name}</strong>
                                 {config.connections.activeConnection === profileId && (
-                                  <span className="badge badge-primary ml-2">
-                                    Active
-                                  </span>
+                                  <span className="badge badge-primary ml-2">Active</span>
                                 )}
                               </div>
                             </div>
@@ -881,9 +849,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                 <>
                                   {profile.signalkUrl}
                                   {profile.signalkUsername && (
-                                    <span className="ml-2 badge badge-outline-info">
-                                      Auth
-                                    </span>
+                                    <span className="ml-2 badge badge-outline-info">Auth</span>
                                   )}
                                 </>
                               )}
@@ -898,26 +864,16 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                   - {profile.deviceType}
                                 </>
                               )}
-                              {profile.type === 'socketcan' && (
-                                <>
-                                  {profile.socketcanInterface}
-                                </>
-                              )}
+                              {profile.type === 'socketcan' && <>{profile.socketcanInterface}</>}
                               {profile.type === 'file' && (
                                 <>
                                   {profile.filePath
                                     ? profile.filePath.split('/').pop() || profile.filePath.split('\\').pop()
                                     : 'No file'}
                                   {profile.playbackSpeed !== 1.0 && (
-                                    <span className="ml-2 badge badge-outline-secondary">
-                                      {profile.playbackSpeed}x
-                                    </span>
+                                    <span className="ml-2 badge badge-outline-secondary">{profile.playbackSpeed}x</span>
                                   )}
-                                  {profile.loopPlayback && (
-                                    <span className="ml-2 badge badge-outline-info">
-                                      Loop
-                                    </span>
-                                  )}
+                                  {profile.loopPlayback && <span className="ml-2 badge badge-outline-info">Loop</span>}
                                 </>
                               )}
                             </small>
@@ -930,9 +886,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                 {getCurrentConnectionStatus() ? 'Connected' : 'Connecting...'}
                               </span>
                             ) : (
-                              <span className="badge badge-secondary">
-                                Inactive
-                              </span>
+                              <span className="badge badge-secondary">Inactive</span>
                             )}
                           </td>
                           <td>
@@ -990,10 +944,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
               <span>{editingProfile ? 'Edit Connection Profile' : 'Create New Connection Profile'}</span>
             </div>
           </ModalHeader>
-          <ModalBody className="p-4">
-            
-            {renderConnectionForm()}
-          </ModalBody>
+          <ModalBody className="p-4">{renderConnectionForm()}</ModalBody>
           <ModalFooter className="bg-light">
             <Button
               color="primary"
@@ -1002,15 +953,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
               size="lg"
               className="px-4"
             >
-              {saving ? (
-                <>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  {editingProfile ? 'Update Profile' : 'Create Profile'}
-                </>
-              )}
+              {saving ? <>Saving...</> : <>{editingProfile ? 'Update Profile' : 'Create Profile'}</>}
             </Button>
             <Button color="secondary" onClick={() => setShowModal(false)} size="lg" className="px-4">
               Cancel
@@ -1021,9 +964,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
         <div className="mt-4">
           <Card className="bg-light border-0">
             <CardBody>
-              <h6 className="text-primary mb-3">
-                Usage Tips
-              </h6>
+              <h6 className="text-primary mb-3">Usage Tips</h6>
               <div className="row">
                 <div className="col-md-6">
                   <ul className="list-unstyled">
