@@ -6,7 +6,7 @@ import { useObservableState } from 'observable-hooks'
 import { DeviceInformation, DeviceMap } from '../types'
 import { Definition, findMatchingDefinition } from '@canboat/ts-pgns'
 import { parseN2kString } from '@canboat/canboatjs'
-import { Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
+import { Nav, NavItem, NavLink, TabContent, TabPane, Card, CardHeader, CardBody, Button } from 'reactstrap'
 
 interface ByteMappingProps {
   pgnData: PGN
@@ -408,6 +408,18 @@ export const SentencePanel = (props: SentencePanelProps) => {
   const pgnData = useObservableState<PGN>(props.selectedPgn)
   const info = useObservableState<DeviceMap>(props.info, {})
 
+  const copyPgnData = async () => {
+    if (pgnData) {
+      try {
+        const dataToSave = JSON.stringify(pgnData, (key, value) => (key === 'input' ? undefined : value), 2)
+        await navigator.clipboard.writeText(dataToSave)
+        // You could add a toast notification here if desired
+      } catch (err) {
+        console.error('Failed to copy PGN data:', err)
+      }
+    }
+  }
+
   if (pgnData === undefined || pgnData === null) {
     return <div>Select a PGN to view its data</div>
   }
@@ -455,8 +467,19 @@ export const SentencePanel = (props: SentencePanelProps) => {
       </Nav>
       <TabContent activeTab={activeTab} style={{ flex: 1, overflow: 'auto' }}>
         <TabPane tabId={DATA_TAB_ID}>
-          <h5>{definition?.Description}</h5>
-          <pre>{JSON.stringify(pgnData, (key, value) => (key === 'input' ? undefined : value), 2)}</pre>
+          <Card className="mt-3">
+            <CardHeader className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">
+                {pgnData.pgn}: {definition?.Description || 'PGN Data'}
+              </h5>
+              <Button size="sm" color="secondary" onClick={copyPgnData} title="Copy PGN data to clipboard">
+                Copy
+              </Button>
+            </CardHeader>
+            <CardBody>
+              <pre>{JSON.stringify(pgnData, (key, value) => (key === 'input' ? undefined : value), 2)}</pre>
+            </CardBody>
+          </Card>
         </TabPane>
         {definition !== undefined && (
           <TabPane tabId={PGNDEF_TAB_ID}>
