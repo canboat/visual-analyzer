@@ -154,10 +154,10 @@ export const SendTab: React.FC = () => {
                   />
                 </div>
                 
-                <div className="d-flex gap-2 mb-3">
+                <div className="d-flex mb-3">
                   <button 
                     type="button" 
-                    className="btn btn-primary"
+                    className="btn btn-primary me-3"
                     disabled={sendStatus.sending}
                     onClick={handleSendMessage}
                   >
@@ -173,7 +173,7 @@ export const SendTab: React.FC = () => {
                   {isJsonInput && (
                     <button 
                       type="button" 
-                      className="btn btn-info"
+                      className="btn btn-info me-3"
                       disabled={sendStatus.sending}
                       onClick={handleBeautifyJson}
                     >
