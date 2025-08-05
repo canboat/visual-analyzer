@@ -709,7 +709,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h4 className="text-sk-primary mb-1">
-              <i className="fas fa-plug mr-2"></i>Connection Manager
+              <i className="fas mr-2"></i>Connection Manager
             </h4>
             <p className="mb-0 text-muted">Manage multiple NMEA 2000 data source connections</p>
           </div>
@@ -733,15 +733,13 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
                     <h6 className="mb-1">
-                      <i className="fas fa-signal mr-2"></i>Current Connection
+                      <i className="fas mr-2"></i>Current Connection
                     </h6>
                     <div className="d-flex align-items-center">
                       <span
                         className={`badge badge-lg ${getCurrentConnectionStatus() ? 'badge-success' : 'badge-secondary'} mr-3`}
                       >
-                        <i
-                          className={`fas ${getCurrentConnectionStatus() ? 'fa-check-circle' : 'fa-times-circle'} mr-1`}
-                        ></i>
+                       
                         {getCurrentConnectionStatus() ? 'Connected' : 'Disconnected'}
                       </span>
                       {config.connection.activeProfile ? (
@@ -777,11 +775,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                     })()}
                   </div>
                   <div className="d-flex align-items-center">
-                    {getCurrentConnectionStatus() && (
-                      <div className="text-success mr-3">
-                        <i className="fas fa-wifi fa-2x"></i>
-                      </div>
-                    )}
+                    
                     <div className="d-flex flex-column">
                       <Button
                         color="outline-primary"
@@ -790,7 +784,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                         disabled={saving}
                         className="mb-1"
                       >
-                        <i className="fas fa-redo mr-1"></i>
+                        <i className="fas mr-1"></i>
                         {saving ? 'Restarting...' : 'Restart Connection'}
                       </Button>
                       {connectionStatus?.error && (
@@ -837,19 +831,19 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                     <thead className="thead-light">
                       <tr>
                         <th style={{ width: '28%' }}>
-                          <i className="fas fa-tag mr-1"></i>Connection Name
+                          <i className="fas mr-1"></i>Connection Name
                         </th>
                         <th style={{ width: '12%' }}>
-                          <i className="fas fa-cogs mr-1"></i>Type
+                          <i className="fas mr-1"></i>Type
                         </th>
                         <th style={{ width: '35%' }}>
-                          <i className="fas fa-info-circle mr-1"></i>Connection Details
+                          <i className="fas mr-1"></i>Connection Details
                         </th>
                         <th style={{ width: '12%' }}>
-                          <i className="fas fa-signal mr-1"></i>Status
+                          <i className="fas mr-1"></i>Status
                         </th>
                         <th style={{ width: '13%' }}>
-                          <i className="fas fa-tools mr-1"></i>Actions
+                          <i className="fas mr-1"></i>Actions
                         </th>
                       </tr>
                     </thead>
@@ -861,34 +855,11 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                         >
                           <td>
                             <div className="d-flex align-items-center">
-                              <i
-                                className={`fas ${
-                                  profile.type === 'network'
-                                    ? 'fa-network-wired'
-                                    : profile.type === 'serial'
-                                      ? 'fa-usb'
-                                      : profile.type === 'socketcan'
-                                        ? 'fa-car'
-                                        : profile.type === 'file'
-                                          ? 'fa-file-alt'
-                                          : 'fa-anchor'
-                                } mr-2 text-${
-                                  profile.type === 'network'
-                                    ? 'info'
-                                    : profile.type === 'serial'
-                                      ? 'success'
-                                      : profile.type === 'socketcan'
-                                        ? 'warning'
-                                        : profile.type === 'file'
-                                          ? 'dark'
-                                          : 'primary'
-                                }`}
-                              ></i>
                               <div>
                                 <strong>{profile.name}</strong>
                                 {config.connections.activeConnection === profileId && (
                                   <span className="badge badge-primary ml-2">
-                                    <i className="fas fa-star mr-1"></i>Active
+                                    <i className="fas mr-1"></i>Active
                                   </span>
                                 )}
                               </div>
@@ -915,7 +886,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                             <small className="text-muted">
                               {profile.type === 'signalk' && (
                                 <>
-                                  <i className="fas fa-globe mr-1"></i>
+                                  <i className="fas mr-1"></i>
                                   {profile.signalkUrl}
                                   {profile.signalkUsername && (
                                     <span className="ml-2 badge badge-outline-info">
@@ -926,38 +897,38 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                               )}
                               {profile.type === 'serial' && (
                                 <>
-                                  <i className="fas fa-microchip mr-1"></i>
+                                  <i className="fas mr-1"></i>
                                   {profile.serialPort} ({profile.deviceType})
                                 </>
                               )}
                               {profile.type === 'network' && (
                                 <>
-                                  <i className="fas fa-server mr-1"></i>
+                                  <i className="fas mr-1"></i>
                                   {profile.networkHost}:{profile.networkPort} ({profile.networkProtocol?.toUpperCase()})
                                   - {profile.deviceType}
                                 </>
                               )}
                               {profile.type === 'socketcan' && (
                                 <>
-                                  <i className="fas fa-microchip mr-1"></i>
+                                  <i className="fas mr-1"></i>
                                   {profile.socketcanInterface}
                                 </>
                               )}
                               {profile.type === 'file' && (
                                 <>
-                                  <i className="fas fa-folder-open mr-1"></i>
+                                  <i className="fas-open mr-1"></i>
                                   {profile.filePath
                                     ? profile.filePath.split('/').pop() || profile.filePath.split('\\').pop()
                                     : 'No file'}
                                   {profile.playbackSpeed !== 1.0 && (
                                     <span className="ml-2 badge badge-outline-secondary">
-                                      <i className="fas fa-tachometer-alt mr-1"></i>
+                                      <i className="fas mr-1"></i>
                                       {profile.playbackSpeed}x
                                     </span>
                                   )}
                                   {profile.loopPlayback && (
                                     <span className="ml-2 badge badge-outline-info">
-                                      <i className="fas fa-redo mr-1"></i>Loop
+                                      <i className="fas mr-1"></i>Loop
                                     </span>
                                   )}
                                 </>
@@ -969,14 +940,11 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                               <span
                                 className={`badge ${getCurrentConnectionStatus() ? 'badge-success' : 'badge-warning'}`}
                               >
-                                <i
-                                  className={`fas ${getCurrentConnectionStatus() ? 'fa-check-circle' : 'fa-clock'} mr-1`}
-                                ></i>
                                 {getCurrentConnectionStatus() ? 'Connected' : 'Connecting...'}
                               </span>
                             ) : (
                               <span className="badge badge-secondary">
-                                <i className="fas fa-minus-circle mr-1"></i>Inactive
+                                <i className="fas mr-1"></i>Inactive
                               </span>
                             )}
                           </td>
