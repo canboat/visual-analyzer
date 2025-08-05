@@ -54,7 +54,21 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
   }
 
   const handleLoadExample = () => {
-    const exampleMessage = '2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,00'
+    const exampleMessage = `{
+  "timestamp": "2023-10-15T10:30:45.123Z",
+  "prio": 2,
+  "src": 17,
+  "dst": 255,
+  "pgn": 127250,
+  "description": "Vessel Heading",
+  "fields": {
+    "SID": 0,
+    "Heading": 1.5708,
+    "Deviation": null,
+    "Variation": null,
+    "Reference": "Magnetic"
+  }
+}`
     setInputValue(exampleMessage)
     setParsedResult(null)
     setParseError(null)
@@ -67,7 +81,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
         <p className="mb-3">Transform and convert NMEA 2000 data between different formats and protocols.</p>
 
         <div className="row mb-4">
-          <div className="col-12">
+          <div className="col-md-6">
             <div className="card">
               <div className="card-header">
                 <h6 className="mb-0">NMEA 2000 Message Input</h6>
@@ -80,13 +94,13 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
                   <textarea
                     id="nmea2000Input"
                     className="form-control"
-                    rows={6}
+                    rows={12}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder="Enter your NMEA 2000 message here...
 Examples:
 String format: 2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,00
-JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot;, &quot;prio&quot;: 2, &quot;pgn&quot;: 127250, &quot;src&quot;: 17, &quot;dst&quot;: 255, &quot;len&quot;: 8, &quot;data&quot;: [0,252,105,151,0,0,0,0]}"
+Canboat JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot;, &quot;prio&quot;: 2, &quot;src&quot;: 17, &quot;dst&quot;: 255, &quot;pgn&quot;: 127250, &quot;description&quot;: &quot;Vessel Heading&quot;, &quot;fields&quot;: {&quot;SID&quot;: 0, &quot;Heading&quot;: 1.5708, &quot;Deviation&quot;: null, &quot;Variation&quot;: null, &quot;Reference&quot;: &quot;Magnetic&quot;}}"
                     style={{ fontFamily: 'monospace' }}
                   />
                 </div>
@@ -107,63 +121,49 @@ JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot;, &quot
                     <strong>Error:</strong> {parseError}
                   </div>
                 )}
-
+              </div>
+            </div>
+          </div>
+          
+          <div className="col-md-6">
+            <div className="card">
+              <div className="card-header">
+                <h6 className="mb-0">Transformation Output</h6>
+              </div>
+              <div className="card-body">
+                <div className="form-group">
+                  <label htmlFor="transformOutput" className="form-label">
+                    Parsed Result:
+                  </label>
+                  <textarea
+                    id="transformOutput"
+                    className="form-control"
+                    rows={12}
+                    value={parsedResult ? JSON.stringify(parsedResult, null, 2) : ''}
+                    readOnly
+                    placeholder="Parsed message will appear here..."
+                    style={{ fontFamily: 'monospace', backgroundColor: '#f8f9fa' }}
+                  />
+                </div>
+                
                 {parsedResult && (
-                  <div className="card mt-3">
-                    <div className="card-header">
-                      <h6 className="mb-0">Parsed Result</h6>
-                    </div>
-                    <div className="card-body">
-                      <div className="row">
-                        <div className="col-md-6">
-                          <strong>PGN:</strong> {parsedResult.pgn}<br />
-                          <strong>Source:</strong> {parsedResult.src}<br />
-                          <strong>Destination:</strong> {parsedResult.dst}<br />
-                          <strong>Priority:</strong> {parsedResult.prio}<br />
-                          <strong>Description:</strong> {parsedResult.description || 'N/A'}
-                        </div>
-                        <div className="col-md-6">
-                          <strong>Fields:</strong>
-                          <pre className="mt-2 p-2 bg-light" style={{ fontSize: '0.85em' }}>
-                            {JSON.stringify(parsedResult.fields, null, 2)}
-                          </pre>
+                  <div className="mt-3">
+                    <div className="row">
+                      <div className="col-12">
+                        <div className="card bg-light">
+                          <div className="card-body p-2">
+                            <small>
+                              <strong>PGN:</strong> {parsedResult.pgn} | 
+                              <strong> Source:</strong> {parsedResult.src} | 
+                              <strong> Priority:</strong> {parsedResult.prio}<br />
+                              <strong>Description:</strong> {parsedResult.description || 'N/A'}
+                            </small>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="alert alert-info" role="alert">
-          <strong>Coming Soon:</strong> Data transformation tools and protocol converters will be available in a
-          future version.
-        </div>
-
-        <div className="row">
-          <div className="col-md-4">
-            <div className="card bg-sk-light">
-              <div className="card-body">
-                <h6 className="card-title">Actisense → YDRAW</h6>
-                <p className="card-text small">Convert Actisense messages to YDRAW format.</p>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="card bg-sk-light">
-              <div className="card-body">
-                <h6 className="card-title">N2K → Signal K</h6>
-                <p className="card-text small">Transform to Signal K JSON format.</p>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="card bg-sk-light">
-              <div className="card-body">
-                <h6 className="card-title">Custom Format</h6>
-                <p className="card-text small">Export to custom data formats.</p>
               </div>
             </div>
           </div>
