@@ -138,10 +138,7 @@ export const SendTab: React.FC = () => {
                         Sending...
                       </>
                     ) : (
-                      <>
-                        <i className="fas fa-paper-plane me-2"></i>
-                        Send Message
-                      </>
+                      'Send Message'
                     )}
                   </button>
                   <button 
@@ -156,7 +153,6 @@ export const SendTab: React.FC = () => {
                       setSendStatus({ sending: false })
                     }}
                   >
-                    <i className="fas fa-eraser me-2"></i>
                     Clear
                   </button>
                 </div>
@@ -175,31 +171,6 @@ export const SendTab: React.FC = () => {
                     <strong>Success:</strong> Message(s) sent successfully at {sendStatus.lastSent}
                   </div>
                 )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="row">
-          <div className="col-md-6">
-            <div className="card bg-sk-light">
-              <div className="card-body">
-                <h6 className="card-title">Quick Send</h6>
-                <p className="card-text small">Send predefined PGNs with custom data fields.</p>
-                <div className="alert alert-info small" role="alert">
-                  <strong>Coming Soon:</strong> Quick send interface will be available in a future version.
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="card bg-sk-light">
-              <div className="card-body">
-                <h6 className="card-title">Custom PGN</h6>
-                <p className="card-text small">Compose and send custom PGN messages.</p>
-                <div className="alert alert-info small" role="alert">
-                  <strong>Coming Soon:</strong> PGN composer will be available in a future version.
-                </div>
               </div>
             </div>
           </div>
