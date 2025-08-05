@@ -109,6 +109,9 @@ export const SendTab: React.FC = () => {
 
   // Function to clear history
   const clearHistory = () => {
+    if (messageHistory.length > 0 && !confirm('Are you sure you want to clear all message history?')) {
+      return
+    }
     setMessageHistory([])
     setShowHistoryDropdown(false)
   }
@@ -335,14 +338,18 @@ export const SendTab: React.FC = () => {
                                   <div className="p-2 border-bottom bg-light">
                                     <div className="d-flex justify-content-between align-items-center">
                                       <small className="text-muted fw-bold">Message History</small>
-                                      <button
-                                        type="button"
-                                        className="btn btn-link btn-sm text-danger p-0"
-                                        onClick={clearHistory}
-                                        title="Clear all history"
-                                      >
-                                        <i className="fas fa-trash"></i>
-                                      </button>
+                                      <div className="d-flex gap-2">
+                                        <button
+                                          type="button"
+                                          className="btn btn-outline-danger btn-sm"
+                                          onClick={clearHistory}
+                                          title="Clear all history"
+                                          style={{ fontSize: '0.75em', padding: '2px 8px' }}
+                                        >
+                                          <i className="fas fa-trash me-1"></i>
+                                          Clear All
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
                                   {messageHistory.map((item, index) => (
