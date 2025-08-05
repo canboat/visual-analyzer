@@ -11,6 +11,128 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
   const [inputValue, setInputValue] = useState<string>('')
   const [parsedResult, setParsedResult] = useState<PGN | null>(null)
   const [parseError, setParseError] = useState<string | null>(null)
+  const [outputFormat, setOutputFormat] = useState<string>('canboat-json')
+
+  const outputFormats = [
+    { value: 'canboat-json', label: 'Canboat JSON' },
+    { value: 'actisense', label: 'Actisense Serial Format' },
+    { value: 'actisense-n2k-ascii', label: 'Actisense N2K ASCII' },
+    { value: 'ikonvert', label: 'iKonvert Format' },
+    { value: 'ydwg-raw', label: 'YDWG Raw Format' },
+    { value: 'pcdin', label: 'PCDIN Format' },
+    { value: 'mxpgn', label: 'MiniPlex-3 MXPGN Format' },
+    { value: 'candump1', label: 'Linux CAN utils (Angstrom)' },
+    { value: 'candump2', label: 'Linux CAN utils (Debian)' },
+    { value: 'candump3', label: 'Linux CAN utils (log format)' }
+  ]
+
+  const formatOutput = (pgn: PGN, format: string): string => {
+    if (!pgn) return ''
+    
+    try {
+      switch (format) {
+        case 'canboat-json':
+          return JSON.stringify(pgn, null, 2)
+        
+        case 'actisense':
+          // Standard Actisense Serial Format: timestamp,prio,pgn,src,dst,len,data
+          const timestamp = pgn.timestamp || new Date().toISOString()
+          const inputData = (pgn as any).inputData
+          if (inputData) {
+            const dataHex = Array.from(inputData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0')).join(',')
+            return `${timestamp},${pgn.prio || 0},${pgn.pgn},${pgn.src || 0},${pgn.dst || 255},${inputData.length},${dataHex}`
+          }
+          return `${timestamp},${pgn.prio || 0},${pgn.pgn},${pgn.src || 0},${pgn.dst || 255},0,`
+        
+        case 'actisense-n2k-ascii':
+          // Actisense N2K ASCII format: A764027.880 CCF52 1F10D FC10FF7FFF7FFFFF
+          const nmeaInputData = (pgn as any).inputData
+          if (nmeaInputData) {
+            const canId = ((pgn.prio || 0) << 26) | (pgn.pgn << 8) | (pgn.src || 0)
+            const dataStr = Array.from(nmeaInputData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join('')
+            return `A${Date.now().toString().slice(-9)} ${canId.toString(16).toUpperCase()} ${pgn.pgn.toString(16).toUpperCase()} ${dataStr}`
+          }
+          return ''
+        
+        case 'ikonvert':
+          // iKonvert format: !PDGY,127245,255,/Pj/f/9///8=
+          const ikonvertData = (pgn as any).inputData
+          if (ikonvertData) {
+            const base64Data = Buffer.from(ikonvertData).toString('base64')
+            return `!PDGY,${pgn.pgn},${pgn.dst || 255},${base64Data}`
+          }
+          return `!PDGY,${pgn.pgn},${pgn.dst || 255},`
+        
+        case 'ydwg-raw':
+          // YDWG Raw format: 16:29:27.082 R 09F8017F 50 C3 B8 13 47 D8 2B C6
+          const ydwgData = (pgn as any).inputData
+          if (ydwgData) {
+            const time = new Date().toTimeString().split(' ')[0] + '.000'
+            const canId = ((pgn.prio || 0) << 26) | (pgn.pgn << 8) | (pgn.src || 0)
+            const dataHex = Array.from(ydwgData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join(' ')
+            return `${time} R ${canId.toString(16).padStart(8, '0').toUpperCase()} ${dataHex}`
+          }
+          return ''
+        
+        case 'pcdin':
+          // PCDIN format: $PCDIN,01F119,00000000,0F,2AAF00D1067414FF*59
+          const pcdinData = (pgn as any).inputData
+          if (pcdinData) {
+            const pgnHex = pgn.pgn.toString(16).padStart(6, '0').toUpperCase()
+            const dataHex = Array.from(pcdinData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join('')
+            return `$PCDIN,${pgnHex},00000000,${(pgn.src || 0).toString(16).padStart(2, '0').toUpperCase()},${dataHex}*00`
+          }
+          return ''
+        
+        case 'mxpgn':
+          // MiniPlex-3 MXPGN format: $MXPGN,01F801,2801,C1308AC40C5DE343*19
+          const mxpgnData = (pgn as any).inputData
+          if (mxpgnData) {
+            const pgnHex = pgn.pgn.toString(16).padStart(6, '0').toUpperCase()
+            const srcDst = ((pgn.src || 0) << 8) | (pgn.dst || 255)
+            const dataHex = Array.from(mxpgnData as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join('')
+            return `$MXPGN,${pgnHex},${srcDst.toString(16).padStart(4, '0').toUpperCase()},${dataHex}*00`
+          }
+          return ''
+        
+        case 'candump1':
+          // Linux CAN utils format (Angstrom): <0x18eeff01> [8] 05 a0 be 1c 00 a0 a0 c0
+          const candump1Data = (pgn as any).inputData
+          if (candump1Data) {
+            const canId = ((pgn.prio || 0) << 26) | (pgn.pgn << 8) | (pgn.src || 0)
+            const dataHex = Array.from(candump1Data as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0')).join(' ')
+            return `<0x${canId.toString(16).padStart(8, '0')}> [${candump1Data.length}] ${dataHex}`
+          }
+          return ''
+        
+        case 'candump2':
+          // Linux CAN utils format (Debian): can0 09F8027F [8] 00 FC FF FF 00 00 FF FF
+          const candump2Data = (pgn as any).inputData
+          if (candump2Data) {
+            const canId = ((pgn.prio || 0) << 26) | (pgn.pgn << 8) | (pgn.src || 0)
+            const dataHex = Array.from(candump2Data as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join(' ')
+            return `can0 ${canId.toString(16).padStart(8, '0').toUpperCase()} [${candump2Data.length}] ${dataHex}`
+          }
+          return ''
+        
+        case 'candump3':
+          // Linux CAN utils format (log): (1502979132.106111) slcan0 09F50374#000A00FFFF00FFFF
+          const candump3Data = (pgn as any).inputData
+          if (candump3Data) {
+            const canId = ((pgn.prio || 0) << 26) | (pgn.pgn << 8) | (pgn.src || 0)
+            const dataHex = Array.from(candump3Data as Uint8Array).map((b: number) => b.toString(16).padStart(2, '0').toUpperCase()).join('')
+            const timestamp = (Date.now() / 1000).toFixed(6)
+            return `(${timestamp}) slcan0 ${canId.toString(16).padStart(8, '0').toUpperCase()}#${dataHex}`
+          }
+          return ''
+        
+        default:
+          return JSON.stringify(pgn, null, 2)
+      }
+    } catch (error) {
+      return `Error formatting output: ${error instanceof Error ? error.message : 'Unknown error'}`
+    }
+  }
 
   const handleParseMessage = () => {
     if (!inputValue.trim()) {
@@ -131,6 +253,24 @@ Canboat JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot
                 <h6 className="mb-0">Transformation Output</h6>
               </div>
               <div className="card-body">
+                <div className="form-group mb-3">
+                  <label htmlFor="outputFormat" className="form-label">
+                    Output Format:
+                  </label>
+                  <select
+                    id="outputFormat"
+                    className="form-control"
+                    value={outputFormat}
+                    onChange={(e) => setOutputFormat(e.target.value)}
+                  >
+                    {outputFormats.map((format) => (
+                      <option key={format.value} value={format.value}>
+                        {format.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
                 <div className="form-group">
                   <label htmlFor="transformOutput" className="form-label">
                     Parsed Result:
@@ -138,8 +278,8 @@ Canboat JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot
                   <textarea
                     id="transformOutput"
                     className="form-control"
-                    rows={12}
-                    value={parsedResult ? JSON.stringify(parsedResult, null, 2) : ''}
+                    rows={9}
+                    value={parsedResult ? formatOutput(parsedResult, outputFormat) : ''}
                     readOnly
                     placeholder="Parsed message will appear here..."
                     style={{ fontFamily: 'monospace', backgroundColor: '#f8f9fa' }}
