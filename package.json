@@ -11,7 +11,8 @@
     "watch": "webpack --watch --mode development",
     "build": "webpack --mode=production",
     "clean": "rimraf ./public",
-    "ci-test": "npm run build && npm run lint && prettier --check './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc.js",
+    "test": "mocha test/**/*.test.js --timeout 10000 --exit",
+    "ci-test": "npm run build && npm run lint && npm test && prettier --check './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc.js",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "prettier": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc.js",
@@ -37,6 +38,7 @@
     "@typescript-eslint/eslint-plugin": "^6.16.0",
     "babel-loader": "^8.1.0",
     "buffer": "^6.0.3",
+    "chai": "^4.3.7",
     "css-loader": "^5.0.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
@@ -48,6 +50,7 @@
     "eslint-plugin-react": "^7.33.2",
     "file-loader": "^6.1.1",
     "html-webpack-plugin": "^5.0.0-alpha.6",
+    "mocha": "^10.2.0",
     "observable-hooks": "^4.2.3",
     "prettier": "^3.1.1",
     "react": "^16.13.1",
@@ -69,6 +72,7 @@
     "express": "^4.18.2",
     "ws": "^8.14.2",
     "serialport": "^10.5.0",
-    "concurrently": "^7.6.0"
+    "concurrently": "^7.6.0",
+    "@fortawesome/fontawesome-free": "^6.5.1"
   }
 }

@@ -54,11 +54,11 @@ export const SendTab: React.FC = () => {
   const getMessageDescription = (message: string, format: string): string => {
     // For multi-line messages, only show the first line
     const firstLine = message.split('\n')[0]
-    
+
     if (format !== 'JSON') {
       return firstLine
     }
-    
+
     try {
       const parsed = JSON.parse(message)
       if (Array.isArray(parsed)) {
@@ -86,12 +86,12 @@ export const SendTab: React.FC = () => {
     const historyItem: MessageHistory = {
       message,
       timestamp: new Date().toISOString(),
-      format: detectMessageFormat(message)
+      format: detectMessageFormat(message),
     }
-    
-    setMessageHistory(prev => {
+
+    setMessageHistory((prev) => {
       // Remove duplicate if exists
-      const filtered = prev.filter(item => item.message !== message)
+      const filtered = prev.filter((item) => item.message !== message)
       // Add new item at the beginning and limit to 20 items
       return [historyItem, ...filtered].slice(0, 20)
     })
@@ -119,15 +119,16 @@ export const SendTab: React.FC = () => {
   // Function to delete a specific history item
   const deleteHistoryItem = (index: number, event: React.MouseEvent) => {
     event.stopPropagation() // Prevent selecting the item when deleting
-    setMessageHistory(prev => prev.filter((_, i) => i !== index))
+    setMessageHistory((prev) => prev.filter((_, i) => i !== index))
   }
 
   // Function to check if input is JSON and update state
   const checkJsonInput = (input: string) => {
     const trimmed = input.trim()
-    const isJson = (trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))
+    const isJson =
+      (trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))
     setIsJsonInput(isJson && trimmed.length > 0)
-    
+
     // If not JSON and has content, show converted JSON
     if (!isJson && trimmed.length > 0) {
       convertToCanboatJson(trimmed)
@@ -138,7 +139,7 @@ export const SendTab: React.FC = () => {
 
   // Function to convert non-JSON input to canboat JSON format
   const convertToCanboatJson = (input: string) => {
-    const lines = input.split('\n').filter(line => line.trim())
+    const lines = input.split('\n').filter((line) => line.trim())
     const jsonMessages: any[] = []
 
     // Create parser instance
@@ -170,9 +171,8 @@ export const SendTab: React.FC = () => {
     }
 
     if (jsonMessages.length > 0) {
-      const formatted = jsonMessages.length === 1 
-        ? JSON.stringify(jsonMessages[0], null, 2)
-        : JSON.stringify(jsonMessages, null, 2)
+      const formatted =
+        jsonMessages.length === 1 ? JSON.stringify(jsonMessages[0], null, 2) : JSON.stringify(jsonMessages, null, 2)
       setConvertedJson(formatted)
     } else {
       setConvertedJson('')
@@ -205,7 +205,7 @@ export const SendTab: React.FC = () => {
     if (!textarea || !textarea.value.trim()) {
       setSendStatus({
         sending: false,
-        error: 'Please enter a message to send'
+        error: 'Please enter a message to send',
       })
       return
     }
@@ -224,7 +224,7 @@ export const SendTab: React.FC = () => {
       if ((input.startsWith('{') && input.endsWith('}')) || (input.startsWith('[') && input.endsWith(']'))) {
         try {
           const parsedJson = JSON.parse(input)
-          
+
           if (Array.isArray(parsedJson)) {
             // JSON array format - validate each message has required fields
             for (const message of parsedJson) {
@@ -268,7 +268,7 @@ export const SendTab: React.FC = () => {
       setSendStatus({
         sending: false,
         lastSent: new Date().toLocaleTimeString(),
-        error: undefined
+        error: undefined,
       })
 
       // Add successful message to history
@@ -279,7 +279,7 @@ export const SendTab: React.FC = () => {
       console.error('Error sending message:', error)
       setSendStatus({
         sending: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred while sending message'
+        error: error instanceof Error ? error.message : 'Unknown error occurred while sending message',
       })
     }
   }
@@ -288,7 +288,10 @@ export const SendTab: React.FC = () => {
     <Card>
       <CardBody>
         <h4 className="text-sk-primary">Send NMEA 2000 Messages</h4>
-        <p className="mb-3">Send NMEA 2000 messages to the network for testing and debugging purposes using any format supported by canboatjs.</p>
+        <p className="mb-3">
+          Send NMEA 2000 messages to the network for testing and debugging purposes using any format supported by
+          canboatjs.
+        </p>
 
         <div className="row mb-4">
           <div className="col-12">
@@ -296,9 +299,10 @@ export const SendTab: React.FC = () => {
               <div className="card-body">
                 <h6 className="card-title">Send Raw NMEA 2000 Message</h6>
                 <p className="card-text small mb-3">
-                  Enter NMEA 2000 messages in any format supported by canboatjs (Actisense, YDRAW, Canboat JSON, etc.). Multiple messages can be entered on separate lines.
+                  Enter NMEA 2000 messages in any format supported by canboatjs (Actisense, YDRAW, Canboat JSON, etc.).
+                  Multiple messages can be entered on separate lines.
                 </p>
-                
+
                 <div className="row mb-3">
                   <div className={convertedJson ? 'col-md-6' : 'col-12'}>
                     <div className="form-group">
@@ -318,7 +322,7 @@ export const SendTab: React.FC = () => {
                             </button>
                             {showHistoryDropdown && (
                               <>
-                                <div 
+                                <div
                                   className="position-fixed top-0 start-0 w-100 h-100"
                                   style={{ zIndex: 1040 }}
                                   onClick={() => setShowHistoryDropdown(false)}
@@ -332,7 +336,7 @@ export const SendTab: React.FC = () => {
                                     maxHeight: '300px',
                                     overflowY: 'auto',
                                     zIndex: 1050,
-                                    marginTop: '4px'
+                                    marginTop: '4px',
                                   }}
                                 >
                                   <div className="p-2 border-bottom bg-light">
@@ -358,7 +362,7 @@ export const SendTab: React.FC = () => {
                                       className="p-2 border-bottom cursor-pointer"
                                       style={{
                                         cursor: 'pointer',
-                                        transition: 'background-color 0.2s'
+                                        transition: 'background-color 0.2s',
                                       }}
                                       onClick={() => selectFromHistory(item.message)}
                                       onMouseEnter={(e) => {
@@ -391,8 +395,8 @@ export const SendTab: React.FC = () => {
                                           className="btn btn-sm text-danger p-1"
                                           onClick={(e) => deleteHistoryItem(index, e)}
                                           title="Delete this item"
-                                          style={{ 
-                                            fontSize: '14px', 
+                                          style={{
+                                            fontSize: '14px',
                                             lineHeight: 1,
                                             minWidth: '22px',
                                             height: '22px',
@@ -402,7 +406,7 @@ export const SendTab: React.FC = () => {
                                             border: '1px solid #dc3545',
                                             borderRadius: '3px',
                                             backgroundColor: 'white',
-                                            fontWeight: 'bold'
+                                            fontWeight: 'bold',
                                           }}
                                         >
                                           ×
@@ -420,16 +424,16 @@ export const SendTab: React.FC = () => {
                         id="nmea2000Message"
                         className="form-control font-monospace"
                         rows={12}
-                        placeholder="Enter NMEA 2000 message here...&#10;&#10;Actisense format:&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;&#10;YDRAW format:&#10;21:53:15.000 R 0DF80503 FF FF FF FF FF FF FF FF&#10;&#10;Canboat JSON format:&#10;{&quot;timestamp&quot;:&quot;2023-10-15T10:30:00.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127251,&quot;description&quot;:&quot;Rate of Turn&quot;,&quot;fields&quot;:{&quot;Rate&quot;:0}}&#10;&#10;JSON array (multiple messages):&#10;[{&quot;pgn&quot;:127251,&quot;src&quot;:1,&quot;fields&quot;:{&quot;Rate&quot;:0}},{&quot;pgn&quot;:127250,&quot;src&quot;:1,&quot;fields&quot;:{&quot;Heading&quot;:1.5708}}]&#10;&#10;Multiple messages (any format, one per line):&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;21:53:16.000 R 0DF80503 01 02 03 04 05 06 07 08"
+                        placeholder='Enter NMEA 2000 message here...&#10;&#10;Actisense format:&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;&#10;YDRAW format:&#10;21:53:15.000 R 0DF80503 FF FF FF FF FF FF FF FF&#10;&#10;Canboat JSON format:&#10;{"timestamp":"2023-10-15T10:30:00.000Z","prio":2,"src":1,"dst":255,"pgn":127251,"description":"Rate of Turn","fields":{"Rate":0}}&#10;&#10;JSON array (multiple messages):&#10;[{"pgn":127251,"src":1,"fields":{"Rate":0}},{"pgn":127250,"src":1,"fields":{"Heading":1.5708}}]&#10;&#10;Multiple messages (any format, one per line):&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;21:53:16.000 R 0DF80503 01 02 03 04 05 06 07 08'
                         onChange={(e) => checkJsonInput(e.target.value)}
                         style={{
                           fontSize: '14px',
-                          lineHeight: '1.4'
+                          lineHeight: '1.4',
                         }}
                       />
                     </div>
                   </div>
-                  
+
                   {convertedJson && (
                     <div className="col-md-6">
                       <div className="form-group">
@@ -445,17 +449,17 @@ export const SendTab: React.FC = () => {
                             fontSize: '14px',
                             lineHeight: '1.4',
                             backgroundColor: '#f8f9fa',
-                            color: '#495057'
+                            color: '#495057',
                           }}
                         />
                       </div>
                     </div>
                   )}
                 </div>
-                
+
                 <div className="d-flex mb-3">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="btn btn-primary me-3"
                     disabled={sendStatus.sending}
                     onClick={handleSendMessage}
@@ -470,8 +474,8 @@ export const SendTab: React.FC = () => {
                     )}
                   </button>
                   {isJsonInput && (
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="btn btn-info me-3"
                       disabled={sendStatus.sending}
                       onClick={handleBeautifyJson}
@@ -479,8 +483,8 @@ export const SendTab: React.FC = () => {
                       Beautify JSON
                     </button>
                   )}
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="btn btn-secondary"
                     disabled={sendStatus.sending}
                     onClick={() => {
@@ -505,7 +509,7 @@ export const SendTab: React.FC = () => {
                     <strong>Send Error:</strong> {sendStatus.error}
                   </div>
                 )}
-                
+
                 {sendStatus.lastSent && !sendStatus.error && (
                   <div className="alert alert-success" role="alert">
                     <i className="fas fa-check-circle me-2"></i>

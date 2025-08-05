@@ -41,6 +41,16 @@ module.exports = {
       parser: '@typescript-eslint/parser',
       plugins: ['@typescript-eslint'],
     },
+    {
+      files: ['test/**/*.js'],
+      env: {
+        node: true,
+        mocha: true,
+      },
+      globals: {
+        expect: 'readonly',
+      },
+    },
   ],
   ignorePatterns: ['ts-build/**', 'public/**'],
 }

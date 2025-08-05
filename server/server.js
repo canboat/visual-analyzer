@@ -177,8 +177,8 @@ class VisualAnalyzerServer {
           } catch (jsonParseError) {
             // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
             // Split by newlines to handle multiple lines
-            const lines = value.split(/\r?\n/).filter(line => line.trim())
-            
+            const lines = value.split(/\r?\n/).filter((line) => line.trim())
+
             if (lines.length === 0) {
               return res.status(400).json({
                 success: false,
@@ -203,14 +203,14 @@ class VisualAnalyzerServer {
                   }
                 }
               }
-              
+
               if (pgnDataArray.length === 0) {
                 return res.status(400).json({
                   success: false,
                   error: 'Unable to parse any NMEA 2000 strings from input',
                 })
               }
-              
+
               console.log(`Parsed ${pgnDataArray.length} NMEA 2000 messages from ${lines.length} lines using canboatjs`)
             } catch (canboatParseError) {
               return res.status(400).json({
@@ -249,7 +249,7 @@ class VisualAnalyzerServer {
                 results.push({
                   pgn: pgnData.pgn,
                   transmitted: true,
-                  parsedData: pgnData
+                  parsedData: pgnData,
                 })
               } else {
                 console.log('NMEA provider does not support message transmission')
@@ -257,7 +257,7 @@ class VisualAnalyzerServer {
                   pgn: pgnData.pgn,
                   transmitted: false,
                   error: 'NMEA provider does not support message transmission',
-                  parsedData: pgnData
+                  parsedData: pgnData,
                 })
               }
             } catch (sendError) {
@@ -266,7 +266,7 @@ class VisualAnalyzerServer {
                 pgn: pgnData.pgn,
                 transmitted: false,
                 error: 'Error sending message: ' + sendError.message,
-                parsedData: pgnData
+                parsedData: pgnData,
               })
             }
           } else if (sendToN2K) {
@@ -275,13 +275,13 @@ class VisualAnalyzerServer {
               pgn: pgnData.pgn,
               transmitted: false,
               error: 'No active NMEA connection',
-              parsedData: pgnData
+              parsedData: pgnData,
             })
           } else {
             results.push({
               pgn: pgnData.pgn,
               transmitted: false,
-              parsedData: pgnData
+              parsedData: pgnData,
             })
           }
         }
@@ -291,7 +291,7 @@ class VisualAnalyzerServer {
           success: true,
           message: `${pgnDataArray.length} message(s) processed successfully`,
           messagesProcessed: pgnDataArray.length,
-          transmitted: sendToN2K && this.nmeaProvider ? results.filter(r => r.transmitted).length : 0,
+          transmitted: sendToN2K && this.nmeaProvider ? results.filter((r) => r.transmitted).length : 0,
           results: results, // Include detailed results for each message
         })
       } catch (error) {
