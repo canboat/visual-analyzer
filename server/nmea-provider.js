@@ -38,6 +38,8 @@ const {
 const net = require('net')
 const dgram = require('dgram')
 const WebSocket = require('ws')
+const fs = require('fs')
+const readline = require('readline')
 
 class NMEADataProvider extends EventEmitter {
   constructor(options = {}) {
@@ -47,6 +49,13 @@ class NMEADataProvider extends EventEmitter {
     this.authToken = null
     this.authRequestId = 0
     this.pendingAuthResolve = null
+
+    // File playback specific properties
+    this.fileStream = null
+    this.playbackTimer = null
+    this.readline = null
+    this.lineQueue = []
+    this.isProcessingQueue = false
   }
 
   async connect() {
@@ -59,6 +68,8 @@ class NMEADataProvider extends EventEmitter {
         await this.connectToNetwork()
       } else if (this.options.type === 'socketcan') {
         await this.connectToSocketCAN()
+      } else if (this.options.type === 'file') {
+        await this.connectToFile()
       }
     } catch (error) {
       console.error('Failed to connect to NMEA source:', error)
@@ -382,6 +393,155 @@ class NMEADataProvider extends EventEmitter {
     }
   }
 
+  async connectToFile() {
+    try {
+      const filePath = this.options.filePath
+      if (!filePath) {
+        throw new Error('File path is required for file connections')
+      }
+
+      console.log(`Connecting to file: ${filePath}`)
+
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`File not found: ${filePath}`)
+      }
+
+      // Read file stats
+      const stats = fs.statSync(filePath)
+      if (!stats.isFile()) {
+        throw new Error(`Path is not a file: ${filePath}`)
+      }
+
+      console.log(`File size: ${(stats.size / 1024).toFixed(2)} KB`)
+
+      // Set up streaming file reader
+      this.setupFileStream(filePath)
+
+      this.isConnected = true
+      this.emit('connected')
+
+      // Start playback
+      this.startFilePlayback()
+    } catch (error) {
+      console.error('Failed to connect to file:', error)
+      throw error
+    }
+  }
+
+  setupFileStream(filePath) {
+    this.fileStream = fs.createReadStream(filePath)
+    this.readline = readline.createInterface({
+      input: this.fileStream,
+      crlfDelay: Infinity, // Handle Windows line endings
+    })
+
+    // Handle each line as it's read
+    this.readline.on('line', (line) => {
+      if (!this.isConnected) {
+        return // Stop processing if disconnected
+      }
+
+      line = line.trim()
+      if (line && !line.startsWith('#')) {
+        // Skip empty lines and comments
+
+        if (line.length > 15 && line.charAt(13) === ';' && line.charAt(15) === ';') {
+          // SignalK Multiplexed format
+          if (line.charAt(14) === 'A') {
+            line = line.substring(16)
+          } else {
+            return // Skip unsupported SignalK formats
+          }
+        }
+
+        // Add line to queue for processing
+        this.lineQueue.push(line)
+
+        // Start processing queue if not already processing
+        if (!this.isProcessingQueue) {
+          this.processQueue()
+        }
+      }
+    })
+
+    // Handle end of file
+    this.readline.on('close', () => {
+      if (!this.isConnected) {
+        return
+      }
+
+      // Wait for queue to finish processing before handling end of file
+      const checkQueue = () => {
+        if (this.lineQueue.length === 0 && !this.isProcessingQueue) {
+          if (this.options.loopPlayback) {
+            console.log('End of file reached, looping back to start')
+            // Restart the file stream for looping
+            setTimeout(() => {
+              if (this.isConnected) {
+                this.setupFileStream(filePath)
+              }
+            }, 100)
+          } else {
+            console.log('End of file reached, playback complete')
+            this.disconnect()
+          }
+        } else {
+          // Check again after a short delay
+          setTimeout(checkQueue, 100)
+        }
+      }
+
+      checkQueue()
+    })
+
+    this.readline.on('error', (error) => {
+      console.error('Error reading file:', error)
+      this.emit('error', error)
+    })
+  }
+
+  processQueue() {
+    if (!this.isConnected || this.lineQueue.length === 0) {
+      this.isProcessingQueue = false
+      return
+    }
+
+    this.isProcessingQueue = true
+    const line = this.lineQueue.shift()
+
+    // Simply emit each line as raw NMEA data
+    this.emit('raw-nmea', line)
+
+    // Schedule next line based on playback speed
+    const playbackSpeed = this.options.playbackSpeed || 1.0
+    let delay = 0
+
+    if (playbackSpeed === 0) {
+      // Maximum speed - no delay
+      delay = 0
+    } else {
+      // Calculate delay based on speed (base 100ms interval)
+      delay = 100 / playbackSpeed
+    }
+
+    if (delay === 0) {
+      // No delay - process immediately
+      setImmediate(() => this.processQueue())
+    } else {
+      // Schedule next line with delay
+      this.playbackTimer = setTimeout(() => this.processQueue(), delay)
+    }
+  }
+
+  startFilePlayback() {
+    const playbackSpeed = this.options.playbackSpeed || 1.0
+    console.log(`Starting file playback at ${playbackSpeed}x speed`)
+
+    // Processing will start automatically when lines are added to queue
+    // No need to do anything special here
+  }
+
   processSignalKUpdate(update) {
     // Convert SignalK update back to NMEA 2000 format if possible
     // This is a simplified conversion - in practice, you might want more sophisticated handling
@@ -426,6 +586,26 @@ class NMEADataProvider extends EventEmitter {
     if (this.canbusStream) {
       this.canbusStream.end()
     }
+
+    // Clean up file playback resources
+    if (this.playbackTimer) {
+      clearTimeout(this.playbackTimer)
+      this.playbackTimer = null
+    }
+
+    if (this.readline) {
+      this.readline.close()
+      this.readline = null
+    }
+
+    if (this.fileStream) {
+      this.fileStream.destroy()
+      this.fileStream = null
+    }
+
+    // Clear file playback state
+    this.lineQueue = []
+    this.isProcessingQueue = false
 
     // Clear authentication data
     this.authToken = null
