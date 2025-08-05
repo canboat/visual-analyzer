@@ -1,3 +1,5 @@
+[![npm version](https://img.shields.io/npm/v/@canboat/visual-analyzer.svg)](https://www.npmjs.com/@canboat/visual-analyzer)
+
 # @canboat/visual-analyzer
 
 A powerful web-based tool for visually analyzing and debugging NMEA 2000 data streams in real-time. This application provides an intuitive interface for monitoring, filtering, and analyzing NMEA 2000 PGN (Parameter Group Number) messages.
