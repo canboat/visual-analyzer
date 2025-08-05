@@ -27,71 +27,63 @@ export const SendTab: React.FC = () => {
 
     try {
       const input = textarea.value.trim()
-      let messagesToSend: any[] = []
 
-      // Check if the entire input is a JSON structure
+      // For JSON format, validate the structure but send as-is
       if ((input.startsWith('{') && input.endsWith('}')) || (input.startsWith('[') && input.endsWith(']'))) {
         try {
           const parsedJson = JSON.parse(input)
           
           if (Array.isArray(parsedJson)) {
-            // JSON array format - validate each message
+            // JSON array format - validate each message has required fields
             for (const message of parsedJson) {
               if (!message.pgn || !message.src) {
                 throw new Error('Each JSON message in array must contain at least pgn and src fields')
               }
-              messagesToSend.push(message)
             }
           } else {
             // Single JSON object - validate required fields
             if (!parsedJson.pgn || !parsedJson.src) {
               throw new Error('JSON message must contain at least pgn and src fields')
             }
-            messagesToSend.push(parsedJson)
           }
         } catch (parseError) {
           throw new Error(`Invalid JSON format: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`)
         }
       } else {
-        // Actisense format - process line by line
+        // For Actisense format, do basic validation
         const lines = input.split('\n').filter(line => line.trim())
         
         for (const line of lines) {
           const trimmedLine = line.trim()
-          if (!trimmedLine) continue
-
-          // Validate Actisense format
-          if (!trimmedLine.includes(',')) {
+          if (trimmedLine && !trimmedLine.includes(',')) {
             throw new Error(`Actisense format must contain comma-separated values: "${trimmedLine}"`)
           }
-          messagesToSend.push({ value: trimmedLine, sendToN2K: true })
+        }
+        
+        if (lines.length === 0) {
+          throw new Error('No valid messages found to send')
         }
       }
 
-      if (messagesToSend.length === 0) {
-        throw new Error('No valid messages found to send')
+      // Send the entire input to the endpoint
+      const messageData = { value: input, sendToN2K: true }
+      const response = await fetch('/skServer/inputTest', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messageData),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Send failed (${response.status}): ${errorText}`)
       }
 
-      // Send each message
-      for (const messageData of messagesToSend) {
-        const response = await fetch('/skServer/inputTest', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(messageData),
-        })
-
-        if (!response.ok) {
-          const errorText = await response.text()
-          throw new Error(`Send failed (${response.status}): ${errorText}`)
-        }
-
-        const result = await response.json()
-        if (result.error) {
-          throw new Error(result.error)
-        }
+      const result = await response.json()
+      if (result.error) {
+        throw new Error(result.error)
       }
 
       setSendStatus({
@@ -100,7 +92,7 @@ export const SendTab: React.FC = () => {
         error: undefined
       })
 
-      console.log(`Successfully sent ${messagesToSend.length} message(s)`)
+      console.log('Successfully sent message(s)')
     } catch (error) {
       console.error('Error sending message:', error)
       setSendStatus({
