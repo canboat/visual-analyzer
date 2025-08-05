@@ -1,6 +1,6 @@
 {
   "name": "@canboat/visual-analyzer",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "NMEA 2000 data visualization utility",
   "main": "index.js",
   "bin": {
