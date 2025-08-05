@@ -189,39 +189,45 @@ export const SendTab: React.FC = () => {
                   Enter NMEA 2000 messages in any format supported by canboatjs (Actisense, YDRAW, Canboat JSON, etc.). Multiple messages can be entered on separate lines.
                 </p>
                 
-                <div className="form-group mb-3">
-                  <label htmlFor="nmea2000Message" className="form-label">
-                    <strong>NMEA 2000 Message:</strong>
-                  </label>
-                  <textarea
-                    id="nmea2000Message"
-                    className="form-control font-monospace"
-                    rows={10}
-                    placeholder="Enter NMEA 2000 message here...&#10;&#10;Actisense format:&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;&#10;YDRAW format:&#10;21:53:15.000 R 0DF80503 FF FF FF FF FF FF FF FF&#10;&#10;Canboat JSON format:&#10;{&quot;timestamp&quot;:&quot;2023-10-15T10:30:00.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127251,&quot;description&quot;:&quot;Rate of Turn&quot;,&quot;fields&quot;:{&quot;Rate&quot;:0}}&#10;&#10;JSON array (multiple messages):&#10;[{&quot;pgn&quot;:127251,&quot;src&quot;:1,&quot;fields&quot;:{&quot;Rate&quot;:0}},{&quot;pgn&quot;:127250,&quot;src&quot;:1,&quot;fields&quot;:{&quot;Heading&quot;:1.5708}}]&#10;&#10;Multiple messages (any format, one per line):&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;21:53:16.000 R 0DF80503 01 02 03 04 05 06 07 08"
-                    onChange={(e) => checkJsonInput(e.target.value)}
-                    style={{
-                      fontSize: '14px',
-                      lineHeight: '1.4'
-                    }}
-                  />
-                  
-                  {convertedJson && (
-                    <div className="mt-3">
-                      <label className="form-label">
-                        <strong>Converted to Canboat JSON:</strong>
+                <div className="row mb-3">
+                  <div className={convertedJson ? 'col-md-6' : 'col-12'}>
+                    <div className="form-group">
+                      <label htmlFor="nmea2000Message" className="form-label">
+                        <strong>NMEA 2000 Message:</strong>
                       </label>
                       <textarea
+                        id="nmea2000Message"
                         className="form-control font-monospace"
-                        rows={8}
-                        value={convertedJson}
-                        readOnly
+                        rows={12}
+                        placeholder="Enter NMEA 2000 message here...&#10;&#10;Actisense format:&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;&#10;YDRAW format:&#10;21:53:15.000 R 0DF80503 FF FF FF FF FF FF FF FF&#10;&#10;Canboat JSON format:&#10;{&quot;timestamp&quot;:&quot;2023-10-15T10:30:00.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127251,&quot;description&quot;:&quot;Rate of Turn&quot;,&quot;fields&quot;:{&quot;Rate&quot;:0}}&#10;&#10;JSON array (multiple messages):&#10;[{&quot;pgn&quot;:127251,&quot;src&quot;:1,&quot;fields&quot;:{&quot;Rate&quot;:0}},{&quot;pgn&quot;:127250,&quot;src&quot;:1,&quot;fields&quot;:{&quot;Heading&quot;:1.5708}}]&#10;&#10;Multiple messages (any format, one per line):&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;21:53:16.000 R 0DF80503 01 02 03 04 05 06 07 08"
+                        onChange={(e) => checkJsonInput(e.target.value)}
                         style={{
                           fontSize: '14px',
-                          lineHeight: '1.4',
-                          backgroundColor: '#f8f9fa',
-                          color: '#495057'
+                          lineHeight: '1.4'
                         }}
                       />
+                    </div>
+                  </div>
+                  
+                  {convertedJson && (
+                    <div className="col-md-6">
+                      <div className="form-group">
+                        <label className="form-label">
+                          <strong>Canboat JSON:</strong>
+                        </label>
+                        <textarea
+                          className="form-control font-monospace"
+                          rows={12}
+                          value={convertedJson}
+                          readOnly
+                          style={{
+                            fontSize: '14px',
+                            lineHeight: '1.4',
+                            backgroundColor: '#f8f9fa',
+                            color: '#495057'
+                          }}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
