@@ -53,8 +53,9 @@ class NMEADataProvider extends EventEmitter {
     // File playback specific properties
     this.fileStream = null
     this.playbackTimer = null
-    this.fileLines = []
-    this.currentLineIndex = 0
+    this.readline = null
+    this.lineQueue = []
+    this.isProcessingQueue = false
   }
 
   async connect() {
@@ -414,8 +415,8 @@ class NMEADataProvider extends EventEmitter {
 
       console.log(`File size: ${(stats.size / 1024).toFixed(2)} KB`)
 
-      // Read the entire file into memory for playback
-      await this.loadFileData(filePath)
+      // Set up streaming file reader
+      this.setupFileStream(filePath)
       
       this.isConnected = true
       this.emit('connected')
@@ -429,82 +430,116 @@ class NMEADataProvider extends EventEmitter {
     }
   }
 
-  async loadFileData(filePath) {
-    return new Promise((resolve, reject) => {
-      const fileStream = fs.createReadStream(filePath)
-      const rl = readline.createInterface({
-        input: fileStream,
-        crlfDelay: Infinity // Handle Windows line endings
-      })
+  setupFileStream(filePath) {
+    this.fileStream = fs.createReadStream(filePath)
+    this.readline = readline.createInterface({
+      input: this.fileStream,
+      crlfDelay: Infinity // Handle Windows line endings
+    })
 
-      this.fileLines = []
-      let lineCount = 0
+    // Handle each line as it's read
+    this.readline.on('line', (line) => {
+      if (!this.isConnected) {
+        return // Stop processing if disconnected
+      }
 
-      rl.on('line', (line) => {
-        line = line.trim()
-        if (line && !line.startsWith('#')) { // Skip empty lines and comments
-          this.fileLines.push(line)
+      line = line.trim()
+      if (line && !line.startsWith('#')) { // Skip empty lines and comments
+
+        if (line.length > 15 && line.charAt(13) === ';' && line.charAt(15) === ';') {
+          // SignalK Multiplexed format
+          if (line.charAt(14) === 'A') {
+            line = line.substring(16)
+          } else {
+            return // Skip unsupported SignalK formats
+          }
         }
-        lineCount++
-      })
 
-      rl.on('close', () => {
-        console.log(`Loaded ${this.fileLines.length} valid lines from ${lineCount} total lines`)
-        resolve()
-      })
+        // Add line to queue for processing
+        this.lineQueue.push(line)
+        
+        // Start processing queue if not already processing
+        if (!this.isProcessingQueue) {
+          this.processQueue()
+        }
+      }
+    })
 
-      rl.on('error', (error) => {
-        console.error('Error reading file:', error)
-        reject(error)
-      })
+    // Handle end of file
+    this.readline.on('close', () => {
+      if (!this.isConnected) {
+        return
+      }
+
+      // Wait for queue to finish processing before handling end of file
+      const checkQueue = () => {
+        if (this.lineQueue.length === 0 && !this.isProcessingQueue) {
+          if (this.options.loopPlayback) {
+            console.log('End of file reached, looping back to start')
+            // Restart the file stream for looping
+            setTimeout(() => {
+              if (this.isConnected) {
+                this.setupFileStream(filePath)
+              }
+            }, 100)
+          } else {
+            console.log('End of file reached, playback complete')
+            this.disconnect()
+          }
+        } else {
+          // Check again after a short delay
+          setTimeout(checkQueue, 100)
+        }
+      }
+      
+      checkQueue()
+    })
+
+    this.readline.on('error', (error) => {
+      console.error('Error reading file:', error)
+      this.emit('error', error)
     })
   }
 
-  startFilePlayback() {
-    if (this.fileLines.length === 0) {
-      console.warn('No valid lines to play back')
+  processQueue() {
+    if (!this.isConnected || this.lineQueue.length === 0) {
+      this.isProcessingQueue = false
       return
     }
 
-    this.currentLineIndex = 0
-    const playbackSpeed = this.options.playbackSpeed || 1.0
-    const baseInterval = playbackSpeed === 0 ? 0 : 100 / playbackSpeed // Base 100ms interval
-
-    console.log(`Starting file playback with ${this.fileLines.length} lines at ${playbackSpeed}x speed`)
+    this.isProcessingQueue = true
+    const line = this.lineQueue.shift()
     
-    this.scheduleNextLine(baseInterval)
+    // Simply emit each line as raw NMEA data
+    this.emit('raw-nmea', line)
+
+    // Schedule next line based on playback speed
+    const playbackSpeed = this.options.playbackSpeed || 1.0
+    let delay = 0
+    
+    if (playbackSpeed === 0) {
+      // Maximum speed - no delay
+      delay = 0
+    } else {
+      // Calculate delay based on speed (base 100ms interval)
+      delay = 100 / playbackSpeed
+    }
+
+    if (delay === 0) {
+      // No delay - process immediately
+      setImmediate(() => this.processQueue())
+    } else {
+      // Schedule next line with delay
+      this.playbackTimer = setTimeout(() => this.processQueue(), delay)
+    }
   }
 
-  scheduleNextLine(baseInterval) {
-    if (!this.isConnected) {
-      return // Stop if disconnected
-    }
-
-    if (this.currentLineIndex >= this.fileLines.length) {
-      // End of file reached
-      if (this.options.loopPlayback) {
-        console.log('End of file reached, looping back to start')
-        this.currentLineIndex = 0
-      } else {
-        console.log('End of file reached, playback complete')
-        return
-      }
-    }
-
-    const currentLine = this.fileLines[this.currentLineIndex]
+  startFilePlayback() {
+    const playbackSpeed = this.options.playbackSpeed || 1.0
+    console.log(`Starting file playback at ${playbackSpeed}x speed`)
     
-    // Process current line - simply emit as raw NMEA
-    this.emit('raw-nmea', currentLine)
-    this.currentLineIndex++
-
-    // Schedule next line with base interval
-    const delay = baseInterval
-    if (delay === 0) {
-      // No delay - use setImmediate for maximum speed
-      setImmediate(() => this.scheduleNextLine(baseInterval))
-    } else {
-      this.playbackTimer = setTimeout(() => this.scheduleNextLine(baseInterval), delay)
-    }
+    // Processing will start automatically when lines are added to queue
+    // No need to do anything special here
   }
 
   processSignalKUpdate(update) {
@@ -558,14 +593,19 @@ class NMEADataProvider extends EventEmitter {
       this.playbackTimer = null
     }
 
+    if (this.readline) {
+      this.readline.close()
+      this.readline = null
+    }
+
     if (this.fileStream) {
-      this.fileStream.close()
+      this.fileStream.destroy()
       this.fileStream = null
     }
 
-    // Clear file data
-    this.fileLines = []
-    this.currentLineIndex = 0
+    // Clear file playback state
+    this.lineQueue = []
+    this.isProcessingQueue = false
 
     // Clear authentication data
     this.authToken = null

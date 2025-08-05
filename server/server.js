@@ -685,8 +685,15 @@ class VisualAnalyzerServer {
         if (!profile.socketcanInterface) throw new Error('SocketCAN interface is required for SocketCAN connection')
         break
 
+      case 'file':
+        if (!profile.filePath) throw new Error('File path is required for file connection')
+        if (profile.playbackSpeed !== undefined && (profile.playbackSpeed < 0 || profile.playbackSpeed > 10)) {
+          throw new Error('Playback speed must be between 0 and 10')
+        }
+        break
+
       default:
-        throw new Error('Connection type must be serial, network, signalk, or socketcan')
+        throw new Error('Connection type must be serial, network, signalk, socketcan, or file')
     }
   }
 
