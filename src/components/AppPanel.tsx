@@ -495,35 +495,54 @@ const AppPanel = (props: any) => {
     setSendStatus({ sending: true, error: undefined })
 
     try {
-      const messages = textarea.value.trim().split('\n').filter(line => line.trim())
-      
-      for (const message of messages) {
-        const trimmedMessage = message.trim()
-        if (!trimmedMessage) continue
+      const input = textarea.value.trim()
+      let messagesToSend: any[] = []
 
-        let messageData: any
-
-        // Detect format and prepare message data
-        if (trimmedMessage.startsWith('{') && trimmedMessage.endsWith('}')) {
-          // JSON format - parse and validate
-          try {
-            messageData = JSON.parse(trimmedMessage)
-            // Validate required fields for JSON format
-            if (!messageData.pgn || !messageData.src) {
+      // Check if the entire input is a JSON structure
+      if ((input.startsWith('{') && input.endsWith('}')) || (input.startsWith('[') && input.endsWith(']'))) {
+        try {
+          const parsedJson = JSON.parse(input)
+          
+          if (Array.isArray(parsedJson)) {
+            // JSON array format - validate each message
+            for (const message of parsedJson) {
+              if (!message.pgn || !message.src) {
+                throw new Error('Each JSON message in array must contain at least pgn and src fields')
+              }
+              messagesToSend.push(message)
+            }
+          } else {
+            // Single JSON object - validate required fields
+            if (!parsedJson.pgn || !parsedJson.src) {
               throw new Error('JSON message must contain at least pgn and src fields')
             }
-          } catch (parseError) {
-            throw new Error(`Invalid JSON format: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`)
+            messagesToSend.push(parsedJson)
           }
-        } else {
-          // Assume Actisense format - validate basic structure
-          if (!trimmedMessage.includes(',')) {
-            throw new Error('Actisense format must contain comma-separated values')
-          }
-          messageData = { value: trimmedMessage, sendToN2K: true }
+        } catch (parseError) {
+          throw new Error(`Invalid JSON format: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`)
         }
+      } else {
+        // Actisense format - process line by line
+        const lines = input.split('\n').filter(line => line.trim())
+        
+        for (const line of lines) {
+          const trimmedLine = line.trim()
+          if (!trimmedLine) continue
 
-        // Send the message
+          // Validate Actisense format
+          if (!trimmedLine.includes(',')) {
+            throw new Error(`Actisense format must contain comma-separated values: "${trimmedLine}"`)
+          }
+          messagesToSend.push({ value: trimmedLine, sendToN2K: true })
+        }
+      }
+
+      if (messagesToSend.length === 0) {
+        throw new Error('No valid messages found to send')
+      }
+
+      // Send each message
+      for (const messageData of messagesToSend) {
         const endpoint = isEmbedded ? '/skServer/inputTest' : '/api/send'
         const response = await fetch(endpoint, {
           method: 'POST',
@@ -551,7 +570,7 @@ const AppPanel = (props: any) => {
         error: undefined
       })
 
-      console.log(`Successfully sent ${messages.length} message(s)`)
+      console.log(`Successfully sent ${messagesToSend.length} message(s)`)
     } catch (error) {
       console.error('Error sending message:', error)
       setSendStatus({
@@ -697,7 +716,7 @@ const AppPanel = (props: any) => {
                     <div className="card-body">
                       <h6 className="card-title">Send Raw NMEA 2000 Message</h6>
                       <p className="card-text small mb-3">
-                        Enter NMEA 2000 messages in Actisense format or Canboat JSON format. Multiple messages can be entered, one per line.
+                        Enter NMEA 2000 messages in Actisense format or Canboat JSON format. Multiple messages can be entered, one per line for Actisense format, or as a JSON array for JSON format.
                       </p>
                       
                       <div className="form-group mb-3">
@@ -707,8 +726,8 @@ const AppPanel = (props: any) => {
                         <textarea
                           id="nmea2000Message"
                           className="form-control font-monospace"
-                          rows={8}
-                          placeholder="Enter NMEA 2000 message here...&#10;&#10;Actisense format:&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;&#10;Canboat JSON format:&#10;{&quot;timestamp&quot;:&quot;2023-10-15T10:30:00.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127251,&quot;description&quot;:&quot;Rate of Turn&quot;,&quot;fields&quot;:{&quot;Rate&quot;:0}}&#10;&#10;You can enter multiple messages, one per line."
+                          rows={10}
+                          placeholder="Enter NMEA 2000 message here...&#10;&#10;Actisense format (one per line):&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;2023-10-15T10:30:01.000Z,2,127250,1,255,8,01,02,03,04,05,06,07,08&#10;&#10;Canboat JSON format (single message):&#10;{&quot;timestamp&quot;:&quot;2023-10-15T10:30:00.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127251,&quot;description&quot;:&quot;Rate of Turn&quot;,&quot;fields&quot;:{&quot;Rate&quot;:0}}&#10;&#10;Canboat JSON array format (multiple messages):&#10;[{&quot;timestamp&quot;:&quot;2023-10-15T10:30:00.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127251,&quot;description&quot;:&quot;Rate of Turn&quot;,&quot;fields&quot;:{&quot;Rate&quot;:0}},{&quot;timestamp&quot;:&quot;2023-10-15T10:30:01.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127250,&quot;description&quot;:&quot;Heading&quot;,&quot;fields&quot;:{&quot;Heading&quot;:1.5708}}]"
                           style={{
                             fontSize: '14px',
                             lineHeight: '1.4'
