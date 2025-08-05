@@ -11,6 +11,34 @@ export const SendTab: React.FC = () => {
   const [sendStatus, setSendStatus] = useState<SendStatus>({
     sending: false,
   })
+  const [isJsonInput, setIsJsonInput] = useState<boolean>(false)
+
+  // Function to check if input is JSON and update state
+  const checkJsonInput = (input: string) => {
+    const trimmed = input.trim()
+    const isJson = (trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))
+    setIsJsonInput(isJson && trimmed.length > 0)
+  }
+
+  // Function to beautify JSON
+  const handleBeautifyJson = () => {
+    const textarea = document.getElementById('nmea2000Message') as HTMLTextAreaElement
+    if (!textarea) return
+
+    try {
+      const input = textarea.value.trim()
+      if ((input.startsWith('{') && input.endsWith('}')) || (input.startsWith('[') && input.endsWith(']'))) {
+        const parsed = JSON.parse(input)
+        const beautified = JSON.stringify(parsed, null, 2)
+        textarea.value = beautified
+        // Update JSON detection after beautifying
+        checkJsonInput(beautified)
+      }
+    } catch (error) {
+      // If JSON parsing fails, don't modify the input
+      console.warn('Could not beautify JSON:', error)
+    }
+  }
 
   // Function to handle sending NMEA 2000 messages
   const handleSendMessage = async () => {
@@ -118,6 +146,7 @@ export const SendTab: React.FC = () => {
                     className="form-control font-monospace"
                     rows={10}
                     placeholder="Enter NMEA 2000 message here...&#10;&#10;Actisense format:&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;&#10;YDRAW format:&#10;21:53:15.000 R 0DF80503 FF FF FF FF FF FF FF FF&#10;&#10;Canboat JSON format:&#10;{&quot;timestamp&quot;:&quot;2023-10-15T10:30:00.000Z&quot;,&quot;prio&quot;:2,&quot;src&quot;:1,&quot;dst&quot;:255,&quot;pgn&quot;:127251,&quot;description&quot;:&quot;Rate of Turn&quot;,&quot;fields&quot;:{&quot;Rate&quot;:0}}&#10;&#10;JSON array (multiple messages):&#10;[{&quot;pgn&quot;:127251,&quot;src&quot;:1,&quot;fields&quot;:{&quot;Rate&quot;:0}},{&quot;pgn&quot;:127250,&quot;src&quot;:1,&quot;fields&quot;:{&quot;Heading&quot;:1.5708}}]&#10;&#10;Multiple messages (any format, one per line):&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;21:53:16.000 R 0DF80503 01 02 03 04 05 06 07 08"
+                    onChange={(e) => checkJsonInput(e.target.value)}
                     style={{
                       fontSize: '14px',
                       lineHeight: '1.4'
@@ -141,6 +170,16 @@ export const SendTab: React.FC = () => {
                       'Send Message'
                     )}
                   </button>
+                  {isJsonInput && (
+                    <button 
+                      type="button" 
+                      className="btn btn-info"
+                      disabled={sendStatus.sending}
+                      onClick={handleBeautifyJson}
+                    >
+                      Beautify JSON
+                    </button>
+                  )}
                   <button 
                     type="button" 
                     className="btn btn-secondary"
@@ -151,6 +190,7 @@ export const SendTab: React.FC = () => {
                         textarea.value = ''
                       }
                       setSendStatus({ sending: false })
+                      setIsJsonInput(false)
                     }}
                   >
                     Clear
