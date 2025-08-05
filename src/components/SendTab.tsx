@@ -298,217 +298,217 @@ export const SendTab: React.FC = () => {
             </p>
 
             <div className="row mb-3">
-                  <div className={convertedJson ? 'col-md-6' : 'col-12'}>
-                    <div className="form-group">
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <label htmlFor="nmea2000Message" className="form-label mb-0">
-                          <strong>NMEA 2000 Message:</strong>
-                        </label>
-                        {messageHistory.length > 0 && (
-                          <div className="position-relative">
-                            <button
-                              type="button"
-                              className="btn btn-outline-secondary btn-sm"
-                              onClick={() => setShowHistoryDropdown(!showHistoryDropdown)}
+              <div className={convertedJson ? 'col-md-6' : 'col-12'}>
+                <div className="form-group">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <label htmlFor="nmea2000Message" className="form-label mb-0">
+                      <strong>NMEA 2000 Message:</strong>
+                    </label>
+                    {messageHistory.length > 0 && (
+                      <div className="position-relative">
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary btn-sm"
+                          onClick={() => setShowHistoryDropdown(!showHistoryDropdown)}
+                        >
+                          <i className="fas fa-history me-1"></i>
+                          History ({messageHistory.length})
+                        </button>
+                        {showHistoryDropdown && (
+                          <>
+                            <div
+                              className="position-fixed top-0 start-0 w-100 h-100"
+                              style={{ zIndex: 1040 }}
+                              onClick={() => setShowHistoryDropdown(false)}
+                            />
+                            <div
+                              className="position-absolute bg-white border rounded shadow-lg"
+                              style={{
+                                top: '100%',
+                                right: 0,
+                                minWidth: '400px',
+                                maxHeight: '300px',
+                                overflowY: 'auto',
+                                zIndex: 1050,
+                                marginTop: '4px',
+                              }}
                             >
-                              <i className="fas fa-history me-1"></i>
-                              History ({messageHistory.length})
-                            </button>
-                            {showHistoryDropdown && (
-                              <>
+                              <div className="p-2 border-bottom bg-light">
+                                <div className="d-flex justify-content-between align-items-center">
+                                  <small className="text-muted fw-bold">Message History</small>
+                                  <div className="d-flex gap-2">
+                                    <button
+                                      type="button"
+                                      className="btn btn-outline-danger btn-sm"
+                                      onClick={clearHistory}
+                                      title="Clear all history"
+                                      style={{ fontSize: '0.75em', padding: '2px 8px' }}
+                                    >
+                                      <i className="fas fa-trash me-1"></i>
+                                      Clear All
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                              {messageHistory.map((item, index) => (
                                 <div
-                                  className="position-fixed top-0 start-0 w-100 h-100"
-                                  style={{ zIndex: 1040 }}
-                                  onClick={() => setShowHistoryDropdown(false)}
-                                />
-                                <div
-                                  className="position-absolute bg-white border rounded shadow-lg"
+                                  key={index}
+                                  className="p-2 border-bottom cursor-pointer"
                                   style={{
-                                    top: '100%',
-                                    right: 0,
-                                    minWidth: '400px',
-                                    maxHeight: '300px',
-                                    overflowY: 'auto',
-                                    zIndex: 1050,
-                                    marginTop: '4px',
+                                    cursor: 'pointer',
+                                    transition: 'background-color 0.2s',
+                                  }}
+                                  onClick={() => selectFromHistory(item.message)}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#f8f9fa'
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = 'transparent'
                                   }}
                                 >
-                                  <div className="p-2 border-bottom bg-light">
-                                    <div className="d-flex justify-content-between align-items-center">
-                                      <small className="text-muted fw-bold">Message History</small>
-                                      <div className="d-flex gap-2">
-                                        <button
-                                          type="button"
-                                          className="btn btn-outline-danger btn-sm"
-                                          onClick={clearHistory}
-                                          title="Clear all history"
-                                          style={{ fontSize: '0.75em', padding: '2px 8px' }}
-                                        >
-                                          <i className="fas fa-trash me-1"></i>
-                                          Clear All
-                                        </button>
+                                  <div className="d-flex justify-content-between align-items-start">
+                                    <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                                      <div className="d-flex align-items-center mb-1">
+                                        <span className="badge bg-secondary me-2" style={{ fontSize: '0.7em' }}>
+                                          {item.format}
+                                        </span>
+                                        <small className="text-muted">
+                                          {new Date(item.timestamp).toLocaleString()}
+                                        </small>
+                                      </div>
+                                      <div
+                                        className="font-monospace small text-truncate"
+                                        style={{ fontSize: '0.75em' }}
+                                        title={item.message}
+                                      >
+                                        {getMessageDescription(item.message, item.format)}
                                       </div>
                                     </div>
-                                  </div>
-                                  {messageHistory.map((item, index) => (
-                                    <div
-                                      key={index}
-                                      className="p-2 border-bottom cursor-pointer"
+                                    <button
+                                      type="button"
+                                      className="btn btn-sm text-danger p-1"
+                                      onClick={(e) => deleteHistoryItem(index, e)}
+                                      title="Delete this item"
                                       style={{
-                                        cursor: 'pointer',
-                                        transition: 'background-color 0.2s',
-                                      }}
-                                      onClick={() => selectFromHistory(item.message)}
-                                      onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#f8f9fa'
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = 'transparent'
+                                        fontSize: '14px',
+                                        lineHeight: 1,
+                                        minWidth: '22px',
+                                        height: '22px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '1px solid #dc3545',
+                                        borderRadius: '3px',
+                                        backgroundColor: 'white',
+                                        fontWeight: 'bold',
                                       }}
                                     >
-                                      <div className="d-flex justify-content-between align-items-start">
-                                        <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                                          <div className="d-flex align-items-center mb-1">
-                                            <span className="badge bg-secondary me-2" style={{ fontSize: '0.7em' }}>
-                                              {item.format}
-                                            </span>
-                                            <small className="text-muted">
-                                              {new Date(item.timestamp).toLocaleString()}
-                                            </small>
-                                          </div>
-                                          <div
-                                            className="font-monospace small text-truncate"
-                                            style={{ fontSize: '0.75em' }}
-                                            title={item.message}
-                                          >
-                                            {getMessageDescription(item.message, item.format)}
-                                          </div>
-                                        </div>
-                                        <button
-                                          type="button"
-                                          className="btn btn-sm text-danger p-1"
-                                          onClick={(e) => deleteHistoryItem(index, e)}
-                                          title="Delete this item"
-                                          style={{
-                                            fontSize: '14px',
-                                            lineHeight: 1,
-                                            minWidth: '22px',
-                                            height: '22px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            border: '1px solid #dc3545',
-                                            borderRadius: '3px',
-                                            backgroundColor: 'white',
-                                            fontWeight: 'bold',
-                                          }}
-                                        >
-                                          ×
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ))}
+                                      ×
+                                    </button>
+                                  </div>
                                 </div>
-                              </>
-                            )}
-                          </div>
+                              ))}
+                            </div>
+                          </>
                         )}
                       </div>
-                      <textarea
-                        id="nmea2000Message"
-                        className="form-control font-monospace"
-                        rows={12}
-                        placeholder='Enter NMEA 2000 message here...&#10;&#10;Actisense format:&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;&#10;YDRAW format:&#10;21:53:15.000 R 0DF80503 FF FF FF FF FF FF FF FF&#10;&#10;Canboat JSON format:&#10;{"timestamp":"2023-10-15T10:30:00.000Z","prio":2,"src":1,"dst":255,"pgn":127251,"description":"Rate of Turn","fields":{"Rate":0}}&#10;&#10;JSON array (multiple messages):&#10;[{"pgn":127251,"src":1,"fields":{"Rate":0}},{"pgn":127250,"src":1,"fields":{"Heading":1.5708}}]&#10;&#10;Multiple messages (any format, one per line):&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;21:53:16.000 R 0DF80503 01 02 03 04 05 06 07 08'
-                        onChange={(e) => checkJsonInput(e.target.value)}
-                        style={{
-                          fontSize: '14px',
-                          lineHeight: '1.4',
-                        }}
-                      />
-                    </div>
+                    )}
                   </div>
-
-                  {convertedJson && (
-                    <div className="col-md-6">
-                      <div className="form-group">
-                        <label className="form-label">
-                          <strong>Canboat JSON:</strong>
-                        </label>
-                        <textarea
-                          className="form-control font-monospace"
-                          rows={12}
-                          value={convertedJson}
-                          readOnly
-                          style={{
-                            fontSize: '14px',
-                            lineHeight: '1.4',
-                            backgroundColor: '#f8f9fa',
-                            color: '#495057',
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
+                  <textarea
+                    id="nmea2000Message"
+                    className="form-control font-monospace"
+                    rows={12}
+                    placeholder='Enter NMEA 2000 message here...&#10;&#10;Actisense format:&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;&#10;YDRAW format:&#10;21:53:15.000 R 0DF80503 FF FF FF FF FF FF FF FF&#10;&#10;Canboat JSON format:&#10;{"timestamp":"2023-10-15T10:30:00.000Z","prio":2,"src":1,"dst":255,"pgn":127251,"description":"Rate of Turn","fields":{"Rate":0}}&#10;&#10;JSON array (multiple messages):&#10;[{"pgn":127251,"src":1,"fields":{"Rate":0}},{"pgn":127250,"src":1,"fields":{"Heading":1.5708}}]&#10;&#10;Multiple messages (any format, one per line):&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;21:53:16.000 R 0DF80503 01 02 03 04 05 06 07 08'
+                    onChange={(e) => checkJsonInput(e.target.value)}
+                    style={{
+                      fontSize: '14px',
+                      lineHeight: '1.4',
+                    }}
+                  />
                 </div>
+              </div>
+
+              {convertedJson && (
+                <div className="col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">
+                      <strong>Canboat JSON:</strong>
+                    </label>
+                    <textarea
+                      className="form-control font-monospace"
+                      rows={12}
+                      value={convertedJson}
+                      readOnly
+                      style={{
+                        fontSize: '14px',
+                        lineHeight: '1.4',
+                        backgroundColor: '#f8f9fa',
+                        color: '#495057',
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="d-flex mb-3">
-                  <button
-                    type="button"
-                    className="btn btn-primary me-3"
-                    disabled={sendStatus.sending}
-                    onClick={handleSendMessage}
-                  >
-                    {sendStatus.sending ? (
-                      <>
-                        <div className="spinner-border spinner-border-sm me-2" role="status"></div>
-                        Sending...
-                      </>
-                    ) : (
-                      'Send Message'
-                    )}
-                  </button>
-                  {isJsonInput && (
-                    <button
-                      type="button"
-                      className="btn btn-info me-3"
-                      disabled={sendStatus.sending}
-                      onClick={handleBeautifyJson}
-                    >
-                      Beautify JSON
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    disabled={sendStatus.sending}
-                    onClick={() => {
-                      const textarea = document.getElementById('nmea2000Message') as HTMLTextAreaElement
-                      if (textarea) {
-                        textarea.value = ''
-                        checkJsonInput('')
-                      }
-                      setSendStatus({ sending: false })
-                      setIsJsonInput(false)
-                      setConvertedJson('')
-                    }}
-                  >
-                    Clear
-                  </button>
-                </div>
+              <button
+                type="button"
+                className="btn btn-primary me-3"
+                disabled={sendStatus.sending}
+                onClick={handleSendMessage}
+              >
+                {sendStatus.sending ? (
+                  <>
+                    <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Sending...
+                  </>
+                ) : (
+                  'Send Message'
+                )}
+              </button>
+              {isJsonInput && (
+                <button
+                  type="button"
+                  className="btn btn-info me-3"
+                  disabled={sendStatus.sending}
+                  onClick={handleBeautifyJson}
+                >
+                  Beautify JSON
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={sendStatus.sending}
+                onClick={() => {
+                  const textarea = document.getElementById('nmea2000Message') as HTMLTextAreaElement
+                  if (textarea) {
+                    textarea.value = ''
+                    checkJsonInput('')
+                  }
+                  setSendStatus({ sending: false })
+                  setIsJsonInput(false)
+                  setConvertedJson('')
+                }}
+              >
+                Clear
+              </button>
+            </div>
 
             {/* Status feedback */}
             {sendStatus.error && (
-                  <div className="alert alert-danger" role="alert">
-                    <i className="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Send Error:</strong> {sendStatus.error}
-                  </div>
+              <div className="alert alert-danger" role="alert">
+                <i className="fas fa-exclamation-triangle me-2"></i>
+                <strong>Send Error:</strong> {sendStatus.error}
+              </div>
             )}
 
             {sendStatus.lastSent && !sendStatus.error && (
-                  <div className="alert alert-success" role="alert">
-                    <i className="fas fa-check-circle me-2"></i>
-                    <strong>Success:</strong> Message(s) sent successfully at {sendStatus.lastSent}
-                  </div>
+              <div className="alert alert-success" role="alert">
+                <i className="fas fa-check-circle me-2"></i>
+                <strong>Success:</strong> Message(s) sent successfully at {sendStatus.lastSent}
+              </div>
             )}
           </CardBody>
         </Card>
