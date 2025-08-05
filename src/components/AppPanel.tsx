@@ -7,6 +7,7 @@ import { DataList } from './DataList'
 import { FilterPanel, Filter } from './Filters'
 import { SentencePanel } from './SentencePanel'
 import { ConnectionManagerPanel } from './ConnectionManagerPanel'
+import { SendTab } from './SendTab'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
 
@@ -599,36 +600,7 @@ const AppPanel = (props: any) => {
           </Card>
         </TabPane>
         <TabPane tabId={SEND_TAB_ID}>
-          <Card>
-            <CardBody>
-              <h4 className="text-sk-primary">Send NMEA 2000 Messages</h4>
-              <p className="mb-3">Send custom NMEA 2000 messages to the network for testing and debugging purposes.</p>
-
-              <div className="alert alert-info" role="alert">
-                <strong>Coming Soon:</strong> PGN composition and transmission interface will be available in a future
-                version.
-              </div>
-
-              <div className="row">
-                <div className="col-md-6">
-                  <div className="card bg-sk-light">
-                    <div className="card-body">
-                      <h6 className="card-title">Quick Send</h6>
-                      <p className="card-text small">Send predefined PGNs with custom data fields.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="card bg-sk-light">
-                    <div className="card-body">
-                      <h6 className="card-title">Custom PGN</h6>
-                      <p className="card-text small">Compose and send custom PGN messages.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
+          <SendTab />
         </TabPane>
         <TabPane tabId={TRANSFORM_TAB_ID}>
           <Card>
