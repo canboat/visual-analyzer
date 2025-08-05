@@ -53,6 +53,34 @@ export const SendTab: React.FC = () => {
     return 'Unknown'
   }
 
+  // Function to get a readable description for a message
+  const getMessageDescription = (message: string, format: string): string => {
+    if (format !== 'JSON') {
+      return message
+    }
+    
+    try {
+      const parsed = JSON.parse(message)
+      if (Array.isArray(parsed)) {
+        // For arrays, show count and first PGN info
+        if (parsed.length > 0 && parsed[0].pgn) {
+          const firstPgn = parsed[0]
+          const desc = firstPgn.description || `PGN ${firstPgn.pgn}`
+          return `${parsed.length} messages: ${desc}${parsed.length > 1 ? ', ...' : ''}`
+        }
+        return `${parsed.length} messages`
+      } else {
+        // For single objects, show PGN description
+        if (parsed.pgn) {
+          return parsed.description || `PGN ${parsed.pgn}`
+        }
+        return 'JSON message'
+      }
+    } catch (error) {
+      return message
+    }
+  }
+
   // Function to add message to history
   const addToHistory = (message: string) => {
     const historyItem: MessageHistory = {
@@ -342,7 +370,7 @@ export const SendTab: React.FC = () => {
                                             style={{ fontSize: '0.75em' }}
                                             title={item.message}
                                           >
-                                            {item.message}
+                                            {getMessageDescription(item.message, item.format)}
                                           </div>
                                         </div>
                                       </div>
