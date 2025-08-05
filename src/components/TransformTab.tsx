@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardBody } from 'reactstrap'
-import { 
-  FromPgn, 
+import {
+  FromPgn,
   pgnToActisenseSerialFormat,
   pgnToActisenseN2KAsciiFormat,
   pgnToiKonvertSerialFormat,
@@ -10,7 +10,7 @@ import {
   pgnToMXPGN,
   pgnToCandump1,
   pgnToCandump2,
-  pgnToCandump3
+  pgnToCandump3,
 } from '@canboat/canboatjs'
 import { PGN } from '@canboat/ts-pgns'
 
@@ -65,27 +65,27 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
     { value: 'mxpgn', label: 'MiniPlex-3 MXPGN Format' },
     { value: 'candump1', label: 'Linux CAN utils (Angstrom)' },
     { value: 'candump2', label: 'Linux CAN utils (Debian)' },
-    { value: 'candump3', label: 'Linux CAN utils (log format)' }
+    { value: 'candump3', label: 'Linux CAN utils (log format)' },
   ]
 
   const formatOutput = (pgn: PGN, format: string): string => {
     if (!pgn) return ''
-    
+
     try {
       switch (format) {
         case 'canboat-json':
           return JSON.stringify(pgn, null, 2)
-        
+
         case 'actisense':
           // Use canboatjs built-in function
           const actisenseResult = pgnToActisenseSerialFormat(pgn)
           return actisenseResult || 'Unable to format to Actisense format'
-        
+
         case 'ikonvert':
           // Use canboatjs built-in function
           const ikonvertResult = pgnToiKonvertSerialFormat(pgn)
           return ikonvertResult || 'Unable to format to iKonvert format'
-        
+
         case 'ydwg-raw':
           // Use canboatjs built-in function - this returns an array of strings
           const ydwgResult = pgnToYdgwRawFormat(pgn)
@@ -93,22 +93,22 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
             return ydwgResult.join('\n')
           }
           return ydwgResult || 'Unable to format to YDWG Raw format'
-        
+
         case 'actisense-n2k-ascii':
           // Use canboatjs built-in function
           const n2kAsciiResult = pgnToActisenseN2KAsciiFormat(pgn)
           return n2kAsciiResult || 'Unable to format to Actisense N2K ASCII format'
-        
+
         case 'pcdin':
           // Use canboatjs built-in function
           const pcdinResult = pgnToPCDIN(pgn)
           return pcdinResult || 'Unable to format to PCDIN format'
-        
+
         case 'mxpgn':
           // Use canboatjs built-in function
           const mxpgnResult = pgnToMXPGN(pgn)
           return mxpgnResult || 'Unable to format to MXPGN format'
-        
+
         case 'candump1':
           // Use canboatjs built-in function - this returns an array of strings
           const candump1Result = pgnToCandump1(pgn)
@@ -116,7 +116,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
             return candump1Result.join('\n')
           }
           return candump1Result || 'Unable to format to candump1 format'
-        
+
         case 'candump2':
           // Use canboatjs built-in function - this returns an array of strings
           const candump2Result = pgnToCandump2(pgn)
@@ -124,7 +124,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
             return candump2Result.join('\n')
           }
           return candump2Result || 'Unable to format to candump2 format'
-        
+
         case 'candump3':
           // Use canboatjs built-in function - this returns an array of strings
           const candump3Result = pgnToCandump3(pgn)
@@ -132,7 +132,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
             return candump3Result.join('\n')
           }
           return candump3Result || 'Unable to format to candump3 format'
-        
+
         default:
           return JSON.stringify(pgn, null, 2)
       }
@@ -149,7 +149,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
 
     try {
       setParseError(null)
-      
+
       // Try to parse as JSON first
       if (inputValue.trim().startsWith('{')) {
         const jsonData = JSON.parse(inputValue)
@@ -162,7 +162,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
         }
         return
       }
-      
+
       // Try to parse as string format using the parser if available
       if (parser) {
         const result = parser.parseString(inputValue.trim())
@@ -188,7 +188,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
 
   const handleCopyOutput = async () => {
     if (!parsedResult) return
-    
+
     const outputText = formatOutput(parsedResult, outputFormat)
     try {
       await navigator.clipboard.writeText(outputText)
@@ -205,8 +205,6 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
       document.body.removeChild(textArea)
     }
   }
-
-
 
   return (
     <Card>
@@ -231,10 +229,10 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
                     rows={12}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Enter your NMEA 2000 message here...
+                    placeholder='Enter your NMEA 2000 message here...
 Examples:
 String format: 2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,00
-Canboat JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot;, &quot;prio&quot;: 2, &quot;src&quot;: 17, &quot;dst&quot;: 255, &quot;pgn&quot;: 127250, &quot;description&quot;: &quot;Vessel Heading&quot;, &quot;fields&quot;: {&quot;SID&quot;: 0, &quot;Heading&quot;: 1.5708, &quot;Deviation&quot;: null, &quot;Variation&quot;: null, &quot;Reference&quot;: &quot;Magnetic&quot;}}"
+Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src": 17, "dst": 255, "pgn": 127250, "description": "Vessel Heading", "fields": {"SID": 0, "Heading": 1.5708, "Deviation": null, "Variation": null, "Reference": "Magnetic"}}'
                     style={{ fontFamily: 'monospace' }}
                   />
                 </div>
@@ -255,7 +253,7 @@ Canboat JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot
               </div>
             </div>
           </div>
-          
+
           <div className="col-md-6">
             <div className="card">
               <div className="card-header">
@@ -279,16 +277,16 @@ Canboat JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="form-group">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <label htmlFor="transformOutput" className="form-label mb-0">
                       Parsed Result:
                     </label>
                     {parsedResult && (
-                      <button 
-                        className="btn btn-outline-primary btn-sm" 
-                        type="button" 
+                      <button
+                        className="btn btn-outline-primary btn-sm"
+                        type="button"
                         onClick={handleCopyOutput}
                         title="Copy output to clipboard"
                       >
@@ -306,7 +304,7 @@ Canboat JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot
                     style={{ fontFamily: 'monospace', backgroundColor: '#f8f9fa' }}
                   />
                 </div>
-                
+
                 {parsedResult && (
                   <div className="mt-3">
                     <div className="row">
@@ -314,9 +312,9 @@ Canboat JSON format: {&quot;timestamp&quot;: &quot;2023-10-15T10:30:45.123Z&quot
                         <div className="card bg-light">
                           <div className="card-body p-2">
                             <small>
-                              <strong>PGN:</strong> {parsedResult.pgn} | 
-                              <strong> Source:</strong> {parsedResult.src} | 
-                              <strong> Priority:</strong> {parsedResult.prio}<br />
+                              <strong>PGN:</strong> {parsedResult.pgn} |<strong> Source:</strong> {parsedResult.src} |
+                              <strong> Priority:</strong> {parsedResult.prio}
+                              <br />
                               <strong>Description:</strong> {parsedResult.description || 'N/A'}
                             </small>
                           </div>

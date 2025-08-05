@@ -118,7 +118,7 @@ const CONNECTIONS_TAB_ID = 'connections'
 const AppPanel = (props: any) => {
   // Check if we're in embedded mode (SignalK plugin) vs standalone mode
   const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
-  
+
   const [activeTab, setActiveTab] = useState(() => {
     const savedTab = loadActiveTab()
     // Validate the saved tab - if in embedded mode, don't allow connections tab
