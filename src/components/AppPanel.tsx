@@ -175,7 +175,7 @@ const AppPanel = (props: any) => {
 
       try {
         console.log('Checking authentication status...')
-        const response = await fetch('/loginStatus')
+        const response = await fetch('/skServer/loginStatus')
         if (response.ok) {
           const loginStatus: LoginStatus = await response.json()
           console.log('Login status received:', loginStatus)
