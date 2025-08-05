@@ -8,6 +8,7 @@
       "skipFiles": ["<node_internals>/**"],
       "outFiles": [
         "${workspaceFolder}/public/*.(m|c|)js",
+        "${workspaceFolder}/dist/*.(m|c|)js",
         "/usr/local/src/ts-pgns/dist/*.(m|c|)js",
         "/usr/local/src/canboatjs/dist/*.(m|c|)js"
         //"${fileWorkspaceFolder}/dist/*.(m|c|)js"
