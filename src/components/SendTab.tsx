@@ -55,8 +55,11 @@ export const SendTab: React.FC = () => {
 
   // Function to get a readable description for a message
   const getMessageDescription = (message: string, format: string): string => {
+    // For multi-line messages, only show the first line
+    const firstLine = message.split('\n')[0]
+    
     if (format !== 'JSON') {
-      return message
+      return firstLine
     }
     
     try {
@@ -77,7 +80,7 @@ export const SendTab: React.FC = () => {
         return 'JSON message'
       }
     } catch (error) {
-      return message
+      return firstLine
     }
   }
 
