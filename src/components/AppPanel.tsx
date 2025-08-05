@@ -8,6 +8,7 @@ import { FilterPanel, Filter } from './Filters'
 import { SentencePanel } from './SentencePanel'
 import { ConnectionManagerPanel } from './ConnectionManagerPanel'
 import { SendTab } from './SendTab'
+import TransformTab from './TransformTab'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
 
@@ -117,7 +118,7 @@ const CONNECTIONS_TAB_ID = 'connections'
 const AppPanel = (props: any) => {
   // Check if we're in embedded mode (SignalK plugin) vs standalone mode
   const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
-  
+
   const [activeTab, setActiveTab] = useState(() => {
     const savedTab = loadActiveTab()
     // Validate the saved tab - if in embedded mode, don't allow connections tab
@@ -642,44 +643,7 @@ const AppPanel = (props: any) => {
           <SendTab />
         </TabPane>
         <TabPane tabId={TRANSFORM_TAB_ID}>
-          <Card>
-            <CardBody>
-              <h4 className="text-sk-primary">Data Transformation</h4>
-              <p className="mb-3">Transform and convert NMEA 2000 data between different formats and protocols.</p>
-
-              <div className="alert alert-info" role="alert">
-                <strong>Coming Soon:</strong> Data transformation tools and protocol converters will be available in a
-                future version.
-              </div>
-
-              <div className="row">
-                <div className="col-md-4">
-                  <div className="card bg-sk-light">
-                    <div className="card-body">
-                      <h6 className="card-title">Actisense → YDRAW</h6>
-                      <p className="card-text small">Convert Actisense messages to YDRAW format.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="card bg-sk-light">
-                    <div className="card-body">
-                      <h6 className="card-title">N2K → Signal K</h6>
-                      <p className="card-text small">Transform to Signal K JSON format.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="card bg-sk-light">
-                    <div className="card-body">
-                      <h6 className="card-title">Custom Format</h6>
-                      <p className="card-text small">Export to custom data formats.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
+          <TransformTab parser={parser} />
         </TabPane>
         {!isEmbedded && (
           <TabPane tabId={CONNECTIONS_TAB_ID}>
