@@ -420,6 +420,18 @@ export const SentencePanel = (props: SentencePanelProps) => {
     }
   }
 
+  const copyInputData = async () => {
+    if (pgnData?.input) {
+      try {
+        const inputDataToSave = pgnData.input.join('\n')
+        await navigator.clipboard.writeText(inputDataToSave)
+        // You could add a toast notification here if desired
+      } catch (err) {
+        console.error('Failed to copy input data:', err)
+      }
+    }
+  }
+
   if (pgnData === undefined || pgnData === null) {
     return <div>Select a PGN to view its data</div>
   }
@@ -490,11 +502,23 @@ export const SentencePanel = (props: SentencePanelProps) => {
           <pre>{JSON.stringify(info[pgnData.src!]?.info, null, 2)}</pre>
         </TabPane>
         <TabPane tabId={INPUT_TAB_ID}>
-          <pre>
-            {(pgnData.input || []).map((input) => {
-              return `${input}\n`
-            })}
-          </pre>
+          <Card className="mt-3">
+            <CardHeader className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">Input Data</h5>
+              <Button size="sm" color="secondary" onClick={copyInputData} title="Copy input data to clipboard">
+                Copy
+              </Button>
+            </CardHeader>
+            <CardBody>
+              <div style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                {(pgnData.input || []).map((input, index) => (
+                  <div key={index} style={{ marginBottom: '5px' }}>
+                    {input}
+                  </div>
+                ))}
+              </div>
+            </CardBody>
+          </Card>
         </TabPane>
         <TabPane tabId={MAPPING_TAB_ID}>
           <ByteMapping pgnData={pgnData} definition={definition} />
