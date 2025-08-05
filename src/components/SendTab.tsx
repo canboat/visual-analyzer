@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Card, CardBody } from 'reactstrap'
+import { FromPgn } from '@canboat/canboatjs'
 
 interface SendStatus {
   sending: boolean
@@ -12,12 +13,63 @@ export const SendTab: React.FC = () => {
     sending: false,
   })
   const [isJsonInput, setIsJsonInput] = useState<boolean>(false)
+  const [convertedJson, setConvertedJson] = useState<string>('')
 
   // Function to check if input is JSON and update state
   const checkJsonInput = (input: string) => {
     const trimmed = input.trim()
     const isJson = (trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))
     setIsJsonInput(isJson && trimmed.length > 0)
+    
+    // If not JSON and has content, show converted JSON
+    if (!isJson && trimmed.length > 0) {
+      convertToCanboatJson(trimmed)
+    } else {
+      setConvertedJson('')
+    }
+  }
+
+  // Function to convert non-JSON input to canboat JSON format
+  const convertToCanboatJson = (input: string) => {
+    const lines = input.split('\n').filter(line => line.trim())
+    const jsonMessages: any[] = []
+
+    // Create parser instance
+    const parser = new FromPgn({
+      returnNulls: true,
+      checkForInvalidFields: true,
+      useCamel: true,
+      useCamelCompat: false,
+      returnNonMatches: true,
+      createPGNObjects: true,
+      includeInputData: true,
+    })
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed) continue
+
+      try {
+        // Try to parse using canboatjs parseString method
+        const parsed = parser.parseString(trimmed)
+        if (parsed) {
+          jsonMessages.push(parsed)
+        }
+      } catch (error) {
+        // If parsing fails, skip this line
+        console.warn('Failed to parse line:', trimmed, error)
+        continue
+      }
+    }
+
+    if (jsonMessages.length > 0) {
+      const formatted = jsonMessages.length === 1 
+        ? JSON.stringify(jsonMessages[0], null, 2)
+        : JSON.stringify(jsonMessages, null, 2)
+      setConvertedJson(formatted)
+    } else {
+      setConvertedJson('')
+    }
   }
 
   // Function to beautify JSON
@@ -152,6 +204,26 @@ export const SendTab: React.FC = () => {
                       lineHeight: '1.4'
                     }}
                   />
+                  
+                  {convertedJson && (
+                    <div className="mt-3">
+                      <label className="form-label">
+                        <strong>Converted to Canboat JSON:</strong>
+                      </label>
+                      <textarea
+                        className="form-control font-monospace"
+                        rows={8}
+                        value={convertedJson}
+                        readOnly
+                        style={{
+                          fontSize: '14px',
+                          lineHeight: '1.4',
+                          backgroundColor: '#f8f9fa',
+                          color: '#495057'
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 <div className="d-flex mb-3">
