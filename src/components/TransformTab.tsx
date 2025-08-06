@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Card, CardBody } from 'reactstrap'
 import {
   FromPgn,
@@ -32,10 +32,32 @@ import {
 import { PGN } from '@canboat/ts-pgns'
 
 interface TransformTabProps {
-  parser?: FromPgn
+  // No longer accepting parser from parent
 }
 
-const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
+const TransformTab: React.FC<TransformTabProps> = () => {
+  // Create our own parser instance with appropriate options
+  const parser = useMemo(() => {
+    const newParser = new FromPgn({
+      returnNulls: true,
+      checkForInvalidFields: true,
+      useCamel: true,
+      useCamelCompat: false,
+      returnNonMatches: true,
+      createPGNObjects: true,
+      includeInputData: true,
+    })
+
+    newParser.on('error', (pgn: any, error: any) => {
+      console.error(`TransformTab parser error for PGN ${pgn.pgn}:`, error)
+    })
+
+    newParser.on('warning', (pgn: any, warning: any) => {
+      console.warn(`TransformTab parser warning for PGN ${pgn.pgn}:`, warning)
+    })
+
+    return newParser
+  }, [])
   // Load initial values from localStorage
   const [inputValue, setInputValue] = useState<string>(() => {
     try {
