@@ -88,7 +88,7 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean; filterOpt
         return {
           filter: settings.filter || {},
           doFiltering: settings.doFiltering || false,
-          filterOptions: settings.filterOptions || { useCamelCase: true },
+          filterOptions: settings.filterOptions || { useCamelCase: true, showUnknownProprietaryPGNsOnSeparateLines: false, showPgn126208OnSeparateLines: false },
         }
       }
     }
@@ -98,9 +98,9 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean; filterOpt
   return null
 }
 
-export const getRowKey = (pgn: PGN): string => {
+export const getRowKey = (pgn: PGN, options?: FilterOptions): string => {
   let key = `${pgn.getDefinition().Id}-${pgn.pgn}-${pgn.src}`
-  if (pgn.getDefinition().Fallback === true || pgn.pgn === 126208) {
+  if ((pgn.getDefinition().Fallback === true && options?.showUnknownProprietaryPGNsOnSeparateLines) || (pgn.pgn === 126208 && options?.showPgn126208OnSeparateLines)) {
     const fieldHash = createFieldDataHash(pgn.fields)
     key = `${key}-${fieldHash}`
   }
@@ -277,6 +277,7 @@ const AppPanel = (props: any) => {
 
   const [parser, setParser] = useState<FromPgn | null>(null)
   const parserRef = useRef<FromPgn | null>(null)
+  const filterOptionsRef = useRef<FilterOptions | null>(null)
 
   // Update parser configuration when filterOptions change
   useEffect(() => {
@@ -300,6 +301,7 @@ const AppPanel = (props: any) => {
       console.log(`Parser created with useCamel: ${options?.useCamelCase ?? true}`)
       setParser(newParser)
       parserRef.current = newParser
+      filterOptionsRef.current = options
     })
 
     return () => subscription.unsubscribe()
@@ -440,7 +442,7 @@ const AppPanel = (props: any) => {
           //console.log('pgn', pgn)
           if (infoPGNS.indexOf(pgn!.pgn) === -1) {
             setList((prev: any) => {
-              prev[getRowKey(pgn!)] = pgn
+              prev[getRowKey(pgn!, filterOptionsRef.current || undefined)] = pgn
               data.next({ ...prev })
               return prev
             })
@@ -567,7 +569,7 @@ const AppPanel = (props: any) => {
       // Set default values if no saved settings
       filter.next({})
       doFiltering.next(false)
-      filterOptions.next({ useCamelCase: true })
+      filterOptions.next({ useCamelCase: true, showUnknownProprietaryPGNsOnSeparateLines: false, showPgn126208OnSeparateLines: false })
     }
     console.log('Filter settings initialization complete')
   }, [])

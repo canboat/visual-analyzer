@@ -33,6 +33,8 @@ export type Filter = {
 
 export type FilterOptions = {
   useCamelCase?: boolean
+  showUnknownProprietaryPGNsOnSeparateLines?: boolean
+  showPgn126208OnSeparateLines?: boolean
 }
 
 export const getFilterConfig = (filter?: Filter): FilterConfig => {
@@ -153,7 +155,7 @@ export const FilterPanel = (props: FilterPanelProps) => {
       <CardHeader className="d-flex justify-content-between align-items-center py-2" style={{ cursor: 'pointer' }}>
         <div className="d-flex align-items-center flex-grow-1" onClick={() => setIsOpen(!isOpen)}>
           <h6 className="mb-0" style={{ fontWeight: 'bold' }}>
-            Filters
+            Filters and Options
           </h6>
         </div>
         <div className="d-flex align-items-center">
@@ -298,7 +300,39 @@ export const FilterPanel = (props: FilterPanelProps) => {
                       })
                     }}
                   />
-                  <span>Use CamelCase field names</span>
+                  <span>Use CamelCase Field Names</span>
+                </Label>
+              </Col>
+              <Col xs="12" className="mb-2">
+                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                  <Input
+                    type="checkbox"
+                    className="me-2"
+                    checked={filterOptions?.showUnknownProprietaryPGNsOnSeparateLines ?? false}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      props.filterOptions.next({ 
+                        ...filterOptions, 
+                        showUnknownProprietaryPGNsOnSeparateLines: e.target.checked 
+                      })
+                    }}
+                  />
+                  <span>Show Unknown Proprietary PGNs On Separate Lines</span>
+                </Label>
+              </Col>
+              <Col xs="12" className="mb-2">
+                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                  <Input
+                    type="checkbox"
+                    className="me-2"
+                    checked={filterOptions?.showPgn126208OnSeparateLines ?? false}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      props.filterOptions.next({ 
+                        ...filterOptions, 
+                        showPgn126208OnSeparateLines: e.target.checked 
+                      })
+                    }}
+                  />
+                  <span>Show PGN 126208 On Separate Lines</span>
                 </Label>
               </Col>
             </Row>
