@@ -108,7 +108,7 @@ export const DataList = (props: DataListProps) => {
             .map((row: PGN, i: number) => {
               return (
                 <tr key={getRowKey(row)} onClick={() => handleRowClick(row)}>
-                  <td>{row.timestamp!.split('T')[1]}</td>
+                  <td style={{ fontFamily: 'monospace' }}>{new Date(row.timestamp!).toLocaleTimeString([], { hour12: false })}</td>
                   <td
                     style={{ color: 'red', cursor: 'pointer' }}
                     onMouseDown={(e) => handlePgnClick(e, row.pgn.toString())}
