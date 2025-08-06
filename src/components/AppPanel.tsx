@@ -26,6 +26,7 @@ import { ConnectionManagerPanel } from './ConnectionManagerPanel'
 import { SendTab } from './SendTab'
 import TransformTab from './TransformTab'
 import RecordingTab from './RecordingTab'
+import { RecordingProvider, useRecording } from '../contexts/RecordingContext'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
 
@@ -142,7 +143,8 @@ const TRANSFORM_TAB_ID = 'transform'
 const RECORDING_TAB_ID = 'recording'
 const CONNECTIONS_TAB_ID = 'connections'
 
-const AppPanel = (props: any) => {
+const AppPanelInner = (props: any) => {
+  const { dispatch } = useRecording()
   // Check if we're in embedded mode (SignalK plugin) vs standalone mode
   const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
 
@@ -434,26 +436,30 @@ const AppPanel = (props: any) => {
 
         // Handle recording events
         if (parsed.event === 'recording:started') {
-          // Recording started event - could trigger UI updates
+          // Recording started event
           console.log('Recording started:', parsed.data)
+          dispatch({ type: 'RECORDING_STARTED', payload: parsed.data })
           return
         }
 
         if (parsed.event === 'recording:stopped') {
-          // Recording stopped event - could trigger UI updates  
+          // Recording stopped event  
           console.log('Recording stopped:', parsed.data)
+          dispatch({ type: 'RECORDING_STOPPED', payload: parsed.data })
           return
         }
 
         if (parsed.event === 'recording:progress') {
-          // Recording progress event - could update recording status in UI
+          // Recording progress event
           console.log('Recording progress:', parsed.data)
+          dispatch({ type: 'RECORDING_PROGRESS', payload: parsed.data })
           return
         }
 
         if (parsed.event === 'recording:error') {
           // Recording error event
           console.error('Recording error:', parsed.data)
+          dispatch({ type: 'RECORDING_ERROR', payload: parsed.data })
           return
         }
 
@@ -807,6 +813,14 @@ function requestMetaData(src: number) {
         console.error(`Error requesting metadata for PGN ${num}:`, error)
       })
   })
+}
+
+const AppPanel = (props: any) => {
+  return (
+    <RecordingProvider>
+      <AppPanelInner {...props} />
+    </RecordingProvider>
+  )
 }
 
 export default AppPanel

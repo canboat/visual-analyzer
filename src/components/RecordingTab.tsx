@@ -29,7 +29,7 @@ import {
   Label,
   Table,
 } from 'reactstrap'
-import { useWebSocket } from '../hooks/useWebSocket'
+import { useRecording } from '../contexts/RecordingContext'
 
 interface RecordingStatus {
   isRecording: boolean
@@ -62,70 +62,34 @@ const RecordingTab: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // WebSocket connection for real-time updates
-  useWebSocket({
-    onMessage: (message) => {
-      // Handle recording-specific WebSocket events
-      switch (message.event) {
-        case 'recording:started':
-          if (message.data) {
-            setRecordingStatus({
-              isRecording: true,
-              fileName: message.data.fileName,
-              startTime: message.data.startTime,
-              messageCount: 0,
-              fileSize: 0,
-              format: message.data.format,
-            })
-            // Refresh file list to show new recording
-            loadRecordingFiles()
-          }
-          break
+  // Use recording context for real-time updates
+  const { state: recordingContextState, dispatch } = useRecording()
 
-        case 'recording:stopped':
-          if (message.data) {
-            setRecordingStatus({
-              isRecording: false,
-              messageCount: message.data.messageCount || 0,
-              fileSize: message.data.fileSize || 0,
-            })
-            // Refresh file list to show completed recording
-            loadRecordingFiles()
-          }
-          break
-
-        case 'recording:progress':
-          if (message.data) {
-            setRecordingStatus((prev) => ({
-              ...prev,
-              messageCount: message.data.messageCount || prev.messageCount,
-              fileSize: message.data.fileSize || prev.fileSize,
-            }))
-          }
-          break
-
-        case 'recording:error':
-          if (message.data?.error) {
-            setError(message.data.error)
-            setRecordingStatus((prev) => ({
-              ...prev,
-              error: message.data.error,
-            }))
-          }
-          break
-
-        default:
-          // Ignore other events
-          break
-      }
-    },
-    onConnect: () => {
-      console.log('Recording tab WebSocket connected')
-    },
-    onDisconnect: () => {
-      console.log('Recording tab WebSocket disconnected')
+  // Update local state when context state changes
+  useEffect(() => {
+    console.log('Recording context updated:', recordingContextState)
+    if (recordingContextState.lastUpdate) {
+      setRecordingStatus((prevStatus) => {
+        const newStatus = recordingContextState.status
+        console.log('Updating recording status from context:', newStatus)
+        
+        // Handle errors from WebSocket events
+        if (newStatus.error) {
+          setError(newStatus.error)
+        } else {
+          setError(null) // Clear error when no error in new status
+        }
+        
+        // Refresh file list when recording starts/stops
+        if (newStatus.isRecording !== prevStatus.isRecording) {
+          console.log('Recording state changed, refreshing file list')
+          setTimeout(() => loadRecordingFiles(), 100) // Small delay to ensure backend is ready
+        }
+        
+        return newStatus
+      })
     }
-  })
+  }, [recordingContextState.lastUpdate])
 
     // Available recording formats based on Transform tab
   const recordingFormats = [
@@ -160,7 +124,10 @@ const RecordingTab: React.FC = () => {
       const response = await fetch('/api/recording/status')
       if (response.ok) {
         const status = await response.json()
+        console.log('Loaded initial recording status:', status)
+        // Update both local state and context
         setRecordingStatus(status)
+        dispatch({ type: 'SET_STATUS', payload: status })
       }
     } catch (err) {
       console.error('Failed to load recording status:', err)
@@ -198,14 +165,8 @@ const RecordingTab: React.FC = () => {
 
       if (response.ok) {
         const result = await response.json()
-        setRecordingStatus({
-          isRecording: true,
-          fileName: result.fileName,
-          startTime: new Date().toISOString(),
-          messageCount: 0,
-          fileSize: 0,
-          format: recordingFormat,
-        })
+        // Don't set local state here - it will be updated via WebSocket events
+        console.log('Recording started successfully:', result)
         // Refresh file list
         loadRecordingFiles()
       } else {
@@ -231,11 +192,8 @@ const RecordingTab: React.FC = () => {
       })
 
       if (response.ok) {
-        setRecordingStatus({
-          isRecording: false,
-          messageCount: 0,
-          fileSize: 0,
-        })
+        // Don't set local state here - it will be updated via WebSocket events
+        console.log('Recording stopped successfully')
         // Refresh file list to show the completed recording
         loadRecordingFiles()
       } else {

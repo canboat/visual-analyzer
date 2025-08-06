@@ -313,7 +313,7 @@ export class RecordingService extends EventEmitter {
       this.messageCount++
 
       // Emit progress update every 100 messages
-      if (this.messageCount % 100 === 0) {
+      if (this.messageCount % 10 === 0) {
         this.emit('progress', this.getStatus())
       }
     } catch (error) {
