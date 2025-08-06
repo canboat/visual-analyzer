@@ -543,18 +543,22 @@ export const SentencePanel = (props: SentencePanelProps) => {
                             .map(([key, value]: [string, any]) => (
                               <div key={key} className="col-md-6 mb-2">
                                 <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                                  <strong style={{ 
-                                    minWidth: '150px', 
-                                    marginRight: '10px',
-                                    color: '#6c757d',
-                                    textTransform: 'capitalize'
-                                  }}>
-                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:
+                                  <strong
+                                    style={{
+                                      minWidth: '150px',
+                                      marginRight: '10px',
+                                      color: '#6c757d',
+                                      textTransform: 'capitalize',
+                                    }}
+                                  >
+                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}:
                                   </strong>
-                                  <span style={{ 
-                                    wordBreak: 'break-word',
-                                    color: '#212529'
-                                  }}>
+                                  <span
+                                    style={{
+                                      wordBreak: 'break-word',
+                                      color: '#212529',
+                                    }}
+                                  >
                                     {value}
                                   </span>
                                 </div>
@@ -566,12 +570,14 @@ export const SentencePanel = (props: SentencePanelProps) => {
                   ))}
                 </div>
               ) : (
-                <div style={{ 
-                  textAlign: 'center', 
-                  color: '#6c757d', 
-                  padding: '40px',
-                  fontStyle: 'italic'
-                }}>
+                <div
+                  style={{
+                    textAlign: 'center',
+                    color: '#6c757d',
+                    padding: '40px',
+                    fontStyle: 'italic',
+                  }}
+                >
                   No device information available for this source
                 </div>
               )}
