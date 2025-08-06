@@ -1,8 +1,9 @@
 {
   "name": "@canboat/visual-analyzer",
-  "version": "1.7.1",
-  "description": "NMEA 2000 data visualization utility",
-  "main": "dist/server.js",
+
+  "version": "1.7.4",
+  "description": "NMEA 2000 data visualization utility (requires SK Server >= 1.15)",
+  "main": "index.js",
   "bin": {
     "visual-analyzer": "./bin/visual-analyzer"
   },
@@ -71,7 +72,7 @@
     "webpack-dev-server": "^5.2.2"
   },
   "dependencies": {
-    "@canboat/canboatjs": "^3.9.0",
+    "@canboat/canboatjs": "^3.9.2",
     "bootstrap": "^5.3.7",
     "express": "^4.18.2",
     "ws": "^8.14.2",
