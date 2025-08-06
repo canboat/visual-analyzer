@@ -255,10 +255,10 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
 
   private async connectToSerial(): Promise<void> {
     try {
-      const deviceType = this.options.deviceType || 'actisense'
+      const deviceType = this.options.deviceType || 'Actisense'
       console.log(`Connecting to serial port: ${this.options.serialPort} (${deviceType})`)
 
-      if (deviceType === 'actisense') {
+      if (deviceType === 'Actisense' || deviceType === 'Actisense ASCII') {
         // Use ActisenseStream from canboatjs for Actisense NGT-1 devices
         this.serialStream = new (ActisenseStream as any)({
           device: this.options.serialPort!,
@@ -270,7 +270,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
         console.log('Actisense serial connection established using canboatjs ActisenseStream')
         this.isConnected = true
         this.emit('connected')
-      } else if (deviceType === 'ikonvert') {
+      } else if (deviceType === 'iKonvert') {
         // Use iKonvertStream from canboatjs for Digital Yacht iKonvert devices
         this.serialStream = new (iKonvertStream as any)({
           device: this.options.serialPort!,
@@ -582,14 +582,15 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
   }
 
   private getDelimiterForDevice(deviceType: string): string | RegExp {
-    switch (deviceType.toLowerCase()) {
-      case 'ydgw':
-      case 'yacht-devices':
+    switch (deviceType) {
+      case 'Yacht Devices':
+      case 'Yacht Devices RAW':
+      case 'NavLink2':
         return '\r\n'
-      case 'actisense':
-      case 'ngt-1':
+      case 'Actisense':
+      case 'Actisense ASCII':
         return '\r\n'
-      case 'ikonvert':
+      case 'iKonvert':
         return '\n'
       default:
         return /\r?\n/
@@ -661,29 +662,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     if (!this.serialStream && !this.serialPort) {
       throw new Error('Serial connection not available')
     }
-
-    // Format data based on device type
-    let formattedData: string
-    switch (this.options.deviceType) {
-      case 'actisense':
-        formattedData = pgnToActisenseN2KAsciiFormat(data) || ''
-        break
-      case 'ikonvert':
-        formattedData = pgnToiKonvertSerialFormat(data) || ''
-        break
-      case 'ydgw':
-        const ydgwResult = pgnToYdgwRawFormat(data)
-        formattedData = Array.isArray(ydgwResult) ? ydgwResult.join('\n') : ydgwResult || ''
-        break
-      default:
-        formattedData = JSON.stringify(data) + '\n'
-    }
-
-    if (this.serialStream && typeof this.serialStream.write === 'function') {
-      this.serialStream.write(formattedData)
-    } else if (this.serialPort && typeof (this.serialPort as any).write === 'function') {
-      ;(this.serialPort as any).write(formattedData)
-    }
+    this.emit('nmea2000JsonOut', data)
   }
 
   private sendToNetwork(data: any): void {
@@ -693,21 +672,23 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
       formattedData = data
     } else {
       // Use canboatjs formatting functions based on device type
-      const supportedDeviceTypes = ['actisense', 'ikonvert', 'ydgw']
       const deviceType = this.options.deviceType
+      const supportedDeviceTypes = ['Actisense', 'Actisense ASCII', 'iKonvert', 'Yacht Devices', 'Yacht Devices RAW', 'NavLink2']
       
       if (deviceType && !supportedDeviceTypes.includes(deviceType)) {
         throw new Error(`Unsupported device type for network transmission: ${deviceType}. Supported types: ${supportedDeviceTypes.join(', ')}`)
       }
 
       switch (deviceType) {
-        case 'actisense':
+        case 'Actisense ASCII':
           formattedData = pgnToActisenseN2KAsciiFormat(data) || ''
           break
-        case 'ikonvert':
+        case 'iKonvert':
+        case 'NavLink2':
           formattedData = pgnToiKonvertSerialFormat(data) || ''
           break
-        case 'ydgw':
+        case 'Yacht Devices':
+        case 'Yacht Devices RAW':
           const ydgwResult = pgnToYdgwRawFormat(data)
           formattedData = Array.isArray(ydgwResult) ? ydgwResult.join('\n') : ydgwResult || ''
           break
@@ -748,12 +729,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
       throw new Error('SocketCAN connection not available')
     }
 
-    // Use canboatjs to send the message
-    if (typeof this.canbusStream.sendMessage === 'function') {
-      this.canbusStream.sendMessage(data)
-    } else {
-      throw new Error('SocketCAN stream does not support message transmission')
-    }
+    this.canbusStream.sendPGN(data)
   }
 }
 
