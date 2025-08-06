@@ -211,10 +211,12 @@ visual-analyzer/
 ├── bin/
 │   └── visual-analyzer           # Executable script for standalone server
 ├── server/
-│   ├── index.js                  # Main server entry point
-│   ├── server.js                 # Express server setup
-│   ├── nmea-provider.js          # NMEA data source providers
+│   ├── index.ts                  # Main server entry point (TypeScript)
+│   ├── server.ts                 # Express server setup (TypeScript)
+│   ├── nmea-provider.ts          # NMEA data source providers (TypeScript)
+│   ├── types.ts                  # Server-side TypeScript type definitions
 │   └── config.json               # Default server configuration
+├── dist/                         # Compiled TypeScript server code (generated)
 ├── src/
 │   ├── components/
 │   │   ├── AppPanel.tsx          # Main application component
@@ -232,7 +234,8 @@ visual-analyzer/
 │   └── index.html                # HTML template
 ├── public/                       # Built frontend assets (generated)
 ├── package.json                  # Project dependencies and scripts
-├── tsconfig.json                 # TypeScript configuration
+├── tsconfig.json                 # Frontend TypeScript configuration
+├── tsconfig.server.json          # Server-side TypeScript configuration
 └── webpack.config.js             # Webpack build configuration
 ```
 
@@ -247,8 +250,17 @@ npm install
 # Start development server with hot reload
 npm run watch
 
-# Build for production
+# Build client-side code for production
 npm run build
+
+# Build server-side TypeScript code
+npm run build:server
+
+# Build everything
+npm run build:all
+
+# Start the compiled server
+npm run server
 
 # Format code
 npm run format
