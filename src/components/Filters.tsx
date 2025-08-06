@@ -35,6 +35,7 @@ export type FilterOptions = {
   useCamelCase?: boolean
   showUnknownProprietaryPGNsOnSeparateLines?: boolean
   showPgn126208OnSeparateLines?: boolean
+  showInfoPgns?: boolean
 }
 
 export const getFilterConfig = (filter?: Filter): FilterConfig => {
@@ -333,6 +334,22 @@ export const FilterPanel = (props: FilterPanelProps) => {
                     }}
                   />
                   <span>Show PGN 126208 On Separate Lines</span>
+                </Label>
+              </Col>
+              <Col xs="12" className="mb-2">
+                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                  <Input
+                    type="checkbox"
+                    className="me-2"
+                    checked={filterOptions?.showInfoPgns ?? false}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      props.filterOptions.next({
+                        ...filterOptions,
+                        showInfoPgns: e.target.checked,
+                      })
+                    }}
+                  />
+                  <span>Show Info PGNs</span>
                 </Label>
               </Col>
             </Row>

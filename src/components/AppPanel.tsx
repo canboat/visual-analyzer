@@ -447,7 +447,7 @@ const AppPanel = (props: any) => {
         }
         if (pgn !== undefined) {
           //console.log('pgn', pgn)
-          if (infoPGNS.indexOf(pgn!.pgn) === -1) {
+          if (infoPGNS.indexOf(pgn!.pgn) === -1 || filterOptionsRef.current?.showInfoPgns) {
             setList((prev: any) => {
               prev[getRowKey(pgn!, filterOptionsRef.current || undefined)] = pgn
               data.next({ ...prev })
