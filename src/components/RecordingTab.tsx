@@ -57,11 +57,11 @@ const RecordingTab: React.FC = () => {
   const [recordingFiles, setRecordingFiles] = useState<RecordingFile[]>([])
   const [customFileName, setCustomFileName] = useState('')
   const [autoGenerateFileName, setAutoGenerateFileName] = useState(true)
-  const [recordingFormat, setRecordingFormat] = useState('raw')
+  const [recordingFormat, setRecordingFormat] = useState('canboat-json')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Available recording formats based on Transform tab
+    // Available recording formats based on Transform tab
   const recordingFormats = [
     { value: 'canboat-json', label: 'Canboat JSON' },
     { value: 'actisense', label: 'Actisense Serial Format' },
@@ -233,9 +233,9 @@ const RecordingTab: React.FC = () => {
       case 'candump1':
       case 'candump2':
       case 'candump3':
-      case 'raw':
-      default:
         return 'log'
+      default:
+        return 'json'
     }
   }
 
@@ -261,7 +261,7 @@ const RecordingTab: React.FC = () => {
                 {recordingStatus.isRecording && recordingStatus.fileName && (
                   <small className="text-muted">
                     File: {recordingStatus.fileName}
-                    {recordingStatus.format && recordingStatus.format !== 'raw' && (
+                    {recordingStatus.format && (
                       <span className="ms-2">
                         Format: {recordingFormats.find(f => f.value === recordingStatus.format)?.label || recordingStatus.format}
                       </span>
@@ -375,7 +375,7 @@ const RecordingTab: React.FC = () => {
                           <small>
                             {file.format 
                               ? recordingFormats.find(f => f.value === file.format)?.label || file.format
-                              : 'Raw'
+                              : 'Unknown'
                             }
                           </small>
                         </td>

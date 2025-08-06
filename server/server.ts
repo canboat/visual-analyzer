@@ -582,13 +582,14 @@ class VisualAnalyzerServer {
           
           // Record the sample data if recording is active
           if (this.recordingService.getStatus().isRecording) {
-            let pgn: any = undefined
             try {
-              pgn = this.canboatParser.parseString(sampleData)
+              const pgn = this.canboatParser.parseString(sampleData)
+              if (pgn) {
+                this.recordingService.recordMessage(pgn)
+              }
             } catch (error) {
               // Ignore parsing errors during recording
             }
-            this.recordingService.recordMessage(sampleData, pgn)
           }
           
           ws.send(
@@ -649,16 +650,15 @@ class VisualAnalyzerServer {
     this.nmeaProvider.on('raw-nmea', (rawData: any) => {
       // Record the message if recording is active
       if (this.recordingService.getStatus().isRecording) {
-        let pgn: any = undefined
         try {
           if (typeof rawData === 'string') {
-            pgn = this.canboatParser.parseString(rawData)
+            const pgn = this.canboatParser.parseString(rawData)
+            if (pgn) {
+              this.recordingService.recordMessage(pgn)
+            }
           }
         } catch (error) {
           console.error('Failed to parse raw NMEA data:', error)
-        }
-        if (pgn) {
-          this.recordingService.recordMessage(rawData, pgn)
         }
       }
 
