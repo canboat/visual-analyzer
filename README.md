@@ -12,7 +12,7 @@ A powerful web-based tool for visually analyzing and debugging NMEA 2000 data st
 
 ### As a Signal K Plugin
 
-The Visual Analyzer is designed to be used as an embeddable webapp within Signal K Server. It is on the App Store and will be available under "Web Apps" after installation.
+The Visual Analyzer is designed to be used as an embeddable webapp within Signal K Server. It requires server vesion 1.15 or better. It is on the App Store and will be available under "Web Apps" after installation.
 
 ### Standalone Server
 
