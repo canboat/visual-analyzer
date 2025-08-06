@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Card, CardBody, Col, Row, Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
 import { ReplaySubject, combineLatest } from 'rxjs'
 // import * as pkg from '../../package.json'
 import { PGNDataMap, PgnNumber, DeviceMap } from '../types'
 import { DataList } from './DataList'
-import { FilterPanel, Filter } from './Filters'
+import { FilterPanel, Filter, FilterOptions } from './Filters'
 import { SentencePanel } from './SentencePanel'
 import { ConnectionManagerPanel } from './ConnectionManagerPanel'
 import { SendTab } from './SendTab'
@@ -42,12 +42,13 @@ interface LoginStatus {
 const LOCALSTORAGE_KEY = 'visual_analyzer_settings'
 const ACTIVE_TAB_KEY = 'visual_analyzer_active_tab'
 
-const saveFilterSettings = (filter: Filter, doFiltering: boolean) => {
+const saveFilterSettings = (filter: Filter, doFiltering: boolean, filterOptions: FilterOptions) => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       const settings = {
         filter,
         doFiltering,
+        filterOptions,
         lastSaved: new Date().toISOString(),
       }
       window.localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(settings))
@@ -78,7 +79,7 @@ const loadActiveTab = (): string | null => {
   return null
 }
 
-const loadFilterSettings = (): { filter: Filter; doFiltering: boolean } | null => {
+const loadFilterSettings = (): { filter: Filter; doFiltering: boolean; filterOptions: FilterOptions } | null => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       const saved = window.localStorage.getItem(LOCALSTORAGE_KEY)
@@ -87,6 +88,7 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean } | null =
         return {
           filter: settings.filter || {},
           doFiltering: settings.doFiltering || false,
+          filterOptions: settings.filterOptions || { useCamelCase: true },
         }
       }
     }
@@ -153,6 +155,7 @@ const AppPanel = (props: any) => {
   const [selectedPgn] = useState(new ReplaySubject<PGN>())
   const [doFiltering] = useState(new ReplaySubject<boolean>())
   const [filter] = useState(new ReplaySubject<Filter>())
+  const [filterOptions] = useState(new ReplaySubject<FilterOptions>())
   const [availableSrcs] = useState(new ReplaySubject<number[]>())
   const [currentSrcs, setCurrentSrcs] = useState<number[]>([])
   const [deviceInfo] = useState(new ReplaySubject<DeviceMap>())
@@ -272,20 +275,49 @@ const AppPanel = (props: any) => {
     checkAuthentication()
   }, [isEmbedded])
 
-  const parser = new FromPgn({
-    returnNulls: true,
-    checkForInvalidFields: true,
-    useCamel: true,
-    useCamelCompat: false,
-    returnNonMatches: true,
-    createPGNObjects: true,
-    includeInputData: true,
-  })
+  const [parser, setParser] = useState<FromPgn | null>(null)
+  const parserRef = useRef<FromPgn | null>(null)
 
-  parser.on('error', (pgn: any, error: any) => {
-    console.error(`Error parsing ${pgn.pgn} ${error}`)
-    console.error(error.stack)
-  })
+  // Update parser configuration when filterOptions change
+  useEffect(() => {
+    const subscription = filterOptions.subscribe((options) => {
+      console.log('filterOptions subscription triggered with:', options)
+      const newParser = new FromPgn({
+        returnNulls: true,
+        checkForInvalidFields: true,
+        useCamel: options?.useCamelCase ?? true,
+        useCamelCompat: false,
+        returnNonMatches: true,
+        createPGNObjects: true,
+        includeInputData: true,
+      })
+      
+      newParser.on('error', (pgn: any, error: any) => {
+        console.error(`Error parsing ${pgn.pgn} ${error}`)
+        console.error(error.stack)
+      })
+      
+      console.log(`Parser created with useCamel: ${options?.useCamelCase ?? true}`)
+      setParser(newParser)
+      parserRef.current = newParser
+    })
+
+    return () => subscription.unsubscribe()
+  }, [filterOptions])
+
+  // Debug parser state
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      ;(window as any).checkParserState = () => {
+        console.log('Parser state:', parser)
+        console.log('Parser ref:', parserRef.current)
+        console.log('Parser state is null:', parser === null)
+        console.log('Parser ref is null:', parserRef.current === null)
+        console.log('Parser state is defined:', parser !== undefined)
+        console.log('Parser ref is defined:', parserRef.current !== undefined)
+      }
+    }
+  }, [parser])
 
   const deleteAllKeys = (obj: any) => {
     Object.keys(obj).forEach((key) => {
@@ -394,8 +426,16 @@ const AppPanel = (props: any) => {
           return
         }
 
+        // Don't process data if parser is not ready yet
+        if (!parserRef.current) {
+          console.log('Parser not ready yet, skipping message processing')
+          return
+        }
+
         let pgn: PGN | undefined = undefined
-        pgn = parser.parse(parsed.data)
+        if (parserRef.current) {
+          pgn = parserRef.current.parse(parsed.data)
+        }
         if (pgn !== undefined) {
           //console.log('pgn', pgn)
           if (infoPGNS.indexOf(pgn!.pgn) === -1) {
@@ -515,21 +555,27 @@ const AppPanel = (props: any) => {
 
   // Initialize filter settings from localStorage on component mount
   useEffect(() => {
+    console.log('Initializing filter settings...')
     const savedSettings = loadFilterSettings()
     if (savedSettings) {
+      console.log('Loading saved settings:', savedSettings)
       filter.next(savedSettings.filter)
       doFiltering.next(savedSettings.doFiltering)
+      filterOptions.next(savedSettings.filterOptions)
     } else {
+      console.log('No saved settings, using defaults')
       // Set default values if no saved settings
       filter.next({})
       doFiltering.next(false)
+      filterOptions.next({ useCamelCase: true })
     }
+    console.log('Filter settings initialization complete')
   }, [])
 
   // Save filter settings to localStorage when they change
   useEffect(() => {
-    const subscription = combineLatest([filter, doFiltering]).subscribe(([filterValue, doFilteringValue]) => {
-      saveFilterSettings(filterValue, doFilteringValue)
+    const subscription = combineLatest([filter, doFiltering, filterOptions]).subscribe(([filterValue, doFilteringValue, filterOptionsValue]) => {
+      saveFilterSettings(filterValue, doFilteringValue, filterOptionsValue)
     })
 
     return () => {
@@ -637,6 +683,7 @@ const AppPanel = (props: any) => {
                     <FilterPanel
                       doFiltering={doFiltering}
                       filter={filter}
+                      filterOptions={filterOptions}
                       availableSrcs={availableSrcs}
                       deviceInfo={deviceInfo}
                     />
@@ -665,7 +712,7 @@ const AppPanel = (props: any) => {
           <SendTab />
         </TabPane>
         <TabPane tabId={TRANSFORM_TAB_ID}>
-          <TransformTab parser={parser} />
+          <TransformTab parser={parser || undefined} />
         </TabPane>
         {!isEmbedded && (
           <TabPane tabId={CONNECTIONS_TAB_ID}>

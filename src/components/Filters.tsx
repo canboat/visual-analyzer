@@ -31,6 +31,10 @@ export type Filter = {
   javaScript?: string
 }
 
+export type FilterOptions = {
+  useCamelCase?: boolean
+}
+
 export const getFilterConfig = (filter?: Filter): FilterConfig => {
   const pgs: number[] | undefined = filter?.pgn
     ?.map((p) => (!isNaN(Number(p)) ? Number(p) : null))
@@ -109,6 +113,7 @@ interface FilterPanelProps {
   availableSrcs: Subject<number[]>
   deviceInfo: Subject<DeviceMap>
   doFiltering: Subject<boolean>
+  filterOptions: Subject<FilterOptions>
 }
 const FILTER_PANEL_STATE_KEY = 'visual_analyzer_filter_panel_open'
 
@@ -130,6 +135,7 @@ export const FilterPanel = (props: FilterPanelProps) => {
   const availableSrcs = useObservableState(props.availableSrcs)
   const deviceInfo = useObservableState(props.deviceInfo)
   const doFiltering = useObservableState(props.doFiltering)
+  const filterOptions = useObservableState(props.filterOptions)
 
   // Save collapse state to localStorage when it changes
   useEffect(() => {
@@ -273,6 +279,30 @@ export const FilterPanel = (props: FilterPanelProps) => {
               />
             </Col>
           </Row>
+          <hr className="my-4" />
+          <div className="mb-3">
+            <h6 className="mb-3" style={{ fontWeight: 'bold', color: '#6c757d' }}>
+              Options
+            </h6>
+            <Row>
+              <Col xs="12" className="mb-2">
+                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                  <Input
+                    type="checkbox"
+                    className="me-2"
+                    checked={filterOptions?.useCamelCase ?? true}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      props.filterOptions.next({ 
+                        ...filterOptions, 
+                        useCamelCase: e.target.checked 
+                      })
+                    }}
+                  />
+                  <span>Use CamelCase field names</span>
+                </Label>
+              </Col>
+            </Row>
+          </div>
         </CardBody>
       </Collapse>
     </Card>
