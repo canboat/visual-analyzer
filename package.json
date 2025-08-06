@@ -7,13 +7,13 @@
     "visual-analyzer": "./bin/visual-analyzer"
   },
   "scripts": {
-    "prepublishOnly": "npm run clean && npm run build && npm run build:server",
     "watch": "webpack --watch --mode development",
     "build": "webpack --mode=production",
+    "watch:server": "tsc --project tsconfig.server.json --watch",
     "build:server": "tsc --project tsconfig.server.json",
     "build:all": "npm run build && npm run build:server",
     "clean": "rimraf ./public ./dist",
-    "test": "npm run build:server && mocha test/**/*.test.js --timeout 10000 --exit",
+    "test": "mocha test/**/*.test.js --timeout 10000 --exit",
     "ci-test": "npm run build:all && npm run lint && npm test && prettier --check './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc.js",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
@@ -21,7 +21,6 @@
     "format": "npm run lint:fix && npm run prettier",
     "start": "webpack serve --config webpack.config.js",
     "server": "npm run build:server && node dist/index.js",
-    "server:dev": "npx tsc --project tsconfig.server.json --watch",
     "dev": "concurrently \"npm run watch\" \"npm run server:dev\" \"npm run server\""
   },
   "keywords": [
