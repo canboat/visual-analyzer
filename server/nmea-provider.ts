@@ -431,7 +431,6 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     this.readline.on('line', (line: string) => {
       let trimmed = line.trim()
       if (trimmed && !trimmed.startsWith('#')) {
-
         if (trimmed.length > 15 && trimmed.charAt(13) === ';' && trimmed.charAt(15) === ';') {
           // SignalK Multiplexed format
           if (trimmed.charAt(14) === 'A') {
