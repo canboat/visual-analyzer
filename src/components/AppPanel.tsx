@@ -443,7 +443,7 @@ const AppPanelInner = (props: any) => {
         }
 
         if (parsed.event === 'recording:stopped') {
-          // Recording stopped event  
+          // Recording stopped event
           console.log('Recording stopped:', parsed.data)
           dispatch({ type: 'RECORDING_STOPPED', payload: parsed.data })
           return

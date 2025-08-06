@@ -79,7 +79,7 @@ class VisualAnalyzerServer {
 
     // Initialize recording service
     this.recordingService = new RecordingService()
-    
+
     // Set up recording service event listeners
     this.recordingService.on('started', (status) => {
       console.log('Recording started:', status)
@@ -620,7 +620,7 @@ class VisualAnalyzerServer {
     this.nmeaProvider.on('raw-nmea', (rawData: any) => {
       // Record the message if recording is active
       if (this.recordingService.getStatus().isRecording) {
-        if ( this.recordingService.getStatus().format === 'passthrough' ) {
+        if (this.recordingService.getStatus().format === 'passthrough') {
           this.recordingService.recordMessage(rawData, undefined)
         } else {
           try {

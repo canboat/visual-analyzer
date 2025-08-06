@@ -5,6 +5,7 @@ The Visual Analyzer now includes comprehensive NMEA 2000 recording functionality
 ## Features
 
 ### Recording Tab (Frontend)
+
 - **Format Selection**: Choose from multiple output formats including Raw NMEA 2000, Canboat JSON, Actisense formats, and more
 - **Custom Filenames**: Option to auto-generate filenames or specify custom names
 - **Real-time Status**: View recording status, message count, file size, and duration
@@ -12,6 +13,7 @@ The Visual Analyzer now includes comprehensive NMEA 2000 recording functionality
 - **Format Display**: View format information for each recorded file
 
 ### Recording Service (Backend)
+
 - **Multi-format Support**: Records data in 12 different formats using canboatjs transformation functions
 - **PGN-based Recording**: Accepts parsed PGN objects and converts to desired output format
 - **File Management**: Secure file operations with path traversal protection
@@ -21,7 +23,9 @@ The Visual Analyzer now includes comprehensive NMEA 2000 recording functionality
 ## API Endpoints
 
 ### GET `/api/recording/status`
+
 Returns the current recording status including:
+
 - `isRecording`: Boolean indicating if recording is active
 - `fileName`: Current recording filename (if active)
 - `messageCount`: Number of messages recorded
@@ -29,21 +33,27 @@ Returns the current recording status including:
 - `format`: Recording format being used
 
 ### POST `/api/recording/start`
+
 Starts a new recording session.
 **Body Parameters:**
+
 - `fileName` (optional): Custom filename
 - `format` (optional): Recording format (defaults to 'raw')
 
 ### POST `/api/recording/stop`
+
 Stops the current recording session.
 
 ### GET `/api/recording/files`
+
 Returns an array of all recorded files with metadata.
 
 ### DELETE `/api/recording/files/:fileName`
+
 Deletes a specific recorded file.
 
 ### GET `/api/recording/files/:fileName/download`
+
 Downloads a specific recorded file.
 
 ## Supported Formats
@@ -61,12 +71,14 @@ Downloads a specific recorded file.
 ## File Storage
 
 Recording files are stored in:
+
 - **Windows**: `%APPDATA%\visual-analyzer\recordings`
 - **Unix/Linux/macOS**: `~/.visual-analyzer/recordings`
 
 ## Integration
 
 The recording functionality is integrated with:
+
 - **NMEA Data Stream**: Automatically records parsed PGN objects from incoming NMEA 2000 data
 - **WebSocket Events**: Broadcasts recording events to connected clients
 - **Server Lifecycle**: Gracefully stops recording on server shutdown

@@ -15,20 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import {
-  Card,
-  CardHeader,
-  CardBody,
-  Button,
-  Alert,
-  Badge,
-  Row,
-  Col,
-  Input,
-  FormGroup,
-  Label,
-  Table,
-} from 'reactstrap'
+import { Card, CardHeader, CardBody, Button, Alert, Badge, Row, Col, Input, FormGroup, Label, Table } from 'reactstrap'
 import { useRecording } from '../contexts/RecordingContext'
 
 interface RecordingStatus {
@@ -75,26 +62,26 @@ const RecordingTab: React.FC = () => {
       setRecordingStatus((prevStatus) => {
         const newStatus = recordingContextState.status
         console.log('Updating recording status from context:', newStatus)
-        
+
         // Handle errors from WebSocket events
         if (newStatus.error) {
           setError(newStatus.error)
         } else {
           setError(null) // Clear error when no error in new status
         }
-        
+
         // Refresh file list when recording starts/stops
         if (newStatus.isRecording !== prevStatus.isRecording) {
           console.log('Recording state changed, refreshing file list')
           setTimeout(() => loadRecordingFiles(), 100) // Small delay to ensure backend is ready
         }
-        
+
         return newStatus
       })
     }
   }, [recordingContextState.lastUpdate])
 
-    // Available recording formats based on Transform tab
+  // Available recording formats based on Transform tab
   const recordingFormats = [
     { value: 'passthrough', label: 'Source Format' },
     { value: 'canboat-json', label: 'Canboat JSON' },
@@ -115,7 +102,7 @@ const RecordingTab: React.FC = () => {
   useEffect(() => {
     loadRecordingStatus()
     loadRecordingFiles()
-    
+
     // Set up periodic refresh for file list (less frequent since status updates come via WebSocket)
     const interval = setInterval(() => {
       loadRecordingFiles()
@@ -164,7 +151,8 @@ const RecordingTab: React.FC = () => {
     try {
       const fileName = autoGenerateFileName
         ? undefined
-        : customFileName || `recording_${new Date().toISOString().replace(/[:.]/g, '-')}.${getFileExtension(recordingFormat)}`
+        : customFileName ||
+          `recording_${new Date().toISOString().replace(/[:.]/g, '-')}.${getFileExtension(recordingFormat)}`
 
       const response = await fetch('/api/recording/start', {
         method: 'POST',
@@ -245,32 +233,36 @@ const RecordingTab: React.FC = () => {
       return
     }
 
-    if (!confirm(`Are you sure you want to delete all ${recordingFiles.length} recording files? This action cannot be undone.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete all ${recordingFiles.length} recording files? This action cannot be undone.`,
+      )
+    ) {
       return
     }
 
     setLoading(true)
     try {
       // Delete all files in parallel
-      const deletePromises = recordingFiles.map(file => 
+      const deletePromises = recordingFiles.map((file) =>
         fetch(`/api/recording/files/${encodeURIComponent(file.name)}`, {
           method: 'DELETE',
-        })
+        }),
       )
 
       const results = await Promise.allSettled(deletePromises)
-      
+
       // Check for any failures
-      const failures = results.filter(result => result.status === 'rejected')
+      const failures = results.filter((result) => result.status === 'rejected')
       if (failures.length > 0) {
         setError(`Failed to delete ${failures.length} file(s)`)
       } else {
         // Check for HTTP errors
         const responses = results
-          .filter(result => result.status === 'fulfilled')
-          .map(result => (result as PromiseFulfilledResult<Response>).value)
-        
-        const httpErrors = responses.filter(response => !response.ok)
+          .filter((result) => result.status === 'fulfilled')
+          .map((result) => (result as PromiseFulfilledResult<Response>).value)
+
+        const httpErrors = responses.filter((response) => !response.ok)
         if (httpErrors.length > 0) {
           setError(`Failed to delete ${httpErrors.length} file(s)`)
         }
@@ -352,7 +344,9 @@ const RecordingTab: React.FC = () => {
                     File: {recordingStatus.fileName}
                     {recordingStatus.format && (
                       <span className="ms-2">
-                        Format: {recordingFormats.find(f => f.value === recordingStatus.format)?.label || recordingStatus.format}
+                        Format:{' '}
+                        {recordingFormats.find((f) => f.value === recordingStatus.format)?.label ||
+                          recordingStatus.format}
                       </span>
                     )}
                   </small>
@@ -439,12 +433,7 @@ const RecordingTab: React.FC = () => {
             <CardHeader className="d-flex justify-content-between align-items-center">
               <h5 className="mb-0">Recorded Files</h5>
               {recordingFiles.length > 0 && (
-                <Button
-                  size="sm"
-                  color="outline-danger"
-                  onClick={deleteAllFiles}
-                  disabled={loading}
-                >
+                <Button size="sm" color="outline-danger" onClick={deleteAllFiles} disabled={loading}>
                   {loading ? 'Deleting...' : 'Delete All'}
                 </Button>
               )}
@@ -472,10 +461,9 @@ const RecordingTab: React.FC = () => {
                         </td>
                         <td>
                           <small>
-                            {file.format 
-                              ? recordingFormats.find(f => f.value === file.format)?.label || file.format
-                              : 'Unknown'
-                            }
+                            {file.format
+                              ? recordingFormats.find((f) => f.value === file.format)?.label || file.format
+                              : 'Unknown'}
                           </small>
                         </td>
                         <td>{formatFileSize(file.size)}</td>
@@ -484,12 +472,7 @@ const RecordingTab: React.FC = () => {
                           <small>{formatDate(file.created)}</small>
                         </td>
                         <td>
-                          <Button
-                            size="sm"
-                            color="primary"
-                            className="me-1"
-                            onClick={() => downloadFile(file.name)}
-                          >
+                          <Button size="sm" color="primary" className="me-1" onClick={() => downloadFile(file.name)}>
                             Download
                           </Button>
                           <Button size="sm" color="danger" onClick={() => deleteFile(file.name)}>

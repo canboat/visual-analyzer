@@ -31,7 +31,7 @@ interface RecordingContextState {
   lastUpdate?: string
 }
 
-type RecordingAction = 
+type RecordingAction =
   | { type: 'RECORDING_STARTED'; payload: RecordingStatus }
   | { type: 'RECORDING_STOPPED'; payload: RecordingStatus }
   | { type: 'RECORDING_PROGRESS'; payload: RecordingStatus }
@@ -54,9 +54,9 @@ const recordingReducer = (state: RecordingContextState, action: RecordingAction)
           ...action.payload,
           isRecording: true,
         },
-        lastUpdate: new Date().toISOString()
+        lastUpdate: new Date().toISOString(),
       }
-    
+
     case 'RECORDING_STOPPED':
       return {
         ...state,
@@ -64,9 +64,9 @@ const recordingReducer = (state: RecordingContextState, action: RecordingAction)
           ...action.payload,
           isRecording: false,
         },
-        lastUpdate: new Date().toISOString()
+        lastUpdate: new Date().toISOString(),
       }
-    
+
     case 'RECORDING_PROGRESS':
       return {
         ...state,
@@ -74,9 +74,9 @@ const recordingReducer = (state: RecordingContextState, action: RecordingAction)
           ...state.status,
           ...action.payload,
         },
-        lastUpdate: new Date().toISOString()
+        lastUpdate: new Date().toISOString(),
       }
-    
+
     case 'RECORDING_ERROR':
       return {
         ...state,
@@ -84,16 +84,16 @@ const recordingReducer = (state: RecordingContextState, action: RecordingAction)
           ...state.status,
           error: action.payload.error,
         },
-        lastUpdate: new Date().toISOString()
+        lastUpdate: new Date().toISOString(),
       }
-    
+
     case 'SET_STATUS':
       return {
         ...state,
         status: action.payload,
-        lastUpdate: new Date().toISOString()
+        lastUpdate: new Date().toISOString(),
       }
-    
+
     default:
       return state
   }
@@ -104,17 +104,13 @@ const initialState: RecordingContextState = {
     isRecording: false,
     messageCount: 0,
     fileSize: 0,
-  }
+  },
 }
 
 export const RecordingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(recordingReducer, initialState)
 
-  return (
-    <RecordingContext.Provider value={{ state, dispatch }}>
-      {children}
-    </RecordingContext.Provider>
-  )
+  return <RecordingContext.Provider value={{ state, dispatch }}>{children}</RecordingContext.Provider>
 }
 
 export const useRecording = (): RecordingContextValue => {

@@ -81,7 +81,9 @@ export class RecordingService extends EventEmitter {
       }
     } catch (error) {
       console.error('Failed to create recordings directory:', error)
-      throw new Error(`Failed to create recordings directory: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      throw new Error(
+        `Failed to create recordings directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      )
     }
   }
 
@@ -137,7 +139,7 @@ export class RecordingService extends EventEmitter {
 
       // Create file stream
       this.fileStream = fs.createWriteStream(filePath, { flags: 'w' })
-      
+
       // Handle stream errors
       this.fileStream.on('error', (error) => {
         console.error('Recording file stream error:', error)
@@ -176,7 +178,7 @@ export class RecordingService extends EventEmitter {
       }
 
       const status = this.getStatus()
-      
+
       // Reset recording state
       this.isRecording = false
       const fileName = this.currentFileName
@@ -208,9 +210,9 @@ export class RecordingService extends EventEmitter {
     try {
       let formattedMessage: string | undefined = undefined
 
-      if ( this.currentFormat === 'passthrough' ) {
+      if (this.currentFormat === 'passthrough') {
         formattedMessage = raw
-      } else if ( pgn !== undefined ) {
+      } else if (pgn !== undefined) {
         switch (this.currentFormat) {
           case 'canboat-json':
             formattedMessage = JSON.stringify(pgn)
@@ -220,7 +222,7 @@ export class RecordingService extends EventEmitter {
             formattedMessage = JSON.stringify(pgn, null, 2)
             break
 
-          case 'actisense':
+          case 'actisense': {
             const actisenseResult = pgnToActisenseSerialFormat(pgn)
             if (!actisenseResult) {
               console.error(`Failed to convert PGN ${pgn.pgn} to Actisense format`)
@@ -228,8 +230,9 @@ export class RecordingService extends EventEmitter {
             }
             formattedMessage = actisenseResult
             break
+          }
 
-          case 'actisense-n2k-ascii':
+          case 'actisense-n2k-ascii': {
             const n2kAsciiResult = pgnToActisenseN2KAsciiFormat(pgn)
             if (!n2kAsciiResult) {
               console.error(`Failed to convert PGN ${pgn.pgn} to Actisense N2K ASCII format`)
@@ -237,8 +240,9 @@ export class RecordingService extends EventEmitter {
             }
             formattedMessage = n2kAsciiResult
             break
+          }
 
-          case 'ikonvert':
+          case 'ikonvert': {
             const ikonvertResult = pgnToiKonvertSerialFormat(pgn)
             if (!ikonvertResult) {
               console.error(`Failed to convert PGN ${pgn.pgn} to iKonvert format`)
@@ -246,8 +250,9 @@ export class RecordingService extends EventEmitter {
             }
             formattedMessage = ikonvertResult
             break
+          }
 
-          case 'ydwg-raw':
+          case 'ydwg-raw': {
             const ydwgResult = pgnToYdgwRawFormat(pgn)
             if (!ydwgResult) {
               console.error(`Failed to convert PGN ${pgn.pgn} to YDWG RAW format`)
@@ -255,8 +260,9 @@ export class RecordingService extends EventEmitter {
             }
             formattedMessage = Array.isArray(ydwgResult) ? ydwgResult.join('\n') : ydwgResult
             break
+          }
 
-          case 'ydwg-full-raw':
+          case 'ydwg-full-raw': {
             const ydwgFullResult = pgnToYdgwFullRawFormat(pgn)
             if (!ydwgFullResult) {
               console.error(`Failed to convert PGN ${pgn.pgn} to YDWG Full RAW format`)
@@ -264,8 +270,9 @@ export class RecordingService extends EventEmitter {
             }
             formattedMessage = Array.isArray(ydwgFullResult) ? ydwgFullResult.join('\n') : ydwgFullResult
             break
+          }
 
-          case 'pcdin':
+          case 'pcdin': {
             const pcdinResult = pgnToPCDIN(pgn)
             if (!pcdinResult) {
               console.error(`Failed to convert PGN ${pgn.pgn} to PCDIN format`)
@@ -273,8 +280,9 @@ export class RecordingService extends EventEmitter {
             }
             formattedMessage = pcdinResult
             break
+          }
 
-          case 'mxpgn':
+          case 'mxpgn': {
             const mxpgnResult = pgnToMXPGN(pgn)
             if (!mxpgnResult) {
               console.error(`Failed to convert PGN ${pgn.pgn} to MXPGN format`)
@@ -282,8 +290,9 @@ export class RecordingService extends EventEmitter {
             }
             formattedMessage = mxpgnResult
             break
+          }
 
-          case 'candump1':
+          case 'candump1': {
             const candump1Result = pgnToCandump1(pgn)
             if (!candump1Result) {
               console.error(`Failed to convert PGN ${pgn.pgn} to candump1 format`)
@@ -291,8 +300,9 @@ export class RecordingService extends EventEmitter {
             }
             formattedMessage = Array.isArray(candump1Result) ? candump1Result.join('\n') : candump1Result
             break
+          }
 
-          case 'candump2':
+          case 'candump2': {
             const candump2Result = pgnToCandump2(pgn)
             if (!candump2Result) {
               console.error(`Failed to convert PGN ${pgn.pgn} to candump2 format`)
@@ -300,8 +310,9 @@ export class RecordingService extends EventEmitter {
             }
             formattedMessage = Array.isArray(candump2Result) ? candump2Result.join('\n') : candump2Result
             break
+          }
 
-          case 'candump3':
+          case 'candump3': {
             const candump3Result = pgnToCandump3(pgn)
             if (!candump3Result) {
               console.error(`Failed to convert PGN ${pgn.pgn} to candump3 format`)
@@ -309,6 +320,7 @@ export class RecordingService extends EventEmitter {
             }
             formattedMessage = Array.isArray(candump3Result) ? candump3Result.join('\n') : candump3Result
             break
+          }
         }
       }
 
@@ -339,15 +351,15 @@ export class RecordingService extends EventEmitter {
 
       for (const file of files) {
         const filePath = path.join(this.recordingsDir, file)
-        
+
         try {
           const stats = fs.statSync(filePath)
           if (stats.isFile()) {
             // Try to determine format from file extension or content
             const format = this.guessFileFormat(file)
-            
+
             // Count messages (rough estimate based on file size and format)
-            const messageCount = this.estimateMessageCount(filePath, format)
+            const messageCount = this.estimateMessageCount(filePath)
 
             recordingFiles.push({
               name: file,
@@ -372,7 +384,7 @@ export class RecordingService extends EventEmitter {
 
   public deleteRecordedFile(fileName: string): void {
     const filePath = path.join(this.recordingsDir, fileName)
-    
+
     // Prevent path traversal attacks
     if (!filePath.startsWith(this.recordingsDir)) {
       throw new Error('Invalid file path')
@@ -394,7 +406,7 @@ export class RecordingService extends EventEmitter {
 
   public getRecordedFilePath(fileName: string): string {
     const filePath = path.join(this.recordingsDir, fileName)
-    
+
     // Prevent path traversal attacks
     if (!filePath.startsWith(this.recordingsDir)) {
       throw new Error('Invalid file path')
@@ -434,7 +446,7 @@ export class RecordingService extends EventEmitter {
 
   private guessFileFormat(fileName: string): string {
     const extension = path.extname(fileName).toLowerCase().substring(1)
-    
+
     switch (extension) {
       case 'json':
         return 'canboat-json'
@@ -455,11 +467,11 @@ export class RecordingService extends EventEmitter {
     }
   }
 
-  private estimateMessageCount(filePath: string, format: string): number {
+  private estimateMessageCount(filePath: string): number {
     try {
       const stats = fs.statSync(filePath)
       const fileSize = stats.size
-      
+
       if (fileSize === 0) return 0
 
       // Read a small sample to estimate average line length
@@ -470,13 +482,13 @@ export class RecordingService extends EventEmitter {
       fs.closeSync(fd)
 
       const sample = buffer.toString('utf8')
-      const lines = sample.split('\n').filter(line => line.trim().length > 0)
-      
+      const lines = sample.split('\n').filter((line) => line.trim().length > 0)
+
       if (lines.length === 0) return 0
 
       const avgLineLength = sample.length / lines.length
       const estimatedLines = Math.floor(fileSize / avgLineLength)
-      
+
       return estimatedLines
     } catch (error) {
       console.warn('Failed to estimate message count:', error)
