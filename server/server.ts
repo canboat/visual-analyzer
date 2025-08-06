@@ -108,6 +108,14 @@ class VisualAnalyzerServer {
       })
     })
 
+    this.recordingService.on('progress', (status) => {
+      this.broadcast({
+        event: 'recording:progress',
+        data: status,
+        timestamp: new Date().toISOString(),
+      })
+    })
+
     // Track current connection state including errors
     this.connectionState = {
       isConnected: false,

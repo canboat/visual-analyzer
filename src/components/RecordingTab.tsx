@@ -29,6 +29,7 @@ import {
   Label,
   Table,
 } from 'reactstrap'
+import { useWebSocket } from '../hooks/useWebSocket'
 
 interface RecordingStatus {
   isRecording: boolean
@@ -61,6 +62,71 @@ const RecordingTab: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // WebSocket connection for real-time updates
+  useWebSocket({
+    onMessage: (message) => {
+      // Handle recording-specific WebSocket events
+      switch (message.event) {
+        case 'recording:started':
+          if (message.data) {
+            setRecordingStatus({
+              isRecording: true,
+              fileName: message.data.fileName,
+              startTime: message.data.startTime,
+              messageCount: 0,
+              fileSize: 0,
+              format: message.data.format,
+            })
+            // Refresh file list to show new recording
+            loadRecordingFiles()
+          }
+          break
+
+        case 'recording:stopped':
+          if (message.data) {
+            setRecordingStatus({
+              isRecording: false,
+              messageCount: message.data.messageCount || 0,
+              fileSize: message.data.fileSize || 0,
+            })
+            // Refresh file list to show completed recording
+            loadRecordingFiles()
+          }
+          break
+
+        case 'recording:progress':
+          if (message.data) {
+            setRecordingStatus((prev) => ({
+              ...prev,
+              messageCount: message.data.messageCount || prev.messageCount,
+              fileSize: message.data.fileSize || prev.fileSize,
+            }))
+          }
+          break
+
+        case 'recording:error':
+          if (message.data?.error) {
+            setError(message.data.error)
+            setRecordingStatus((prev) => ({
+              ...prev,
+              error: message.data.error,
+            }))
+          }
+          break
+
+        default:
+          // Ignore other events
+          break
+      }
+    },
+    onConnect: () => {
+      console.log('Recording tab WebSocket connected')
+    },
+    onDisconnect: () => {
+      console.log('Recording tab WebSocket disconnected')
+    }
+  })
+
     // Available recording formats based on Transform tab
   const recordingFormats = [
     { value: 'canboat-json', label: 'Canboat JSON' },
@@ -76,10 +142,17 @@ const RecordingTab: React.FC = () => {
     { value: 'candump3', label: 'Linux CAN utils (log format)' },
   ]
 
-  // Load recording status and files on component mount
+  // Load initial recording status and files on component mount
   useEffect(() => {
     loadRecordingStatus()
     loadRecordingFiles()
+    
+    // Set up periodic refresh for file list (less frequent since status updates come via WebSocket)
+    const interval = setInterval(() => {
+      loadRecordingFiles()
+    }, 10000) // Refresh file list every 10 seconds
+    
+    return () => clearInterval(interval)
   }, [])
 
   const loadRecordingStatus = async () => {

@@ -432,6 +432,31 @@ const AppPanel = (props: any) => {
           return
         }
 
+        // Handle recording events
+        if (parsed.event === 'recording:started') {
+          // Recording started event - could trigger UI updates
+          console.log('Recording started:', parsed.data)
+          return
+        }
+
+        if (parsed.event === 'recording:stopped') {
+          // Recording stopped event - could trigger UI updates  
+          console.log('Recording stopped:', parsed.data)
+          return
+        }
+
+        if (parsed.event === 'recording:progress') {
+          // Recording progress event - could update recording status in UI
+          console.log('Recording progress:', parsed.data)
+          return
+        }
+
+        if (parsed.event === 'recording:error') {
+          // Recording error event
+          console.error('Recording error:', parsed.data)
+          return
+        }
+
         // Handle NMEA data events
         if (parsed.event !== 'canboatjs:rawoutput') {
           return
