@@ -25,6 +25,7 @@ import { SentencePanel } from './SentencePanel'
 import { ConnectionManagerPanel } from './ConnectionManagerPanel'
 import { SendTab } from './SendTab'
 import TransformTab from './TransformTab'
+import RecordingTab from './RecordingTab'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
 
@@ -138,6 +139,7 @@ const infoPGNS: number[] = [60928, 126998, 126996]
 const SEND_TAB_ID = 'send'
 const ANALYZER_TAB_ID = 'analyzer'
 const TRANSFORM_TAB_ID = 'transform'
+const RECORDING_TAB_ID = 'recording'
 const CONNECTIONS_TAB_ID = 'connections'
 
 const AppPanel = (props: any) => {
@@ -148,7 +150,7 @@ const AppPanel = (props: any) => {
     const savedTab = loadActiveTab()
     // Validate the saved tab - if in embedded mode, don't allow connections tab
     if (savedTab && (savedTab !== CONNECTIONS_TAB_ID || !isEmbedded)) {
-      const validTabs = [ANALYZER_TAB_ID, SEND_TAB_ID, TRANSFORM_TAB_ID]
+      const validTabs = [ANALYZER_TAB_ID, SEND_TAB_ID, TRANSFORM_TAB_ID, RECORDING_TAB_ID]
       if (!isEmbedded) {
         validTabs.push(CONNECTIONS_TAB_ID)
       }
@@ -679,6 +681,17 @@ const AppPanel = (props: any) => {
         {!isEmbedded && (
           <NavItem>
             <NavLink
+              className={activeTab === RECORDING_TAB_ID ? 'active' : ''}
+              onClick={() => handleTabChange(RECORDING_TAB_ID)}
+              style={{ cursor: 'pointer' }}
+            >
+              Recording
+            </NavLink>
+          </NavItem>
+        )}
+        {!isEmbedded && (
+          <NavItem>
+            <NavLink
               className={activeTab === CONNECTIONS_TAB_ID ? 'active' : ''}
               onClick={() => handleTabChange(CONNECTIONS_TAB_ID)}
               style={{ cursor: 'pointer' }}
@@ -730,6 +743,11 @@ const AppPanel = (props: any) => {
         <TabPane tabId={TRANSFORM_TAB_ID}>
           <TransformTab parser={parser || undefined} />
         </TabPane>
+        {!isEmbedded && (
+          <TabPane tabId={RECORDING_TAB_ID}>
+            <RecordingTab />
+          </TabPane>
+        )}
         {!isEmbedded && (
           <TabPane tabId={CONNECTIONS_TAB_ID}>
             <ConnectionManagerPanel connectionStatus={connectionStatus} onStatusUpdate={setConnectionStatus} />
