@@ -31,6 +31,12 @@ export type Filter = {
   javaScript?: string
 }
 
+export type FilterOptions = {
+  useCamelCase?: boolean
+  showUnknownProprietaryPGNsOnSeparateLines?: boolean
+  showPgn126208OnSeparateLines?: boolean
+}
+
 export const getFilterConfig = (filter?: Filter): FilterConfig => {
   const pgs: number[] | undefined = filter?.pgn
     ?.map((p) => (!isNaN(Number(p)) ? Number(p) : null))
@@ -109,6 +115,7 @@ interface FilterPanelProps {
   availableSrcs: Subject<number[]>
   deviceInfo: Subject<DeviceMap>
   doFiltering: Subject<boolean>
+  filterOptions: Subject<FilterOptions>
 }
 const FILTER_PANEL_STATE_KEY = 'visual_analyzer_filter_panel_open'
 
@@ -130,6 +137,7 @@ export const FilterPanel = (props: FilterPanelProps) => {
   const availableSrcs = useObservableState(props.availableSrcs)
   const deviceInfo = useObservableState(props.deviceInfo)
   const doFiltering = useObservableState(props.doFiltering)
+  const filterOptions = useObservableState(props.filterOptions)
 
   // Save collapse state to localStorage when it changes
   useEffect(() => {
@@ -147,7 +155,7 @@ export const FilterPanel = (props: FilterPanelProps) => {
       <CardHeader className="d-flex justify-content-between align-items-center py-2" style={{ cursor: 'pointer' }}>
         <div className="d-flex align-items-center flex-grow-1" onClick={() => setIsOpen(!isOpen)}>
           <h6 className="mb-0" style={{ fontWeight: 'bold' }}>
-            Filters
+            Filters and Options
           </h6>
         </div>
         <div className="d-flex align-items-center">
@@ -273,6 +281,62 @@ export const FilterPanel = (props: FilterPanelProps) => {
               />
             </Col>
           </Row>
+          <hr className="my-4" />
+          <div className="mb-3">
+            <h6 className="mb-3" style={{ fontWeight: 'bold', color: '#6c757d' }}>
+              Options
+            </h6>
+            <Row>
+              <Col xs="12" className="mb-2">
+                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                  <Input
+                    type="checkbox"
+                    className="me-2"
+                    checked={filterOptions?.useCamelCase ?? true}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      props.filterOptions.next({
+                        ...filterOptions,
+                        useCamelCase: e.target.checked,
+                      })
+                    }}
+                  />
+                  <span>Use CamelCase Field Names</span>
+                </Label>
+              </Col>
+              <Col xs="12" className="mb-2">
+                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                  <Input
+                    type="checkbox"
+                    className="me-2"
+                    checked={filterOptions?.showUnknownProprietaryPGNsOnSeparateLines ?? false}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      props.filterOptions.next({
+                        ...filterOptions,
+                        showUnknownProprietaryPGNsOnSeparateLines: e.target.checked,
+                      })
+                    }}
+                  />
+                  <span>Show Unknown Proprietary PGNs On Separate Lines</span>
+                </Label>
+              </Col>
+              <Col xs="12" className="mb-2">
+                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                  <Input
+                    type="checkbox"
+                    className="me-2"
+                    checked={filterOptions?.showPgn126208OnSeparateLines ?? false}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      props.filterOptions.next({
+                        ...filterOptions,
+                        showPgn126208OnSeparateLines: e.target.checked,
+                      })
+                    }}
+                  />
+                  <span>Show PGN 126208 On Separate Lines</span>
+                </Label>
+              </Col>
+            </Row>
+          </div>
         </CardBody>
       </Collapse>
     </Card>
