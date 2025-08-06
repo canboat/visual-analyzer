@@ -272,7 +272,7 @@ const AppPanel = (props: any) => {
   })
 
   const deleteAllKeys = (obj: any) => {
-    Object.keys(obj).forEach(key => {
+    Object.keys(obj).forEach((key) => {
       delete obj[key]
     })
   }
@@ -322,7 +322,7 @@ const AppPanel = (props: any) => {
         // Handle connection status events
         if (parsed.event === 'nmea:connected') {
           // Clear all data when reconnecting
-          
+
           setList((prev: any) => {
             data.next({})
             deleteAllKeys(prev)
@@ -377,7 +377,7 @@ const AppPanel = (props: any) => {
         if (parsed.event !== 'canboatjs:rawoutput') {
           return
         }
-        
+
         let pgn: PGN | undefined = undefined
         pgn = parser.parse(parsed.data)
         if (pgn !== undefined) {
