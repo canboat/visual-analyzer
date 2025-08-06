@@ -1,30 +1,19 @@
 /**
- * NMEA Data Provider for Visual Analyzer
+ * Copyright 2025 Scott Bender (scott@scottbender.net)
  *
- * This module provides connectivity to various NMEA 2000 data sources including:
- * - SignalK WebSocket connections (with authentication support)
- * - Serial devices (Actisense NGT-1, iKonvert, Yacht Devices)
- * - Network sources (TCP/UDP)
- * - SocketCAN interfaces (Linux only)
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Updated to use specialized canboatjs streams:
- * - ActisenseStream for Actisense NGT-1 serial devices
- * - iKonvertStream for Digital Yacht iKonvert serial devices
- * - canbus for SocketCAN connections
- * - Proper message formatting with pgnToActisenseSerialFormat and pgnToiKonvertSerialFormat
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * SignalK Authentication Features:
- * - WebSocket-based authentication using login/logout messages
- * - Authenticated message sending with token inclusion
- * - Graceful handling of servers without authentication
- *
- * Features:
- * - Robust NMEA 2000 message handling and parsing
- * - Automatic reconnection for SocketCAN
- * - Device-specific optimizations
- * - Bidirectional communication support
- * - SignalK security specification compliance
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 
 import { EventEmitter } from 'events'
 import {
