@@ -527,7 +527,60 @@ export const SentencePanel = (props: SentencePanelProps) => {
               <h5 className="mb-0">Device Information</h5>
             </CardHeader>
             <CardBody>
-              <pre>{JSON.stringify(info[pgnData.src!]?.info, null, 2)}</pre>
+              {info[pgnData.src!]?.info ? (
+                <div>
+                  {Object.entries(info[pgnData.src!].info).map(([pgnNumber, pgnInfo]: [string, any]) => (
+                    <Card key={pgnNumber} className="mb-3" style={{ border: '1px solid #e0e0e0' }}>
+                      <CardHeader style={{ backgroundColor: '#f8f9fa', padding: '10px 15px' }}>
+                        <h6 className="mb-0" style={{ color: '#495057' }}>
+                          PGN {pgnNumber}: {pgnInfo.description || 'Unknown'}
+                        </h6>
+                      </CardHeader>
+                      <CardBody style={{ padding: '15px' }}>
+                        <div className="row">
+                          {Object.entries(pgnInfo)
+                            .filter(([key]) => key !== 'description')
+                            .map(([key, value]: [string, any]) => (
+                              <div key={key} className="col-md-6 mb-2">
+                                <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                                  <strong
+                                    style={{
+                                      minWidth: '150px',
+                                      marginRight: '10px',
+                                      color: '#6c757d',
+                                      textTransform: 'capitalize',
+                                    }}
+                                  >
+                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}:
+                                  </strong>
+                                  <span
+                                    style={{
+                                      wordBreak: 'break-word',
+                                      color: '#212529',
+                                    }}
+                                  >
+                                    {value}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </CardBody>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    color: '#6c757d',
+                    padding: '40px',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  No device information available for this source
+                </div>
+              )}
             </CardBody>
           </Card>
         </TabPane>
