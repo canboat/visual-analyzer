@@ -163,7 +163,7 @@ Example `config.json`:
 - **Connection management** - Configure and manage multiple data source connections:
   - Serial/USB connections to NMEA 2000 gateways
   - TCP/IP network connections
-  - Signal K Server connections  
+  - Signal K Server connections
   - SocketCAN connections
   - File playback with speed control
 - **Configuration persistence** - Save connection profiles and settings locally
@@ -262,7 +262,7 @@ The Visual Analyzer includes powerful data recording capabilities when running i
 
 - **Multiple output formats** - Record data in various industry-standard formats
 - **Real-time recording** - Capture live data streams without interrupting analysis
-- **Custom filenames** - Use auto-generated timestamps or specify custom filenames  
+- **Custom filenames** - Use auto-generated timestamps or specify custom filenames
 - **File management** - Browse, download, and manage recorded files
 - **Progress monitoring** - Track recording status, message count, and file size in real-time
 
@@ -279,6 +279,7 @@ The Visual Analyzer includes powerful data recording capabilities when running i
 ### Recording Storage
 
 Recorded files are automatically saved to:
+
 - **Linux/macOS**: `~/.visual-analyzer/recordings/`
 - **Windows**: `%APPDATA%\visual-analyzer\recordings\`
 

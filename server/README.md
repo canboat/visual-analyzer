@@ -5,7 +5,9 @@ This server component provides WebSocket connectivity for the NMEA 2000 Visual A
 ## Operating Modes
 
 ### Standalone Mode (Full Featured)
+
 When run independently, the Visual Analyzer server provides complete functionality including:
+
 - **Web-based Configuration**: Full REST API and web interface for managing connection profiles
 - **Multiple Data Sources**: Direct support for SignalK, serial devices, network sources, and SocketCAN
 - **Connection Management**: Create, edit, and manage multiple connection profiles
@@ -13,14 +15,17 @@ When run independently, the Visual Analyzer server provides complete functionali
 - **Persistent Configuration**: JSON-based configuration with connection profiles
 
 ### Embedded Mode (Signal K Plugin)
+
 When embedded in Signal K Server as a plugin, some features are managed by the host server:
-- **Data Source**: Uses Signal K Server's existing NMEA 2000 data connections *(connection management not available)*
-- **Authentication**: Uses Signal K Server's authentication system *(no separate auth required)*
-- **Web Interface**: Served through Signal K's plugin system *(no standalone web server)*
+
+- **Data Source**: Uses Signal K Server's existing NMEA 2000 data connections _(connection management not available)_
+- **Authentication**: Uses Signal K Server's authentication system _(no separate auth required)_
+- **Web Interface**: Served through Signal K's plugin system _(no standalone web server)_
 
 ### Choosing the Right Mode
 
 **Use Standalone Mode when:**
+
 - You need direct control over NMEA 2000 connections
 - You want to run Visual Analyzer independently of Signal K Server
 - You need file playback capabilities
@@ -28,6 +33,7 @@ When embedded in Signal K Server as a plugin, some features are managed by the h
 - You're developing or debugging NMEA 2000 connections
 
 **Use Embedded Mode when:**
+
 - You already have Signal K Server running
 - You want to leverage Signal K's connection management
 - You prefer a unified web interface through Signal K
@@ -50,9 +56,11 @@ The server dependencies are included in the main package.json. After running `np
 ### For Embedded Mode (Signal K Plugin)
 
 Install through Signal K Server's App Store or via npm:
+
 ```bash
 npm install @canboat/visual-analyzer
 ```
+
 The Visual Analyzer will be available as an embeddable webapp in Signal K Server's web interface.
 
 ## Usage
@@ -78,6 +86,7 @@ The server will start with a default configuration. You can create connection pr
 ### Embedded Mode (Signal K Plugin)
 
 When used as a Signal K plugin:
+
 1. Install via Signal K Server's App Store
 2. Access through Signal K's web interface under Web Apps
 3. Data connection is automatically provided by Signal K Server
@@ -223,11 +232,13 @@ The server exposes a REST API for programmatic configuration management:
 ### Connection Behavior by Mode
 
 #### Standalone Mode
+
 - Direct WebSocket connection to the Visual Analyzer server
 - Full control over data subscription and connection management
 - Custom WebSocket protocol for configuration and data streaming
 
 #### Embedded Mode
+
 - Uses Signal K Server's WebSocket connection
 - Integrates with Signal K's streaming API
 - Data provided through Signal K's delta message system
@@ -294,13 +305,13 @@ Clients can send commands to the server via WebSocket when in standalone mode:
 
 ### Data Source Availability by Mode
 
-| Data Source Type | Standalone Mode | Embedded Mode |
-|------------------|-----------------|---------------|
-| SignalK Server   | ✅ Direct connection | ✅ Automatic (host server) |
+| Data Source Type | Standalone Mode           | Embedded Mode                   |
+| ---------------- | ------------------------- | ------------------------------- |
+| SignalK Server   | ✅ Direct connection      | ✅ Automatic (host server)      |
 | Serial Devices   | ✅ Direct hardware access | ✅ Through Signal K connections |
-| Network Sources  | ✅ Direct TCP/UDP | ✅ Through Signal K connections |
-| SocketCAN        | ✅ Direct CAN interface | ✅ Through Signal K connections |
-| File Playback    | ✅ Direct file access | ❌ Not available |
+| Network Sources  | ✅ Direct TCP/UDP         | ✅ Through Signal K connections |
+| SocketCAN        | ✅ Direct CAN interface   | ✅ Through Signal K connections |
+| File Playback    | ✅ Direct file access     | ❌ Not available                |
 
 > **Note**: When embedded in Signal K Server, all NMEA 2000 data sources are managed through Signal K's connection configuration. The Visual Analyzer receives data through Signal K's unified data model.
 
@@ -429,6 +440,7 @@ Clients can send commands to the server via WebSocket when in standalone mode:
 ### Key Components
 
 #### Standalone Mode
+
 - **Express Server**: Serves static files and provides REST API
 - **WebSocket Server**: Handles real-time bidirectional communication
 - **NMEA Data Provider**: Manages connections to various NMEA 2000 sources
@@ -436,6 +448,7 @@ Clients can send commands to the server via WebSocket when in standalone mode:
 - **Device-Specific Streams**: Optimized processors for different hardware types
 
 #### Embedded Mode
+
 - **Signal K Integration**: Leverages Signal K Server's WebSocket and data management
 - **Embedded Web App**: Runs within Signal K's web interface framework
 - **Data Stream Adapter**: Converts Signal K delta messages to Visual Analyzer format
@@ -444,6 +457,7 @@ Clients can send commands to the server via WebSocket when in standalone mode:
 ## Security Considerations
 
 ### Standalone Mode
+
 - The server currently runs without authentication for local development
 - When deploying in production, consider:
   - Adding authentication/authorization for the configuration API
@@ -454,6 +468,7 @@ Clients can send commands to the server via WebSocket when in standalone mode:
   - Securing the config.json file with appropriate file permissions
 
 ### Embedded Mode
+
 - Security is managed by the host Signal K Server
 - Inherits Signal K Server's authentication and authorization system
 - Benefits from Signal K's security features including:
@@ -469,6 +484,7 @@ Clients can send commands to the server via WebSocket when in standalone mode:
 #### Standalone Mode Issues
 
 **No Data Received:**
+
 1. **Check Connection Status**: Use the web interface to verify your data source is connected
 2. **Verify Data Source**: Ensure your NMEA 2000 source is actively transmitting data
 3. **Network Connectivity**: Test network connectivity to remote data sources
@@ -478,6 +494,7 @@ Clients can send commands to the server via WebSocket when in standalone mode:
 #### Embedded Mode Issues
 
 **No Data in Signal K Plugin:**
+
 1. **Check Signal K Connections**: Verify NMEA 2000 data sources are configured in Signal K Server
 2. **Plugin Status**: Ensure the Visual Analyzer plugin is installed and enabled
 3. **Signal K Data Flow**: Check Signal K Server's data browser to confirm data is flowing
@@ -501,6 +518,7 @@ Clients can send commands to the server via WebSocket when in standalone mode:
 ### WebSocket Connection Issues
 
 #### Standalone Mode
+
 1. **Server Status**: Verify the server is running and accessible at the configured port
 2. **Firewall Settings**: Check that the port is not blocked by firewall rules
 3. **Browser Console**: Check browser developer console for WebSocket error messages
@@ -508,6 +526,7 @@ Clients can send commands to the server via WebSocket when in standalone mode:
 5. **Network Configuration**: Verify network routing if accessing remotely
 
 #### Embedded Mode
+
 1. **Signal K Status**: Ensure Signal K Server is running and accessible
 2. **Plugin Status**: Verify the Visual Analyzer plugin is properly installed and enabled
 3. **Signal K WebSocket**: Check Signal K Server's WebSocket connection status
@@ -581,6 +600,7 @@ For developing Signal K plugin features:
 ### Code Structure
 
 #### Standalone Mode Structure
+
 ```
 server/
 ├── index.js           # Entry point and process management
@@ -591,6 +611,7 @@ server/
 ```
 
 #### Embedded Mode Integration
+
 ```
 Visual Analyzer Plugin/
 ├── index.js           # Signal K plugin entry point
@@ -602,12 +623,14 @@ Visual Analyzer Plugin/
 ### Testing
 
 #### Standalone Mode Testing
+
 1. **Manual Testing**: Use the web interface to test different connection types
 2. **API Testing**: Use curl or Postman to test the REST API endpoints
 3. **WebSocket Testing**: Use browser developer tools or WebSocket testing tools
 4. **Data Source Testing**: Verify compatibility with your specific NMEA 2000 hardware
 
 #### Embedded Mode Testing
+
 1. **Signal K Integration**: Test within a Signal K Server environment
 2. **Plugin Installation**: Test installation through Signal K's App Store
 3. **Data Flow**: Verify data flows from Signal K connections to Visual Analyzer

@@ -140,7 +140,6 @@ export class RecordingService extends EventEmitter {
       // Create file stream
       this.fileStream = fs.createWriteStream(filePath, { flags: 'w' })
 
-
       // Handle stream errors
       this.fileStream.on('error', (error) => {
         console.error('Recording file stream error:', error)
