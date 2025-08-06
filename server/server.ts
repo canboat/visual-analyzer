@@ -16,12 +16,13 @@
 
 import express, { Express, Request, Response } from 'express'
 import * as http from 'http'
-import WebSocket, { Server as WebSocketServer } from 'ws'
+import WebSocket, { WebSocketServer } from 'ws'
 import * as path from 'path'
 import * as fs from 'fs'
 import * as os from 'os'
 import NMEADataProvider from './nmea-provider'
 import { FromPgn } from '@canboat/canboatjs'
+import { RecordingService } from './recording-service'
 import {
   Config,
   ConnectionState,
@@ -47,6 +48,7 @@ class VisualAnalyzerServer {
   private currentConfig: Config
   private canboatParser: FromPgn
   private connectionState: ConnectionState
+  private recordingService: RecordingService
 
   constructor(options: Partial<Config> = {}) {
     this.port = options.port || 8080
@@ -74,6 +76,37 @@ class VisualAnalyzerServer {
 
     // Initialize canboatjs parser for string input parsing
     this.canboatParser = new FromPgn()
+
+    // Initialize recording service
+    this.recordingService = new RecordingService()
+    
+    // Set up recording service event listeners
+    this.recordingService.on('started', (status) => {
+      console.log('Recording started:', status)
+      this.broadcast({
+        event: 'recording:started',
+        data: status,
+        timestamp: new Date().toISOString(),
+      })
+    })
+
+    this.recordingService.on('stopped', (status) => {
+      console.log('Recording stopped:', status)
+      this.broadcast({
+        event: 'recording:stopped',
+        data: status,
+        timestamp: new Date().toISOString(),
+      })
+    })
+
+    this.recordingService.on('error', (error) => {
+      console.error('Recording error:', error)
+      this.broadcast({
+        event: 'recording:error',
+        data: { error: error.message },
+        timestamp: new Date().toISOString(),
+      })
+    })
 
     // Track current connection state including errors
     this.connectionState = {
@@ -203,6 +236,75 @@ class VisualAnalyzerServer {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         res.status(500).json({ success: false, error: errorMessage })
+      }
+    })
+
+    // Recording API routes
+    this.app.get('/api/recording/status', (req: Request, res: Response) => {
+      try {
+        const status = this.recordingService.getStatus()
+        res.json(status)
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        res.status(500).json({ success: false, error: errorMessage })
+      }
+    })
+
+    this.app.post('/api/recording/start', (req: Request, res: Response) => {
+      try {
+        const { fileName, format } = req.body
+        const result = this.recordingService.startRecording({ fileName, format })
+        res.json({ success: true, fileName: result.fileName, message: 'Recording started successfully' })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        res.status(400).json({ success: false, error: errorMessage })
+      }
+    })
+
+    this.app.post('/api/recording/stop', (req: Request, res: Response) => {
+      try {
+        const result = this.recordingService.stopRecording()
+        res.json({ success: true, message: 'Recording stopped successfully', finalStats: result })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        res.status(400).json({ success: false, error: errorMessage })
+      }
+    })
+
+    this.app.get('/api/recording/files', (req: Request, res: Response) => {
+      try {
+        const files = this.recordingService.getRecordedFiles()
+        res.json(files)
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        res.status(500).json({ success: false, error: errorMessage })
+      }
+    })
+
+    this.app.delete('/api/recording/files/:fileName', (req: Request, res: Response) => {
+      try {
+        this.recordingService.deleteRecordedFile(req.params.fileName)
+        res.json({ success: true, message: 'File deleted successfully' })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        res.status(400).json({ success: false, error: errorMessage })
+      }
+    })
+
+    this.app.get('/api/recording/files/:fileName/download', (req: Request, res: Response) => {
+      try {
+        const filePath = this.recordingService.getRecordedFilePath(req.params.fileName)
+        res.download(filePath, req.params.fileName, (err) => {
+          if (err) {
+            console.error('Download error:', err)
+            if (!res.headersSent) {
+              res.status(500).json({ success: false, error: 'Download failed' })
+            }
+          }
+        })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        res.status(404).json({ success: false, error: errorMessage })
       }
     })
 
@@ -477,6 +579,18 @@ class VisualAnalyzerServer {
       const interval = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
           const sampleData = this.generateSampleNMEAData()
+          
+          // Record the sample data if recording is active
+          if (this.recordingService.getStatus().isRecording) {
+            let pgn: any = undefined
+            try {
+              pgn = this.canboatParser.parseString(sampleData)
+            } catch (error) {
+              // Ignore parsing errors during recording
+            }
+            this.recordingService.recordMessage(sampleData, pgn)
+          }
+          
           ws.send(
             JSON.stringify({
               event: 'canboatjs:rawoutput',
@@ -533,6 +647,21 @@ class VisualAnalyzerServer {
     })
 
     this.nmeaProvider.on('raw-nmea', (rawData: any) => {
+      // Record the message if recording is active
+      if (this.recordingService.getStatus().isRecording) {
+        let pgn: any = undefined
+        try {
+          if (typeof rawData === 'string') {
+            pgn = this.canboatParser.parseString(rawData)
+          }
+        } catch (error) {
+          console.error('Failed to parse raw NMEA data:', error)
+        }
+        if (pgn) {
+          this.recordingService.recordMessage(rawData, pgn)
+        }
+      }
+
       this.broadcast({
         event: 'canboatjs:rawoutput',
         data: rawData,
@@ -873,6 +1002,16 @@ class VisualAnalyzerServer {
   }
 
   public stop(): void {
+    // Stop any active recording
+    try {
+      if (this.recordingService.getStatus().isRecording) {
+        this.recordingService.stopRecording()
+        console.log('Stopped active recording on server shutdown')
+      }
+    } catch (error) {
+      console.warn('Failed to stop recording on shutdown:', error)
+    }
+
     // Disconnect NMEA provider
     if (this.nmeaProvider) {
       this.nmeaProvider.disconnect()

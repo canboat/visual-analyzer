@@ -233,6 +233,7 @@ const RecordingTab: React.FC = () => {
       case 'candump1':
       case 'candump2':
       case 'candump3':
+      case 'raw':
       default:
         return 'log'
     }
