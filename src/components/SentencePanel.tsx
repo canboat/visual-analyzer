@@ -199,15 +199,15 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
     if (hasRepeatingFields) {
       // Get the count from the count field
       const countFieldIndex = definition.RepeatingFieldSet1CountField
-      console.log('Count field index:', countFieldIndex, 'Total fields:', definition.Fields.length)
+      //console.debug('Count field index:', countFieldIndex, 'Total fields:', definition.Fields.length)
 
       if (countFieldIndex !== undefined && countFieldIndex > 0 && countFieldIndex <= definition.Fields.length) {
         // Field indices in the definition are 1-based, so subtract 1 to get 0-based array index
         const countField = definition.Fields[countFieldIndex - 1]
-        console.log('Count field:', countField.Name, countField.Id)
+        //console.debug('Count field:', countField.Name, countField.Id)
 
         let countValue = (pgnData.fields as any)[countField.Id]
-        console.log('Count value from field:', countValue, 'Type:', typeof countValue)
+        //console.debug('Count value from field:', countValue, 'Type:', typeof countValue)
 
         // If the defined count field doesn't have a value, try common alternatives
         if (countValue === undefined || countValue === null) {
@@ -216,7 +216,7 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
           for (const altName of alternativeNames) {
             if ((pgnData.fields as any)[altName] !== undefined) {
               countValue = (pgnData.fields as any)[altName]
-              console.log(`Found count in alternative field '${altName}':`, countValue)
+              //console.debug(`Found count in alternative field '${altName}':`, countValue)
               break
             }
           }
@@ -229,7 +229,7 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
     }
 
     // Debug information
-    console.log('Debug repeating fields:', {
+    /*console.debug('Debug repeating fields:', {
       hasRepeatingFields,
       RepeatingFieldSet1Size: definition.RepeatingFieldSet1Size,
       RepeatingFieldSet1StartField: definition.RepeatingFieldSet1StartField,
@@ -239,7 +239,7 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
       listData: (pgnData.fields as any).list,
       allFieldKeys: Object.keys(pgnData.fields),
       allFieldValues: pgnData.fields,
-    })
+    })*/
 
     // Calculate bit offsets for all fields (sequential reading)
     let currentBitOffset = 0
@@ -319,9 +319,9 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
                     fieldIndex >= definition.RepeatingFieldSet1StartField - 1 &&
                     fieldIndex < definition.RepeatingFieldSet1StartField - 1 + (definition.RepeatingFieldSet1Size || 0)
 
-                  console.log(
+                  /*console.debug(
                     `Field ${fieldIndex} (${field.Name}): isRepeatingField=${isRepeatingField}, repetitionCount=${repetitionCount}, startField=${definition.RepeatingFieldSet1StartField}, fieldSetSize=${definition.RepeatingFieldSet1Size}`,
-                  )
+                  )*/
 
                   if (isRepeatingField && repetitionCount > 0 && !repeatingFieldsProcessed) {
                     // Process all repetitions for all repeating fields at once
@@ -452,7 +452,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
     return <div>Select a PGN to view its data</div>
   }
   let definition: Definition = pgnData.getDefinition()
-  //console.log('pgnData', pgnData)
+  //console.debug('pgnData', pgnData)
   return (
     <div
       style={{
