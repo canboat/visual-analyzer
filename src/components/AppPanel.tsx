@@ -290,29 +290,42 @@ const AppPanelInner = (props: any) => {
   const parserRef = useRef<FromPgn | null>(null)
   const filterOptionsRef = useRef<FilterOptions | null>(null)
 
-  // Update parser configuration when filterOptions change
+  // Initialize parser once
   useEffect(() => {
-    const subscription = filterOptions.subscribe((options) => {
-      console.log('filterOptions subscription triggered with:', options)
-      const newParser = new FromPgn({
+    if (!parser) {
+      console.log('Creating parser for the first time')
+      const initialParser = new FromPgn({
         returnNulls: true,
         checkForInvalidFields: true,
-        useCamel: options?.useCamelCase ?? true,
+        useCamel: true, // Default value
         useCamelCompat: false,
         returnNonMatches: true,
         createPGNObjects: true,
         includeInputData: true,
       })
 
-      newParser.on('error', (pgn: any, error: any) => {
+      initialParser.on('error', (pgn: any, error: any) => {
         console.error(`Error parsing ${pgn.pgn} ${error}`)
         console.error(error.stack)
       })
 
-      console.log(`Parser created with useCamel: ${options?.useCamelCase ?? true}`)
-      setParser(newParser)
-      parserRef.current = newParser
-      filterOptionsRef.current = options
+      console.log('Parser created once with initial options')
+      setParser(initialParser)
+      parserRef.current = initialParser
+    }
+  }, [parser])
+
+  // Update parser options when filterOptions change
+  useEffect(() => {
+    const subscription = filterOptions.subscribe((options) => {
+      console.log('filterOptions subscription triggered with:', options)
+      
+      if (parserRef.current) {
+        // Update parser options instead of recreating the parser
+        parserRef.current.options.useCamel = options?.useCamelCase ?? true
+        console.log(`Parser options updated with useCamel: ${options?.useCamelCase ?? true}`)
+        filterOptionsRef.current = options
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -772,7 +785,7 @@ const AppPanelInner = (props: any) => {
           <SendTab />
         </TabPane>
         <TabPane tabId={TRANSFORM_TAB_ID}>
-          <TransformTab parser={parser || undefined} />
+          <TransformTab />
         </TabPane>
         {!isEmbedded && (
           <TabPane tabId={RECORDING_TAB_ID}>
