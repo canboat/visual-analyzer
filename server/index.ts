@@ -28,7 +28,7 @@ if (fs.existsSync(configPath)) {
 
 // Configuration options (environment variables override config file)
 const config: Partial<Config> = {
-  port: process.env.PORT ? parseInt(process.env.PORT, 10) : (fileConfig.server?.port || 8080),
+  port: process.env.PORT ? parseInt(process.env.PORT, 10) : fileConfig.server?.port || 8080,
 
   // Connection profiles system
   connections: fileConfig.connections || {

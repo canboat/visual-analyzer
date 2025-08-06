@@ -17,7 +17,7 @@ import {
   ConnectionProfile,
   ConnectionsConfig,
   InputTestRequest,
-  INMEAProvider
+  INMEAProvider,
 } from './types'
 
 class VisualAnalyzerServer {
@@ -51,9 +51,9 @@ class VisualAnalyzerServer {
     this.app = express()
     this.server = http.createServer(this.app)
     this.wss = new WebSocketServer({ server: this.server })
-    this.currentConfig = { 
+    this.currentConfig = {
       port: this.port,
-      connections: { activeConnection: null, profiles: {} } 
+      connections: { activeConnection: null, profiles: {} },
     }
 
     // Initialize canboatjs parser for string input parsing
@@ -367,7 +367,7 @@ class VisualAnalyzerServer {
         JSON.stringify({
           event: 'connection',
           message: 'Connected to Visual Analyzer WebSocket server',
-        })
+        }),
       )
 
       // Handle incoming messages
@@ -422,7 +422,7 @@ class VisualAnalyzerServer {
               JSON.stringify({
                 event: 'nmea:disconnected',
                 timestamp: this.connectionState.lastUpdate,
-              })
+              }),
             )
           }
 
@@ -434,7 +434,7 @@ class VisualAnalyzerServer {
                 event: 'error',
                 error: this.connectionState.error,
                 timestamp: this.connectionState.lastUpdate,
-              })
+              }),
             )
           }
         }
@@ -466,7 +466,7 @@ class VisualAnalyzerServer {
               event: 'canboatjs:rawoutput',
               data: sampleData,
               timestamp: new Date().toISOString(),
-            })
+            }),
           )
         } else {
           clearInterval(interval)
@@ -816,6 +816,7 @@ class VisualAnalyzerServer {
   }
 
   private openBrowser(url: string): void {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { spawn } = require('child_process')
 
     console.log(`Opening browser at: ${url}`)

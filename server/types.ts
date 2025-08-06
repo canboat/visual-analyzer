@@ -5,29 +5,36 @@ export interface ConnectionProfile {
   id?: string
   name: string
   type: 'serial' | 'network' | 'signalk' | 'socketcan' | 'file'
-  
+
   // Serial connection specific
   serialPort?: string
   baudRate?: number
-  deviceType?: 'Actisense' | 'Actisense ASCII' | 'iKonvert' | 'Yacht Devices' | 'Yacht Devices RAW' | 'NavLink2' | 'SocketCAN'
-  
+  deviceType?:
+    | 'Actisense'
+    | 'Actisense ASCII'
+    | 'iKonvert'
+    | 'Yacht Devices'
+    | 'Yacht Devices RAW'
+    | 'NavLink2'
+    | 'SocketCAN'
+
   // Network connection specific
   networkHost?: string
   networkPort?: number
   networkProtocol?: 'tcp' | 'udp'
-  
+
   // SignalK specific
   signalkUrl?: string
   signalkUsername?: string
   signalkPassword?: string
-  
+
   // SocketCAN specific
   socketcanInterface?: string
-  
+
   // File playback specific
   filePath?: string
   playbackSpeed?: number
-  
+
   // Additional properties
   [key: string]: any
 }
@@ -140,7 +147,7 @@ export interface INMEAProvider extends EventEmitter {
   options: NMEAProviderOptions
   isConnected: boolean
   authToken: string | null
-  
+
   connect(): Promise<void>
   disconnect(): void
   sendMessage?(data: any): void

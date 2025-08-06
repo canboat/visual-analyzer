@@ -40,13 +40,7 @@ import * as dgram from 'dgram'
 import WebSocket from 'ws'
 import * as fs from 'fs'
 import * as readline from 'readline'
-import {
-  NMEAProviderOptions,
-  SignalKMessage,
-  SignalKLoginMessage,
-  SignalKLoginResponse,
-  INMEAProvider
-} from './types'
+import { NMEAProviderOptions, SignalKMessage, SignalKLoginMessage, SignalKLoginResponse, INMEAProvider } from './types'
 
 interface SerialPortLike {
   pipe(parser: any): any
@@ -283,7 +277,9 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
         this.emit('connected')
       } else {
         // Fall back to generic serial port handling for other devices
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const SerialPort = require('serialport')
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { ReadlineParser } = require('@serialport/parser-readline')
 
         this.serialPort = new SerialPort({
@@ -673,10 +669,19 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     } else {
       // Use canboatjs formatting functions based on device type
       const deviceType = this.options.deviceType
-      const supportedDeviceTypes = ['Actisense', 'Actisense ASCII', 'iKonvert', 'Yacht Devices', 'Yacht Devices RAW', 'NavLink2']
-      
+      const supportedDeviceTypes = [
+        'Actisense',
+        'Actisense ASCII',
+        'iKonvert',
+        'Yacht Devices',
+        'Yacht Devices RAW',
+        'NavLink2',
+      ]
+
       if (deviceType && !supportedDeviceTypes.includes(deviceType)) {
-        throw new Error(`Unsupported device type for network transmission: ${deviceType}. Supported types: ${supportedDeviceTypes.join(', ')}`)
+        throw new Error(
+          `Unsupported device type for network transmission: ${deviceType}. Supported types: ${supportedDeviceTypes.join(', ')}`,
+        )
       }
 
       switch (deviceType) {
