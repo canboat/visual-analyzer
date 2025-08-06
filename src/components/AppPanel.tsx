@@ -332,6 +332,15 @@ const AppPanel = (props: any) => {
             //console.log('Event type:', data.event)
 
             if (data.event === 'nmea:connected') {
+              // Clear all data when reconnecting
+              setList({})
+              setCurrentSrcs([])
+              setCurrentInfo({})
+              data.next({})
+              selectedPgn.next(undefined as any)
+              availableSrcs.next([])
+              deviceInfo.next({})
+              
               setConnectionStatus((prev) => {
                 //console.log('>>> STATUS WS: Processing nmea:connected event')
                 const newStatus = {
@@ -417,6 +426,16 @@ const AppPanel = (props: any) => {
       // Handle connection status events (keep as backup)
       if (parsed.event === 'nmea:connected') {
         //console.log('NMEA connection established')
+        
+        // Clear all data when reconnecting
+        setList({})
+        setCurrentSrcs([])
+        setCurrentInfo({})
+        data.next({})
+        selectedPgn.next(undefined as any)
+        availableSrcs.next([])
+        deviceInfo.next({})
+        
         setConnectionStatus({
           isConnected: true,
           lastUpdate: new Date().toISOString(),
