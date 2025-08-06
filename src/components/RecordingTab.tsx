@@ -115,7 +115,7 @@ const RecordingTab: React.FC = () => {
     const interval = setInterval(() => {
       loadRecordingFiles()
     }, 10000) // Refresh file list every 10 seconds
-    
+
     return () => clearInterval(interval)
   }, [])
 
@@ -226,6 +226,51 @@ const RecordingTab: React.FC = () => {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete file')
+    }
+  }
+
+  const deleteAllFiles = async () => {
+    if (recordingFiles.length === 0) {
+      return
+    }
+
+    if (!confirm(`Are you sure you want to delete all ${recordingFiles.length} recording files? This action cannot be undone.`)) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      // Delete all files in parallel
+      const deletePromises = recordingFiles.map(file => 
+        fetch(`/api/recording/files/${encodeURIComponent(file.name)}`, {
+          method: 'DELETE',
+        })
+      )
+
+      const results = await Promise.allSettled(deletePromises)
+      
+      // Check for any failures
+      const failures = results.filter(result => result.status === 'rejected')
+      if (failures.length > 0) {
+        setError(`Failed to delete ${failures.length} file(s)`)
+      } else {
+        // Check for HTTP errors
+        const responses = results
+          .filter(result => result.status === 'fulfilled')
+          .map(result => (result as PromiseFulfilledResult<Response>).value)
+        
+        const httpErrors = responses.filter(response => !response.ok)
+        if (httpErrors.length > 0) {
+          setError(`Failed to delete ${httpErrors.length} file(s)`)
+        }
+      }
+
+      // Refresh file list regardless of partial failures
+      loadRecordingFiles()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete files')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -378,8 +423,18 @@ const RecordingTab: React.FC = () => {
 
         <Col md={6}>
           <Card>
-            <CardHeader>
-              <h5>Recorded Files</h5>
+            <CardHeader className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">Recorded Files</h5>
+              {recordingFiles.length > 0 && (
+                <Button
+                  size="sm"
+                  color="outline-danger"
+                  onClick={deleteAllFiles}
+                  disabled={loading}
+                >
+                  {loading ? 'Deleting...' : 'Delete All'}
+                </Button>
+              )}
             </CardHeader>
             <CardBody>
               {recordingFiles.length === 0 ? (
