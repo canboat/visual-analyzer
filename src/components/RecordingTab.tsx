@@ -63,7 +63,6 @@ const RecordingTab: React.FC = () => {
 
   // Available recording formats based on Transform tab
   const recordingFormats = [
-    { value: 'raw', label: 'Raw NMEA 2000 (Original Format)' },
     { value: 'canboat-json', label: 'Canboat JSON' },
     { value: 'actisense', label: 'Actisense Serial Format' },
     { value: 'actisense-n2k-ascii', label: 'Actisense N2K ASCII' },
@@ -234,10 +233,8 @@ const RecordingTab: React.FC = () => {
       case 'candump1':
       case 'candump2':
       case 'candump3':
-        return 'log'
-      case 'raw':
       default:
-        return 'raw'
+        return 'log'
     }
   }
 
