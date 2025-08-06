@@ -210,7 +210,7 @@ class VisualAnalyzerServer {
           try {
             const jsonParsed = JSON.parse(value)
             pgnDataArray = [jsonParsed]
-            console.log('Parsed as JSON from string value')
+            //console.log('Parsed as JSON from string value')
           } catch (jsonParseError) {
             // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
             // Split by newlines to handle multiple lines
@@ -284,7 +284,7 @@ class VisualAnalyzerServer {
               // Convert PGN object to raw NMEA 2000 format if the provider supports it
               if (typeof this.nmeaProvider.sendMessage === 'function') {
                 this.nmeaProvider.sendMessage(pgnData)
-                console.log('Message sent to NMEA 2000 network')
+                //console.log('Message sent to NMEA 2000 network')
                 results.push({
                   pgn: pgnData.pgn,
                   transmitted: true,

@@ -429,8 +429,18 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
 
     // Read all lines into queue first
     this.readline.on('line', (line: string) => {
-      const trimmed = line.trim()
-      if (trimmed) {
+      let trimmed = line.trim()
+      if (trimmed && !trimmed.startsWith('#')) {
+
+        if (trimmed.length > 15 && trimmed.charAt(13) === ';' && trimmed.charAt(15) === ';') {
+          // SignalK Multiplexed format
+          if (trimmed.charAt(14) === 'A') {
+            trimmed = trimmed.substring(16)
+          } else {
+            return // Skip unsupported SignalK formats
+          }
+        }
+
         this.lineQueue.push(trimmed)
       }
     })
@@ -626,6 +636,8 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
         break
       case 'socketcan':
         this.sendToSocketCAN(data)
+        break
+      case 'file':
         break
       default:
         throw new Error(`Message transmission not supported for connection type: ${this.options.type}`)
