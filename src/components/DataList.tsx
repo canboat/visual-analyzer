@@ -21,7 +21,7 @@ import { PGN } from '@canboat/ts-pgns'
 
 import { Subject } from 'rxjs'
 import { PgnNumber, PGNDataMap } from '../types'
-import { Filter, filterFor, getFilterConfig } from './Filters'
+import { Filter, filterFor, getFilterConfig, FilterOptions } from './Filters'
 import { getRowKey } from './AppPanel'
 
 interface DataListProps {
@@ -29,12 +29,14 @@ interface DataListProps {
   onRowClicked: (row: PGN) => void
   filter: Subject<Filter>
   doFiltering: Subject<boolean>
+  filterOptions: Subject<FilterOptions>
 }
 
 export const DataList = (props: DataListProps) => {
   const data = useObservableState<PGNDataMap>(props.data)
   const filter = useObservableState(props.filter)
   const doFiltering = useObservableState(props.doFiltering)
+  const filterOptions = useObservableState(props.filterOptions)
 
   const filterConfig = getFilterConfig(filter)
 
@@ -123,7 +125,7 @@ export const DataList = (props: DataListProps) => {
             })
             .map((row: PGN, i: number) => {
               return (
-                <tr key={getRowKey(row)} onClick={() => handleRowClick(row)}>
+                <tr key={getRowKey(row, filterOptions)} onClick={() => handleRowClick(row)}>
                   <td style={{ fontFamily: 'monospace' }}>
                     {new Date(row.timestamp!).toLocaleTimeString([], { hour12: false })}
                   </td>
