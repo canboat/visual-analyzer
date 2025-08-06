@@ -336,10 +336,6 @@ const AppPanel = (props: any) => {
               setList({})
               setCurrentSrcs([])
               setCurrentInfo({})
-              data.next({})
-              selectedPgn.next(undefined as any)
-              availableSrcs.next([])
-              deviceInfo.next({})
               
               setConnectionStatus((prev) => {
                 //console.log('>>> STATUS WS: Processing nmea:connected event')
@@ -426,16 +422,7 @@ const AppPanel = (props: any) => {
       // Handle connection status events (keep as backup)
       if (parsed.event === 'nmea:connected') {
         //console.log('NMEA connection established')
-        
-        // Clear all data when reconnecting
-        setList({})
-        setCurrentSrcs([])
-        setCurrentInfo({})
-        data.next({})
-        selectedPgn.next(undefined as any)
-        availableSrcs.next([])
-        deviceInfo.next({})
-        
+                
         setConnectionStatus({
           isConnected: true,
           lastUpdate: new Date().toISOString(),
@@ -481,7 +468,7 @@ const AppPanel = (props: any) => {
           })
         }
 
-        if (!currentSrcs.includes(pgn.src!)) {
+        if (currentSrcs.indexOf(pgn!.src!) === -1) {
           setCurrentSrcs((prev) => {
             prev.push(pgn!.src!)
             availableSrcs.next([...prev.sort((a, b) => a - b)])
