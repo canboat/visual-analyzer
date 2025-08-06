@@ -436,6 +436,7 @@ export const SendTab: React.FC = () => {
                     rows={12}
                     placeholder='Enter NMEA 2000 message here...&#10;&#10;Actisense format:&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;&#10;YDRAW format:&#10;21:53:15.000 R 0DF80503 FF FF FF FF FF FF FF FF&#10;&#10;Canboat JSON format:&#10;{"timestamp":"2023-10-15T10:30:00.000Z","prio":2,"src":1,"dst":255,"pgn":127251,"description":"Rate of Turn","fields":{"Rate":0}}&#10;&#10;JSON array (multiple messages):&#10;[{"pgn":127251,"src":1,"fields":{"Rate":0}},{"pgn":127250,"src":1,"fields":{"Heading":1.5708}}]&#10;&#10;Multiple messages (any format, one per line):&#10;2023-10-15T10:30:00.000Z,2,127251,1,255,8,ff,ff,ff,ff,ff,ff,ff,ff&#10;21:53:16.000 R 0DF80503 01 02 03 04 05 06 07 08'
                     onChange={(e) => checkJsonInput(e.target.value)}
+                    spellCheck={false}
                     style={{
                       fontSize: '14px',
                       lineHeight: '1.4',
