@@ -140,6 +140,7 @@ export class RecordingService extends EventEmitter {
       // Create file stream
       this.fileStream = fs.createWriteStream(filePath, { flags: 'w' })
 
+
       // Handle stream errors
       this.fileStream.on('error', (error) => {
         console.error('Recording file stream error:', error)
@@ -153,6 +154,10 @@ export class RecordingService extends EventEmitter {
       this.currentFormat = options.format || 'passthrough'
       this.messageCount = 0
       this.startTime = new Date()
+
+      if (this.currentFormat === 'canboat-json-pretty') {
+        this.fileStream.write('[\n') // Start JSON array for canboat-json format
+      }
 
       console.log(`Started recording to ${fileName} in ${this.currentFormat} format`)
       this.emit('started', this.getStatus())
@@ -173,6 +178,10 @@ export class RecordingService extends EventEmitter {
     try {
       // Close file stream
       if (this.fileStream) {
+        if (this.currentFormat === 'canboat-json-pretty') {
+          this.fileStream.write('\n]\n') // End JSON array for canboat-json format
+        }
+
         this.fileStream.end()
         this.fileStream = null
       }
@@ -219,7 +228,7 @@ export class RecordingService extends EventEmitter {
             break
 
           case 'canboat-json-pretty':
-            formattedMessage = JSON.stringify(pgn, null, 2)
+            formattedMessage = JSON.stringify(pgn, null, 2) + ','
             break
 
           case 'actisense': {
