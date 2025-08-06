@@ -3,7 +3,7 @@
 import VisualAnalyzerServer from './server'
 import * as path from 'path'
 import * as fs from 'fs'
-import { Config, ConnectionProfile, ConnectionsConfig, ServerConfig } from './types'
+import { Config, ConnectionsConfig, ServerConfig } from './types'
 
 // Define types for configuration
 interface FileConfig {

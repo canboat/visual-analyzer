@@ -362,7 +362,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     return new Promise((resolve, reject) => {
       this.udpSocket = dgram.createSocket('udp4')
 
-      this.udpSocket.on('message', (message: Buffer, remote: dgram.RemoteInfo) => {
+      this.udpSocket.on('message', (message: Buffer, _remote: dgram.RemoteInfo) => {
         const lines = message.toString().split(/\r?\n/)
         lines.forEach((line) => {
           const trimmed = line.trim()
@@ -688,10 +688,11 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
           formattedData = pgnToiKonvertSerialFormat(data) || ''
           break
         case 'Yacht Devices':
-        case 'Yacht Devices RAW':
+        case 'Yacht Devices RAW': {
           const ydgwResult = pgnToYdgwRawFormat(data)
           formattedData = Array.isArray(ydgwResult) ? ydgwResult.join('\n') : ydgwResult || ''
           break
+        }
         default:
           // Default to JSON format if no device type specified
           formattedData = JSON.stringify(data) + '\n'

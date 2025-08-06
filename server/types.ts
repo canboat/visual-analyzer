@@ -1,6 +1,4 @@
 import { EventEmitter } from 'events'
-import { Server as WebSocketServer } from 'ws'
-import WebSocket from 'ws'
 
 // Connection Profile Types
 export interface ConnectionProfile {
