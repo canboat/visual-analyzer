@@ -41,6 +41,8 @@ import WebSocket from 'ws'
 import * as fs from 'fs'
 import * as readline from 'readline'
 import { NMEAProviderOptions, SignalKMessage, SignalKLoginMessage, SignalKLoginResponse, INMEAProvider } from './types'
+import SerialPortStream from './streams/serialport'
+import TcpStream from './streams/tcp'
 
 interface SerialPortLike {
   pipe(parser: any): any
@@ -65,6 +67,8 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
   private tcpClient: net.Socket | null = null
   private udpSocket: dgram.Socket | null = null
   private canbusStream: any = null
+  private iKonvertStream: any | null = null
+  private tcpStream: TcpStream | null = null
 
   // File playback specific properties
   private fileStream: fs.ReadStream | null = null
@@ -239,6 +243,8 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
       emit: (event: string, data: any) => {
         if (event === 'canboatjs:rawoutput') {
           this.emit('raw-nmea', data)
+        } else {
+          this.emit(event, data)
         }
       },
       listenerCount: (event: string) => {
@@ -266,11 +272,20 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
         this.emit('connected')
       } else if (deviceType === 'iKonvert') {
         // Use iKonvertStream from canboatjs for Digital Yacht iKonvert devices
-        this.serialStream = new (iKonvertStream as any)({
+
+        this.serialStream = new SerialPortStream({
+          app: this.getServerApp(),
           device: this.options.serialPort!,
           baudrate: this.options.baudRate || 230400,
-          app: this.getServerApp(),
+          toStdout: 'ikonvertOut',
         })
+
+        this.iKonvertStream = new (iKonvertStream as any)({
+          app: this.getServerApp(),
+          tcp: false,
+        })
+
+        this.serialStream.pipe(this.iKonvertStream)
 
         console.log('iKonvert serial connection established using canboatjs iKonvertStream')
         this.isConnected = true
@@ -312,11 +327,33 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
   }
 
   private async connectToNetwork(): Promise<void> {
-    if (this.options.networkProtocol === 'udp') {
-      await this.connectToUDP()
+    if (this.options.deviceType === 'NavLink2') {
+      await this.connectToNavLink2()
     } else {
-      await this.connectToTCP()
+      if (this.options.networkProtocol === 'udp') {
+        await this.connectToUDP()
+      } else {
+        await this.connectToTCP()
+      }
     }
+  }
+
+  private async connectToNavLink2(): Promise<void> {
+    return new Promise((resolve) => {
+      this.tcpStream = new TcpStream({
+        app: this.getServerApp(),
+        port: this.options.networkPort!,
+        host: this.options.networkHost!,
+        toStdout: 'navlink2-out',
+      })
+
+      this.iKonvertStream = new (iKonvertStream as any)({
+        app: this.getServerApp(),
+        tcp: true,
+      })
+      this.tcpStream.pipe(this.iKonvertStream)
+      resolve()
+    })
   }
 
   private async connectToTCP(): Promise<void> {
@@ -515,7 +552,10 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     }
 
     if (this.serialStream) {
-      // These streams typically have a close or destroy method
+      if (typeof this.serialStream.end === 'function') {
+        this.serialStream.end()
+      }
+
       if (typeof this.serialStream.close === 'function') {
         this.serialStream.close()
       } else if (typeof this.serialStream.destroy === 'function') {
@@ -561,6 +601,11 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     if (this.fileStream) {
       this.fileStream.destroy()
       this.fileStream = null
+    }
+
+    if (this.tcpStream) {
+      this.tcpStream.end()
+      this.tcpStream = null
     }
 
     this.lineQueue = []

@@ -425,7 +425,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                 className="form-control-lg"
               >
                 <option value="Actisense">Actisense (NGT-1 Compatible)</option>
-                <option value="iKonvert">iKonvert (NMEA 2000 Gateway)</option>
+                <option value="iKonvert">Digital Yacht iKonvert</option>
                 <option value="Yacht Devices">Yacht Devices RAW (YDNU-02)</option>
               </Input>
               <small className="form-text text-muted">Select your specific NMEA 2000 gateway device</small>
@@ -489,7 +489,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                 className="form-control-lg"
               >
                 <option value="Yacht Devices RAW">Yacht Devices RAW (YDWG-02)</option>
-                <option value="NavLink2">NavLink2 Gateway</option>
+                <option value="NavLink2">Digital Yacht NavLink2</option>
                 <option value="Actisense ASCII">Actisense ASCII (W2K-1)</option>
               </Input>
               <small className="form-text text-muted">Select your specific NMEA 2000 network gateway device</small>
@@ -811,121 +811,127 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(config.connections.profiles).map(([profileId, profile]) => (
-                        <tr
-                          key={profileId}
-                          className={config.connections.activeConnection === profileId ? 'table-primary' : ''}
-                        >
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <div>
-                                <strong>{profile.name}</strong>
-                                {config.connections.activeConnection === profileId && (
-                                  <span className="badge badge-primary ml-2">Active</span>
-                                )}
+                      {Object.entries(config.connections.profiles)
+                        .sort(([, a], [, b]) => a.name.localeCompare(b.name))
+                        .map(([profileId, profile]) => (
+                          <tr
+                            key={profileId}
+                            className={config.connections.activeConnection === profileId ? 'table-primary' : ''}
+                          >
+                            <td>
+                              <div className="d-flex align-items-center">
+                                <div>
+                                  <strong>{profile.name}</strong>
+                                  {config.connections.activeConnection === profileId && (
+                                    <span className="badge badge-primary ml-2">Active</span>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span
-                              className={`badge badge-outline-${
-                                profile.type === 'network'
-                                  ? 'info'
-                                  : profile.type === 'serial'
-                                    ? 'success'
-                                    : profile.type === 'socketcan'
-                                      ? 'warning'
-                                      : profile.type === 'file'
-                                        ? 'dark'
-                                        : 'primary'
-                              }`}
-                            >
-                              {profile.type.toUpperCase()}
-                            </span>
-                          </td>
-                          <td>
-                            <small className="text-muted">
-                              {profile.type === 'signalk' && (
-                                <>
-                                  {profile.signalkUrl}
-                                  {profile.signalkUsername && (
-                                    <span className="ml-2 badge badge-outline-info">Auth</span>
-                                  )}
-                                </>
-                              )}
-                              {profile.type === 'serial' && (
-                                <>
-                                  {profile.serialPort} ({profile.deviceType})
-                                </>
-                              )}
-                              {profile.type === 'network' && (
-                                <>
-                                  {profile.networkHost}:{profile.networkPort} ({profile.networkProtocol?.toUpperCase()})
-                                  - {profile.deviceType}
-                                </>
-                              )}
-                              {profile.type === 'socketcan' && <>{profile.socketcanInterface}</>}
-                              {profile.type === 'file' && (
-                                <>
-                                  {profile.filePath
-                                    ? profile.filePath.split('/').pop() || profile.filePath.split('\\').pop()
-                                    : 'No file'}
-                                  {profile.playbackSpeed !== 1.0 && (
-                                    <span className="ml-2 badge badge-outline-secondary">{profile.playbackSpeed}x</span>
-                                  )}
-                                  {profile.loopPlayback && <span className="ml-2 badge badge-outline-info">Loop</span>}
-                                </>
-                              )}
-                            </small>
-                          </td>
-                          <td>
-                            {config.connections.activeConnection === profileId ? (
+                            </td>
+                            <td>
                               <span
-                                className={`badge ${getCurrentConnectionStatus() ? 'badge-success' : 'badge-warning'}`}
+                                className={`badge badge-outline-${
+                                  profile.type === 'network'
+                                    ? 'info'
+                                    : profile.type === 'serial'
+                                      ? 'success'
+                                      : profile.type === 'socketcan'
+                                        ? 'warning'
+                                        : profile.type === 'file'
+                                          ? 'dark'
+                                          : 'primary'
+                                }`}
                               >
-                                {getCurrentConnectionStatus() ? 'Connected' : 'Connecting...'}
+                                {profile.type.toUpperCase()}
                               </span>
-                            ) : (
-                              <span className="badge badge-secondary">Inactive</span>
-                            )}
-                          </td>
-                          <td>
-                            <div className="d-flex flex-row" style={{ gap: '2px' }}>
-                              {config.connections.activeConnection !== profileId && (
+                            </td>
+                            <td>
+                              <small className="text-muted">
+                                {profile.type === 'signalk' && (
+                                  <>
+                                    {profile.signalkUrl}
+                                    {profile.signalkUsername && (
+                                      <span className="ml-2 badge badge-outline-info">Auth</span>
+                                    )}
+                                  </>
+                                )}
+                                {profile.type === 'serial' && (
+                                  <>
+                                    {profile.serialPort} ({profile.deviceType})
+                                  </>
+                                )}
+                                {profile.type === 'network' && (
+                                  <>
+                                    {profile.networkHost}:{profile.networkPort} (
+                                    {profile.networkProtocol?.toUpperCase()}) - {profile.deviceType}
+                                  </>
+                                )}
+                                {profile.type === 'socketcan' && <>{profile.socketcanInterface}</>}
+                                {profile.type === 'file' && (
+                                  <>
+                                    {profile.filePath
+                                      ? profile.filePath.split('/').pop() || profile.filePath.split('\\').pop()
+                                      : 'No file'}
+                                    {profile.playbackSpeed !== 1.0 && (
+                                      <span className="ml-2 badge badge-outline-secondary">
+                                        {profile.playbackSpeed}x
+                                      </span>
+                                    )}
+                                    {profile.loopPlayback && (
+                                      <span className="ml-2 badge badge-outline-info">Loop</span>
+                                    )}
+                                  </>
+                                )}
+                              </small>
+                            </td>
+                            <td>
+                              {config.connections.activeConnection === profileId ? (
+                                <span
+                                  className={`badge ${getCurrentConnectionStatus() ? 'badge-success' : 'badge-warning'}`}
+                                >
+                                  {getCurrentConnectionStatus() ? 'Connected' : 'Connecting...'}
+                                </span>
+                              ) : (
+                                <span className="badge badge-secondary">Inactive</span>
+                              )}
+                            </td>
+                            <td>
+                              <div className="d-flex flex-row" style={{ gap: '2px' }}>
+                                {config.connections.activeConnection !== profileId && (
+                                  <Button
+                                    size="xs"
+                                    color="success"
+                                    onClick={() => activateConnectionProfile(profileId)}
+                                    disabled={loading}
+                                    className="d-flex align-items-center justify-content-center"
+                                    style={{ minWidth: '50px', fontSize: '0.7rem', padding: '2px 4px' }}
+                                  >
+                                    Activate
+                                  </Button>
+                                )}
                                 <Button
                                   size="xs"
-                                  color="success"
-                                  onClick={() => activateConnectionProfile(profileId)}
-                                  disabled={loading}
+                                  color="outline-primary"
+                                  onClick={() => openEditModal(profileId)}
                                   className="d-flex align-items-center justify-content-center"
-                                  style={{ minWidth: '50px', fontSize: '0.7rem', padding: '2px 4px' }}
+                                  style={{ minWidth: '40px', fontSize: '0.7rem', padding: '2px 4px' }}
                                 >
-                                  Activate
+                                  Edit
                                 </Button>
-                              )}
-                              <Button
-                                size="xs"
-                                color="outline-primary"
-                                onClick={() => openEditModal(profileId)}
-                                className="d-flex align-items-center justify-content-center"
-                                style={{ minWidth: '40px', fontSize: '0.7rem', padding: '2px 4px' }}
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                size="xs"
-                                color="outline-danger"
-                                onClick={() => deleteConnectionProfile(profileId)}
-                                disabled={config.connections.activeConnection === profileId}
-                                className="d-flex align-items-center justify-content-center"
-                                style={{ minWidth: '45px', fontSize: '0.7rem', padding: '2px 4px' }}
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                                <Button
+                                  size="xs"
+                                  color="outline-danger"
+                                  onClick={() => deleteConnectionProfile(profileId)}
+                                  disabled={config.connections.activeConnection === profileId}
+                                  className="d-flex align-items-center justify-content-center"
+                                  style={{ minWidth: '45px', fontSize: '0.7rem', padding: '2px 4px' }}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </Table>
                 )}
