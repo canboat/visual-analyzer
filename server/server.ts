@@ -580,44 +580,6 @@ class VisualAnalyzerServer {
     }
   }
 
-  private startDataStream(ws: WebSocket): void {
-    // If we have a real NMEA provider, the data will come through events
-    // For fallback, we'll still provide sample data if no real source is connected
-    if (!this.nmeaProvider || !this.nmeaProvider.isConnectionActive?.()) {
-      const interval = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          const sampleData = this.generateSampleNMEAData()
-          
-          // Record the sample data if recording is active
-          if (this.recordingService.getStatus().isRecording) {
-            try {
-              const pgn = this.canboatParser.parseString(sampleData)
-              if (pgn) {
-                this.recordingService.recordMessage(pgn)
-              }
-            } catch (error) {
-              // Ignore parsing errors during recording
-            }
-          }
-          
-          ws.send(
-            JSON.stringify({
-              event: 'canboatjs:rawoutput',
-              data: sampleData,
-              timestamp: new Date().toISOString(),
-            }),
-          )
-        } else {
-          clearInterval(interval)
-        }
-      }, 1000)
-
-      // Store interval reference on the WebSocket for cleanup
-      if (!(ws as any).intervals) (ws as any).intervals = []
-      ;(ws as any).intervals.push(interval)
-    }
-  }
-
   private stopDataStream(ws: WebSocket): void {
     // Clean up intervals when unsubscribing
     if ((ws as any).intervals) {
@@ -658,15 +620,19 @@ class VisualAnalyzerServer {
     this.nmeaProvider.on('raw-nmea', (rawData: any) => {
       // Record the message if recording is active
       if (this.recordingService.getStatus().isRecording) {
-        try {
-          if (typeof rawData === 'string') {
-            const pgn = this.canboatParser.parseString(rawData)
-            if (pgn) {
-              this.recordingService.recordMessage(pgn)
+        if ( this.recordingService.getStatus().format === 'passthrough' ) {
+          this.recordingService.recordMessage(rawData, undefined)
+        } else {
+          try {
+            if (typeof rawData === 'string') {
+              const pgn = this.canboatParser.parseString(rawData)
+              if (pgn) {
+                this.recordingService.recordMessage(undefined, pgn)
+              }
             }
+          } catch (error) {
+            console.debug('Failed to parse raw NMEA data:', error)
           }
-        } catch (error) {
-          console.error('Failed to parse raw NMEA data:', error)
         }
       }
 

@@ -117,14 +117,14 @@ export class RecordingService extends EventEmitter {
       let fileName = options.fileName
       if (!fileName) {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-        const format = options.format || 'canboat-json'
+        const format = options.format || 'passthrough'
         const extension = this.getFileExtension(format)
         fileName = `recording_${timestamp}.${extension}`
       }
 
       // Ensure filename has correct extension
       if (!fileName.includes('.')) {
-        const extension = this.getFileExtension(options.format || 'canboat-json')
+        const extension = this.getFileExtension(options.format || 'passthrough')
         fileName += `.${extension}`
       }
 
@@ -148,7 +148,7 @@ export class RecordingService extends EventEmitter {
       // Set recording state
       this.isRecording = true
       this.currentFileName = fileName
-      this.currentFormat = options.format || 'canboat-json'
+      this.currentFormat = options.format || 'passthrough'
       this.messageCount = 0
       this.startTime = new Date()
 
@@ -181,7 +181,7 @@ export class RecordingService extends EventEmitter {
       this.isRecording = false
       const fileName = this.currentFileName
       this.currentFileName = null
-      this.currentFormat = 'canboat-json'
+      this.currentFormat = 'passthrough'
       this.messageCount = 0
       this.startTime = null
 
@@ -200,121 +200,127 @@ export class RecordingService extends EventEmitter {
     }
   }
 
-  public recordMessage(pgn: PGN): void {
+  public recordMessage(raw: string | undefined, pgn: PGN | undefined): void {
     if (!this.isRecording || !this.fileStream) {
       return
     }
 
     try {
-      let formattedMessage: string
+      let formattedMessage: string | undefined = undefined
 
-      switch (this.currentFormat) {
-        case 'canboat-json':
-          formattedMessage = JSON.stringify(pgn)
-          break
+      if ( this.currentFormat === 'passthrough' ) {
+        formattedMessage = raw
+      } else if ( pgn !== undefined ) {
+        switch (this.currentFormat) {
+          case 'canboat-json':
+            formattedMessage = JSON.stringify(pgn)
+            break
 
-        case 'actisense':
-          const actisenseResult = pgnToActisenseSerialFormat(pgn)
-          if (!actisenseResult) {
-            console.error(`Failed to convert PGN ${pgn.pgn} to Actisense format`)
-            return
-          }
-          formattedMessage = actisenseResult
-          break
+          case 'canboat-json-pretty':
+            formattedMessage = JSON.stringify(pgn, null, 2)
+            break
 
-        case 'actisense-n2k-ascii':
-          const n2kAsciiResult = pgnToActisenseN2KAsciiFormat(pgn)
-          if (!n2kAsciiResult) {
-            console.error(`Failed to convert PGN ${pgn.pgn} to Actisense N2K ASCII format`)
-            return
-          }
-          formattedMessage = n2kAsciiResult
-          break
+          case 'actisense':
+            const actisenseResult = pgnToActisenseSerialFormat(pgn)
+            if (!actisenseResult) {
+              console.error(`Failed to convert PGN ${pgn.pgn} to Actisense format`)
+              return
+            }
+            formattedMessage = actisenseResult
+            break
 
-        case 'ikonvert':
-          const ikonvertResult = pgnToiKonvertSerialFormat(pgn)
-          if (!ikonvertResult) {
-            console.error(`Failed to convert PGN ${pgn.pgn} to iKonvert format`)
-            return
-          }
-          formattedMessage = ikonvertResult
-          break
+          case 'actisense-n2k-ascii':
+            const n2kAsciiResult = pgnToActisenseN2KAsciiFormat(pgn)
+            if (!n2kAsciiResult) {
+              console.error(`Failed to convert PGN ${pgn.pgn} to Actisense N2K ASCII format`)
+              return
+            }
+            formattedMessage = n2kAsciiResult
+            break
 
-        case 'ydwg-raw':
-          const ydwgResult = pgnToYdgwRawFormat(pgn)
-          if (!ydwgResult) {
-            console.error(`Failed to convert PGN ${pgn.pgn} to YDWG RAW format`)
-            return
-          }
-          formattedMessage = Array.isArray(ydwgResult) ? ydwgResult.join('\n') : ydwgResult
-          break
+          case 'ikonvert':
+            const ikonvertResult = pgnToiKonvertSerialFormat(pgn)
+            if (!ikonvertResult) {
+              console.error(`Failed to convert PGN ${pgn.pgn} to iKonvert format`)
+              return
+            }
+            formattedMessage = ikonvertResult
+            break
 
-        case 'ydwg-full-raw':
-          const ydwgFullResult = pgnToYdgwFullRawFormat(pgn)
-          if (!ydwgFullResult) {
-            console.error(`Failed to convert PGN ${pgn.pgn} to YDWG Full RAW format`)
-            return
-          }
-          formattedMessage = Array.isArray(ydwgFullResult) ? ydwgFullResult.join('\n') : ydwgFullResult
-          break
+          case 'ydwg-raw':
+            const ydwgResult = pgnToYdgwRawFormat(pgn)
+            if (!ydwgResult) {
+              console.error(`Failed to convert PGN ${pgn.pgn} to YDWG RAW format`)
+              return
+            }
+            formattedMessage = Array.isArray(ydwgResult) ? ydwgResult.join('\n') : ydwgResult
+            break
 
-        case 'pcdin':
-          const pcdinResult = pgnToPCDIN(pgn)
-          if (!pcdinResult) {
-            console.error(`Failed to convert PGN ${pgn.pgn} to PCDIN format`)
-            return
-          }
-          formattedMessage = pcdinResult
-          break
+          case 'ydwg-full-raw':
+            const ydwgFullResult = pgnToYdgwFullRawFormat(pgn)
+            if (!ydwgFullResult) {
+              console.error(`Failed to convert PGN ${pgn.pgn} to YDWG Full RAW format`)
+              return
+            }
+            formattedMessage = Array.isArray(ydwgFullResult) ? ydwgFullResult.join('\n') : ydwgFullResult
+            break
 
-        case 'mxpgn':
-          const mxpgnResult = pgnToMXPGN(pgn)
-          if (!mxpgnResult) {
-            console.error(`Failed to convert PGN ${pgn.pgn} to MXPGN format`)
-            return
-          }
-          formattedMessage = mxpgnResult
-          break
+          case 'pcdin':
+            const pcdinResult = pgnToPCDIN(pgn)
+            if (!pcdinResult) {
+              console.error(`Failed to convert PGN ${pgn.pgn} to PCDIN format`)
+              return
+            }
+            formattedMessage = pcdinResult
+            break
 
-        case 'candump1':
-          const candump1Result = pgnToCandump1(pgn)
-          if (!candump1Result) {
-            console.error(`Failed to convert PGN ${pgn.pgn} to candump1 format`)
-            return
-          }
-          formattedMessage = Array.isArray(candump1Result) ? candump1Result.join('\n') : candump1Result
-          break
+          case 'mxpgn':
+            const mxpgnResult = pgnToMXPGN(pgn)
+            if (!mxpgnResult) {
+              console.error(`Failed to convert PGN ${pgn.pgn} to MXPGN format`)
+              return
+            }
+            formattedMessage = mxpgnResult
+            break
 
-        case 'candump2':
-          const candump2Result = pgnToCandump2(pgn)
-          if (!candump2Result) {
-            console.error(`Failed to convert PGN ${pgn.pgn} to candump2 format`)
-            return
-          }
-          formattedMessage = Array.isArray(candump2Result) ? candump2Result.join('\n') : candump2Result
-          break
+          case 'candump1':
+            const candump1Result = pgnToCandump1(pgn)
+            if (!candump1Result) {
+              console.error(`Failed to convert PGN ${pgn.pgn} to candump1 format`)
+              return
+            }
+            formattedMessage = Array.isArray(candump1Result) ? candump1Result.join('\n') : candump1Result
+            break
 
-        case 'candump3':
-          const candump3Result = pgnToCandump3(pgn)
-          if (!candump3Result) {
-            console.error(`Failed to convert PGN ${pgn.pgn} to candump3 format`)
-            return
-          }
-          formattedMessage = Array.isArray(candump3Result) ? candump3Result.join('\n') : candump3Result
-          break
+          case 'candump2':
+            const candump2Result = pgnToCandump2(pgn)
+            if (!candump2Result) {
+              console.error(`Failed to convert PGN ${pgn.pgn} to candump2 format`)
+              return
+            }
+            formattedMessage = Array.isArray(candump2Result) ? candump2Result.join('\n') : candump2Result
+            break
 
-        default:
-          formattedMessage = JSON.stringify(pgn)
-          break
+          case 'candump3':
+            const candump3Result = pgnToCandump3(pgn)
+            if (!candump3Result) {
+              console.error(`Failed to convert PGN ${pgn.pgn} to candump3 format`)
+              return
+            }
+            formattedMessage = Array.isArray(candump3Result) ? candump3Result.join('\n') : candump3Result
+            break
+        }
       }
 
-      // Write message to file
-      this.fileStream.write(formattedMessage + '\n')
-      this.messageCount++
+      if (formattedMessage !== undefined) {
+        // Write message to file
+        this.fileStream.write(formattedMessage + '\n')
+        this.messageCount++
 
-      // Emit progress update every 100 messages
-      if (this.messageCount % 10 === 0) {
-        this.emit('progress', this.getStatus())
+        // Emit progress update every 100 messages
+        if (this.messageCount % 10 === 0) {
+          this.emit('progress', this.getStatus())
+        }
       }
     } catch (error) {
       console.error('Failed to record message:', error)

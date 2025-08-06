@@ -59,8 +59,8 @@ const RecordingTab: React.FC = () => {
   const [customFileName, setCustomFileName] = useState('')
   const [autoGenerateFileName, setAutoGenerateFileName] = useState(true)
   const [recordingFormat, setRecordingFormat] = useState(() => {
-    // Load last selected format from localStorage, default to 'canboat-json'
-    return localStorage.getItem('visual-analyzer-recording-format') || 'canboat-json'
+    // Load last selected format from localStorage, default to 'passthrough'
+    return localStorage.getItem('visual-analyzer-recording-format') || 'passthrough'
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -96,7 +96,9 @@ const RecordingTab: React.FC = () => {
 
     // Available recording formats based on Transform tab
   const recordingFormats = [
+    { value: 'passthrough', label: 'Source Format' },
     { value: 'canboat-json', label: 'Canboat JSON' },
+    { value: 'canboat-json-pretty', label: 'Canboat JSON (Pretty)' },
     { value: 'actisense', label: 'Actisense Serial Format' },
     { value: 'actisense-n2k-ascii', label: 'Actisense N2K ASCII' },
     { value: 'ikonvert', label: 'iKonvert Format' },
@@ -302,6 +304,7 @@ const RecordingTab: React.FC = () => {
   const getFileExtension = (format: string): string => {
     switch (format) {
       case 'canboat-json':
+      case 'canboat-json-pretty':
         return 'json'
       case 'actisense':
       case 'actisense-n2k-ascii':
@@ -318,6 +321,7 @@ const RecordingTab: React.FC = () => {
       case 'candump1':
       case 'candump2':
       case 'candump3':
+      case 'passthrough':
         return 'log'
       default:
         return 'json'
