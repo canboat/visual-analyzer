@@ -284,11 +284,11 @@ export const FilterPanel = (props: FilterPanelProps) => {
           </Row>
           <hr className="my-4" />
           <div className="mb-3">
-            <h6 className="mb-3" style={{ fontWeight: 'bold', color: '#6c757d' }}>
+            <h6 className="mb-2" style={{ fontWeight: 'bold', color: '#6c757d' }}>
               Options
             </h6>
             <Row>
-              <Col xs="12" className="mb-2">
+              <Col xs="12" md="6" className="mb-2">
                 <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
                   <Input
                     type="checkbox"
@@ -304,7 +304,23 @@ export const FilterPanel = (props: FilterPanelProps) => {
                   <span>Use CamelCase Field Names</span>
                 </Label>
               </Col>
-              <Col xs="12" className="mb-2">
+              <Col xs="12" md="6" className="mb-2">
+                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                  <Input
+                    type="checkbox"
+                    className="me-2"
+                    checked={filterOptions?.showInfoPgns ?? false}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      props.filterOptions.next({
+                        ...filterOptions,
+                        showInfoPgns: e.target.checked,
+                      })
+                    }}
+                  />
+                  <span>Show Info PGNs</span>
+                </Label>
+              </Col>
+              <Col xs="12" md="6" className="mb-2">
                 <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
                   <Input
                     type="checkbox"
@@ -320,7 +336,7 @@ export const FilterPanel = (props: FilterPanelProps) => {
                   <span>Show Unknown Proprietary PGNs On Separate Lines</span>
                 </Label>
               </Col>
-              <Col xs="12" className="mb-2">
+              <Col xs="12" md="6" className="mb-2">
                 <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
                   <Input
                     type="checkbox"
@@ -334,22 +350,6 @@ export const FilterPanel = (props: FilterPanelProps) => {
                     }}
                   />
                   <span>Show PGN 126208 On Separate Lines</span>
-                </Label>
-              </Col>
-              <Col xs="12" className="mb-2">
-                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
-                  <Input
-                    type="checkbox"
-                    className="me-2"
-                    checked={filterOptions?.showInfoPgns ?? false}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      props.filterOptions.next({
-                        ...filterOptions,
-                        showInfoPgns: e.target.checked,
-                      })
-                    }}
-                  />
-                  <span>Show Info PGNs</span>
                 </Label>
               </Col>
             </Row>
