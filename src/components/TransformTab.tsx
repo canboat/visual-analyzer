@@ -72,6 +72,47 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
     }
   }, [outputFormat])
 
+  // Auto-parse whenever input or parser changes
+  useEffect(() => {
+    if (!inputValue.trim()) {
+      setParsedResult(null)
+      setParseError(null)
+      return
+    }
+
+    try {
+      setParseError(null)
+
+      // Try to parse as JSON first
+      if (inputValue.trim().startsWith('{')) {
+        const jsonData = JSON.parse(inputValue)
+        // If it's already a valid PGN JSON object, use it directly
+        if (jsonData.pgn && typeof jsonData.pgn === 'number') {
+          setParsedResult(jsonData as PGN)
+          console.log('JSON PGN loaded:', jsonData)
+        } else {
+          setParseError('Invalid PGN JSON format - missing required pgn field')
+        }
+        return
+      }
+
+      // Try to parse as string format using the parser if available
+      if (parser) {
+        const result = parser.parseString(inputValue.trim())
+        if (result) {
+          setParsedResult(result)
+          console.log('Parsed PGN:', result)
+        } else {
+          setParseError('Failed to parse message - invalid format or unsupported PGN')
+        }
+      } else {
+        setParseError('Parser not available')
+      }
+    } catch (error) {
+      setParseError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }, [inputValue, parser])
+
   const outputFormats = [
     { value: 'canboat-json', label: 'Canboat JSON' },
     { value: 'actisense', label: 'Actisense Serial Format' },
@@ -167,45 +208,6 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
     }
   }
 
-  const handleParseMessage = () => {
-    if (!inputValue.trim()) {
-      setParseError('Please enter a message to parse')
-      return
-    }
-
-    try {
-      setParseError(null)
-
-      // Try to parse as JSON first
-      if (inputValue.trim().startsWith('{')) {
-        const jsonData = JSON.parse(inputValue)
-        // If it's already a valid PGN JSON object, use it directly
-        if (jsonData.pgn && typeof jsonData.pgn === 'number') {
-          setParsedResult(jsonData as PGN)
-          console.log('JSON PGN loaded:', jsonData)
-        } else {
-          setParseError('Invalid PGN JSON format - missing required pgn field')
-        }
-        return
-      }
-
-      // Try to parse as string format using the parser if available
-      if (parser) {
-        const result = parser.parseString(inputValue.trim())
-        if (result) {
-          setParsedResult(result)
-          console.log('Parsed PGN:', result)
-        } else {
-          setParseError('Failed to parse message - invalid format or unsupported PGN')
-        }
-      } else {
-        setParseError('Parser not available')
-      }
-    } catch (error) {
-      setParseError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
-  }
-
   const handleClear = () => {
     setInputValue('')
     setParsedResult(null)
@@ -255,17 +257,15 @@ const TransformTab: React.FC<TransformTabProps> = ({ parser }) => {
                     rows={12}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    placeholder='Enter your NMEA 2000 message here...
+                    placeholder='Enter your NMEA 2000 message here (auto-parsed)...
 Examples:
 String format: 2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,00
 Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src": 17, "dst": 255, "pgn": 127250, "description": "Vessel Heading", "fields": {"SID": 0, "Heading": 1.5708, "Deviation": null, "Variation": null, "Reference": "Magnetic"}}'
                     style={{ fontFamily: 'monospace' }}
+                    spellCheck={false}
                   />
                 </div>
                 <div className="d-flex gap-2 mb-3">
-                  <button className="btn btn-primary" type="button" onClick={handleParseMessage}>
-                    Parse Message
-                  </button>
                   <button className="btn btn-secondary" type="button" onClick={handleClear}>
                     Clear
                   </button>
