@@ -271,6 +271,12 @@ const AppPanel = (props: any) => {
     console.error(error.stack)
   })
 
+  const deleteAllKeys = (obj: any) => {
+    Object.keys(obj).forEach((key) => {
+      delete obj[key]
+    })
+  }
+
   // Load initial connection status from server
   useEffect(() => {
     const loadInitialStatus = async () => {
@@ -305,191 +311,191 @@ const AppPanel = (props: any) => {
   }, [isEmbedded])
 
   useEffect(() => {
-    // Create a dedicated WebSocket connection for monitoring connection status and errors
-    let statusWebSocket: WebSocket | null = null
+    let webSocket: WebSocket | any = null
+    let reconnectTimeout: NodeJS.Timeout | null = null
 
-    const connectStatusWebSocket = () => {
+    const handleWebSocketMessage = (messageData: string) => {
       try {
-        statusWebSocket = new WebSocket(`ws://${window.location.host}`)
+        const parsed = JSON.parse(messageData)
+        //console.log('Parsed WebSocket event:', parsed.event, parsed)
 
-        statusWebSocket.onopen = () => {
-          console.log('Status WebSocket connected')
-          // Subscribe to connection events
-          statusWebSocket?.send(
-            JSON.stringify({
-              type: 'subscribe',
-              subscription: 'status',
-            }),
-          )
+        // Handle connection status events
+        if (parsed.event === 'nmea:connected') {
+          // Clear all data when reconnecting
+
+          setList((prev: any) => {
+            data.next({})
+            deleteAllKeys(prev)
+            return prev
+          })
+
+          setCurrentSrcs((prev) => {
+            availableSrcs.next([])
+            prev.length = 0
+            return prev
+          })
+
+          setCurrentInfo((prev) => {
+            deviceInfo.next([])
+            deleteAllKeys(prev)
+            return prev
+          })
+
+          sentInfoReq.length = 0
+
+          setConnectionStatus({
+            isConnected: true,
+            lastUpdate: new Date().toISOString(),
+            error: undefined, // Clear any previous errors
+          })
+          return
         }
 
-        statusWebSocket.onmessage = (event) => {
-          //console.log('=== STATUS WEBSOCKET MESSAGE ===')
-          //console.log('Raw message:', event.data)
-          try {
-            const data = JSON.parse(event.data)
-            //console.log('Parsed data:', data)
-            //console.log('Event type:', data.event)
+        if (parsed.event === 'nmea:disconnected') {
+          console.log('NMEA connection lost')
+          setConnectionStatus((prev) => ({
+            isConnected: false,
+            lastUpdate: new Date().toISOString(),
+            error: undefined, // Disconnection isn't necessarily an error
+          }))
+          return
+        }
 
-            if (data.event === 'nmea:connected') {
-              setConnectionStatus((prev) => {
-                //console.log('>>> STATUS WS: Processing nmea:connected event')
-                const newStatus = {
-                  ...prev,
-                  isConnected: true,
-                  lastUpdate: new Date().toISOString(),
-                  error: undefined,
-                }
-                //console.log('>>> STATUS WS: Setting connected status:', newStatus)
-                return newStatus
-              })
-            } else if (data.event === 'nmea:disconnected') {
-              //console.log('>>> STATUS WS: Processing nmea:disconnected event')
-              setConnectionStatus((prev) => {
-                const newStatus = {
-                  ...prev,
-                  isConnected: false,
-                  lastUpdate: new Date().toISOString(),
-                }
-                console.log('>>> STATUS WS: Setting disconnected status:', newStatus)
-                return newStatus
-              })
-            } else if (data.event === 'error') {
-              console.log('>>> STATUS WS: Processing ERROR event:', data.error)
-              console.log('>>> STATUS WS: Current connectionStatus before update:', connectionStatus)
-              setConnectionStatus((prev) => {
-                const newStatus = {
-                  ...prev,
-                  isConnected: false,
-                  error: data.error,
-                  lastUpdate: new Date().toISOString(),
-                }
-                console.log('>>> STATUS WS: Setting ERROR status:', newStatus)
-                return newStatus
-              })
-            } else {
-              //console.log('>>> STATUS WS: Ignoring event type:', data.event)
-            }
-          } catch (error) {
-            console.error('Error parsing status WebSocket message:', error)
+        // Handle error events that might affect connection status
+        if (parsed.event === 'error') {
+          console.error('NMEA connection error received via WebSocket:', parsed.error)
+          setConnectionStatus((prev) => ({
+            ...prev,
+            isConnected: false,
+            error: parsed.error || 'Unknown connection error',
+            lastUpdate: new Date().toISOString(),
+          }))
+          return
+        }
+
+        // Handle NMEA data events
+        if (parsed.event !== 'canboatjs:rawoutput') {
+          return
+        }
+
+        let pgn: PGN | undefined = undefined
+        pgn = parser.parse(parsed.data)
+        if (pgn !== undefined) {
+          //console.log('pgn', pgn)
+          if (infoPGNS.indexOf(pgn!.pgn) === -1) {
+            setList((prev: any) => {
+              prev[getRowKey(pgn!)] = pgn
+              data.next({ ...prev })
+              return prev
+            })
+          }
+
+          if (currentSrcs.indexOf(pgn!.src!) === -1) {
+            setCurrentSrcs((prev) => {
+              prev.push(pgn!.src!)
+              availableSrcs.next([...prev.sort((a, b) => a - b)])
+              return prev
+            })
+          }
+
+          if (infoPGNS.indexOf(pgn!.pgn) !== -1) {
+            setCurrentInfo((prev) => {
+              prev[pgn!.src!] = prev[pgn!.src!] || { src: pgn!.src!, info: {} }
+              prev[pgn!.src!].info[pgn!.pgn! as PgnNumber] = {
+                description: pgn!.description,
+                ...pgn!.fields,
+              }
+              deviceInfo.next({ ...prev })
+              return prev
+            })
+          }
+
+          if (sentInfoReq.indexOf(pgn!.src!) === -1) {
+            sentInfoReq.push(pgn!.src!)
+            requestMetaData(pgn!.src!)
           }
         }
-
-        statusWebSocket.onclose = () => {
-          console.log('Status WebSocket disconnected')
-          // Attempt to reconnect after a delay
-          setTimeout(connectStatusWebSocket, 3000)
-        }
-
-        statusWebSocket.onerror = (error) => {
-          console.error('Status WebSocket error:', error)
-        }
       } catch (error) {
-        console.error('Failed to create status WebSocket:', error)
-        setTimeout(connectStatusWebSocket, 3000)
+        console.error('Error parsing WebSocket message:', error)
       }
     }
 
-    // Only create status WebSocket in standalone mode
-    if (!isEmbedded) {
-      connectStatusWebSocket()
+    const connectWebSocket = () => {
+      try {
+        if (isEmbedded) {
+          // Use SignalK admin UI WebSocket in embedded mode
+          webSocket = props.adminUI.openWebsocket({
+            subscribe: 'none',
+            events: 'canboatjs:rawoutput',
+          })
+
+          webSocket.onmessage = (x: any) => {
+            handleWebSocketMessage(x.data)
+          }
+        } else {
+          // Use direct WebSocket connection in standalone mode
+          webSocket = new WebSocket(`ws://${window.location.host}`)
+
+          webSocket.onopen = () => {
+            console.log('WebSocket connected')
+            // Subscribe to connection events
+            webSocket?.send(
+              JSON.stringify({
+                type: 'subscribe',
+                subscription: 'status',
+              }),
+            )
+          }
+
+          webSocket.onmessage = (event: MessageEvent) => {
+            handleWebSocketMessage(event.data)
+          }
+
+          webSocket.onclose = () => {
+            console.log('WebSocket disconnected')
+            // Attempt to reconnect after a delay in standalone mode
+            if (reconnectTimeout) {
+              clearTimeout(reconnectTimeout)
+            }
+            reconnectTimeout = setTimeout(connectWebSocket, 3000)
+          }
+
+          webSocket.onerror = (error: Event) => {
+            console.error('WebSocket error:', error)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to create WebSocket:', error)
+        if (!isEmbedded && reconnectTimeout) {
+          clearTimeout(reconnectTimeout)
+        }
+        if (!isEmbedded) {
+          reconnectTimeout = setTimeout(connectWebSocket, 3000)
+        }
+      }
     }
 
+    connectWebSocket()
+    setWs(webSocket)
+
     return () => {
-      if (statusWebSocket) {
-        statusWebSocket.close()
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout)
+      }
+      if (webSocket) {
+        if (isEmbedded) {
+          // SignalK WebSocket might have a different close method
+          try {
+            webSocket.close?.()
+          } catch (e) {
+            console.warn('Failed to close SignalK WebSocket:', e)
+          }
+        } else {
+          webSocket.close()
+        }
       }
     }
   }, [isEmbedded])
-
-  useEffect(() => {
-    const ws = props.adminUI.openWebsocket({
-      subscribe: 'none',
-      events: 'canboatjs:rawoutput',
-    })
-
-    ws.onmessage = (x: any) => {
-      // console.log('Received WebSocket message:', x.data)
-
-      const parsed = JSON.parse(x.data)
-      //console.log('Parsed WebSocket event:', parsed.event, parsed)
-
-      // Handle connection status events (keep as backup)
-      if (parsed.event === 'nmea:connected') {
-        //console.log('NMEA connection established')
-        setConnectionStatus({
-          isConnected: true,
-          lastUpdate: new Date().toISOString(),
-          error: undefined, // Clear any previous errors
-        })
-        return
-      }
-
-      if (parsed.event === 'nmea:disconnected') {
-        console.log('NMEA connection lost')
-        setConnectionStatus({
-          isConnected: false,
-          lastUpdate: new Date().toISOString(),
-          error: undefined, // Disconnection isn't necessarily an error
-        })
-        return
-      }
-
-      // Also handle error events that might affect connection status
-      if (parsed.event === 'error') {
-        console.error('NMEA connection error received via WebSocket:', parsed.error)
-        setConnectionStatus((prev) => ({
-          ...prev,
-          error: parsed.error || 'Unknown connection error',
-          lastUpdate: new Date().toISOString(),
-        }))
-        return
-      }
-
-      // Handle NMEA data events
-      if (parsed.event !== 'canboatjs:rawoutput') {
-        return
-      }
-      let pgn: PGN | undefined = undefined
-      pgn = parser.parse(parsed.data)
-      if (pgn !== undefined) {
-        //console.log('pgn', pgn)
-        if (infoPGNS.indexOf(pgn!.pgn) === -1) {
-          setList((prev: any) => {
-            prev[getRowKey(pgn!)] = pgn
-            data.next({ ...prev })
-            return prev
-          })
-        }
-
-        if (!currentSrcs.includes(pgn.src!)) {
-          setCurrentSrcs((prev) => {
-            prev.push(pgn!.src!)
-            availableSrcs.next([...prev.sort((a, b) => a - b)])
-            return prev
-          })
-        }
-
-        if (infoPGNS.indexOf(pgn!.pgn) !== -1) {
-          setCurrentInfo((prev) => {
-            prev[pgn!.src!] = prev[pgn!.src!] || { src: pgn!.src!, info: {} }
-            prev[pgn!.src!].info[pgn!.pgn! as PgnNumber] = {
-              description: pgn!.description,
-              ...pgn!.fields,
-            }
-            deviceInfo.next({ ...prev })
-            return prev
-          })
-        }
-
-        if (sentInfoReq.indexOf(pgn!.src!) === -1) {
-          sentInfoReq.push(pgn!.src!)
-          requestMetaData(pgn!.src!)
-        }
-      }
-    }
-    setWs(ws)
-  }, [])
 
   // Initialize filter settings from localStorage on component mount
   useEffect(() => {

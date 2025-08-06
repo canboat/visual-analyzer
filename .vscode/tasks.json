@@ -7,6 +7,28 @@
       "problemMatcher": ["$eslint-stylish"],
       "label": "npm: format",
       "detail": "npm run lint:fix && npm run prettier"
+    },
+    {
+      "type": "npm",
+      "script": "watch:server",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "label": "npm: watch:server",
+      "detail": "tsc --project tsconfig.server.json --watch"
+    },
+    {
+      "type": "npm",
+      "script": "watch",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "label": "npm: watch",
+      "detail": "webpack --watch --mode development"
     }
   ]
 }
