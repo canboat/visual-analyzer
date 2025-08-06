@@ -555,7 +555,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
                                     wordBreak: 'break-word',
                                     color: '#212529'
                                   }}>
-                                    {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                    {value}
                                   </span>
                                 </div>
                               </div>
