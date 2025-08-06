@@ -294,9 +294,9 @@ export const FilterPanel = (props: FilterPanelProps) => {
                     className="me-2"
                     checked={filterOptions?.useCamelCase ?? true}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      props.filterOptions.next({ 
-                        ...filterOptions, 
-                        useCamelCase: e.target.checked 
+                      props.filterOptions.next({
+                        ...filterOptions,
+                        useCamelCase: e.target.checked,
                       })
                     }}
                   />
@@ -310,9 +310,9 @@ export const FilterPanel = (props: FilterPanelProps) => {
                     className="me-2"
                     checked={filterOptions?.showUnknownProprietaryPGNsOnSeparateLines ?? false}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      props.filterOptions.next({ 
-                        ...filterOptions, 
-                        showUnknownProprietaryPGNsOnSeparateLines: e.target.checked 
+                      props.filterOptions.next({
+                        ...filterOptions,
+                        showUnknownProprietaryPGNsOnSeparateLines: e.target.checked,
                       })
                     }}
                   />
@@ -326,9 +326,9 @@ export const FilterPanel = (props: FilterPanelProps) => {
                     className="me-2"
                     checked={filterOptions?.showPgn126208OnSeparateLines ?? false}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      props.filterOptions.next({ 
-                        ...filterOptions, 
-                        showPgn126208OnSeparateLines: e.target.checked 
+                      props.filterOptions.next({
+                        ...filterOptions,
+                        showPgn126208OnSeparateLines: e.target.checked,
                       })
                     }}
                   />

@@ -88,7 +88,11 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean; filterOpt
         return {
           filter: settings.filter || {},
           doFiltering: settings.doFiltering || false,
-          filterOptions: settings.filterOptions || { useCamelCase: true, showUnknownProprietaryPGNsOnSeparateLines: false, showPgn126208OnSeparateLines: false },
+          filterOptions: settings.filterOptions || {
+            useCamelCase: true,
+            showUnknownProprietaryPGNsOnSeparateLines: false,
+            showPgn126208OnSeparateLines: false,
+          },
         }
       }
     }
@@ -100,7 +104,10 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean; filterOpt
 
 export const getRowKey = (pgn: PGN, options?: FilterOptions): string => {
   let key = `${pgn.getDefinition().Id}-${pgn.pgn}-${pgn.src}`
-  if ((pgn.getDefinition().Fallback === true && options?.showUnknownProprietaryPGNsOnSeparateLines) || (pgn.pgn === 126208 && options?.showPgn126208OnSeparateLines)) {
+  if (
+    (pgn.getDefinition().Fallback === true && options?.showUnknownProprietaryPGNsOnSeparateLines) ||
+    (pgn.pgn === 126208 && options?.showPgn126208OnSeparateLines)
+  ) {
     const fieldHash = createFieldDataHash(pgn.fields)
     key = `${key}-${fieldHash}`
   }
@@ -292,12 +299,12 @@ const AppPanel = (props: any) => {
         createPGNObjects: true,
         includeInputData: true,
       })
-      
+
       newParser.on('error', (pgn: any, error: any) => {
         console.error(`Error parsing ${pgn.pgn} ${error}`)
         console.error(error.stack)
       })
-      
+
       console.log(`Parser created with useCamel: ${options?.useCamelCase ?? true}`)
       setParser(newParser)
       parserRef.current = newParser
@@ -569,16 +576,22 @@ const AppPanel = (props: any) => {
       // Set default values if no saved settings
       filter.next({})
       doFiltering.next(false)
-      filterOptions.next({ useCamelCase: true, showUnknownProprietaryPGNsOnSeparateLines: false, showPgn126208OnSeparateLines: false })
+      filterOptions.next({
+        useCamelCase: true,
+        showUnknownProprietaryPGNsOnSeparateLines: false,
+        showPgn126208OnSeparateLines: false,
+      })
     }
     console.log('Filter settings initialization complete')
   }, [])
 
   // Save filter settings to localStorage when they change
   useEffect(() => {
-    const subscription = combineLatest([filter, doFiltering, filterOptions]).subscribe(([filterValue, doFilteringValue, filterOptionsValue]) => {
-      saveFilterSettings(filterValue, doFilteringValue, filterOptionsValue)
-    })
+    const subscription = combineLatest([filter, doFiltering, filterOptions]).subscribe(
+      ([filterValue, doFilteringValue, filterOptionsValue]) => {
+        saveFilterSettings(filterValue, doFilteringValue, filterOptionsValue)
+      },
+    )
 
     return () => {
       subscription.unsubscribe()
