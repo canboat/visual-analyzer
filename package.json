@@ -72,11 +72,12 @@
   },
   "dependencies": {
     "@canboat/canboatjs": "^3.9.2",
+    "@fortawesome/fontawesome-free": "^6.5.1",
     "bootstrap": "^5.3.7",
-    "express": "^4.18.2",
-    "ws": "^8.14.2",
-    "serialport": "^10.5.0",
     "concurrently": "^7.6.0",
-    "@fortawesome/fontawesome-free": "^6.5.1"
+    "express": "^4.18.2",
+    "reconnect-core": "^1.3.0",
+    "serialport": "^10.5.0",
+    "ws": "^8.14.2"
   }
 }
