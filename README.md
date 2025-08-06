@@ -144,6 +144,8 @@ Example `config.json`:
 
 ## Features
 
+### Core Features (Available in All Modes)
+
 - **Real-time NMEA 2000 data visualization** - Live monitoring of PGN messages
 - **Advanced filtering capabilities**:
   - Filter by PGN numbers
@@ -153,26 +155,86 @@ Example `config.json`:
   - Custom JavaScript filtering
 - **Device information display** - Automatic detection and display of device metadata
 - **Interactive data exploration** - Click on messages to view detailed information
-- **Signal K integration** - Seamlessly integrates with Signal K Server as an embeddable webapp
+- **Message transformation and analysis** - Convert between different NMEA 2000 formats
+- **Message sending capabilities** - Send custom NMEA 2000 messages for testing
+
+### Standalone Mode Features
+
+- **Connection management** - Configure and manage multiple data source connections:
+  - Serial/USB connections to NMEA 2000 gateways
+  - TCP/IP network connections
+  - Signal K Server connections  
+  - SocketCAN connections
+  - File playback with speed control
+- **Configuration persistence** - Save connection profiles and settings locally
+- **Direct hardware access** - Connect directly to NMEA 2000 hardware without intermediate servers
+- **Data recording** - Record NMEA 2000 data streams to files in multiple formats:
+  - Source format (passthrough)
+  - Canboat JSON formats
+  - Actisense serial formats
+  - Digital Yacht iKonvert format
+  - Yacht Devices RAW formats
+  - PCDIN and MXPGN formats
+  - Linux CAN utils (candump) formats
+- **Recording management** - Start/stop recording with custom filenames and format selection
+- **File management** - Browse, download, and delete recorded files
+
+### Signal K Embedded Mode Features
+
+- **Seamless Signal K integration** - Uses Signal K Server's existing data connections
+- **Unified authentication** - Leverages Signal K Server's user authentication system
+- **Embedded web interface** - Runs within Signal K Server's admin interface
+- **Zero configuration** - Automatically uses Signal K's configured NMEA 2000 data sources
+
+> **Note**: Connection management and data recording features are not available when embedded in Signal K Server, as data sources are managed by Signal K Server itself.
 
 ## Data Sources
 
-The Visual Analyzer supports multiple data source types:
+### Standalone Mode
+
+The Visual Analyzer supports multiple data source types when running as a standalone server:
 
 - **Serial/USB connections** - Direct connection to NMEA 2000 gateways and adapters
 - **TCP/IP connections** - Network-based NMEA 2000 data streams
-- **File input** - Analysis of previously recorded NMEA 2000 data
-- **Signal K Server** - Integration with Signal K Server's live data streams
+- **Signal K Server connections** - Connect to remote Signal K Server instances
+- **SocketCAN connections** - Direct access to Linux CAN interfaces
+- **File input** - Analysis of previously recorded NMEA 2000 data with playback controls
+- **Data recording** - Save live NMEA 2000 data streams to files for later analysis or sharing
+
+### Signal K Embedded Mode
+
+When running as a Signal K plugin, the Visual Analyzer automatically uses:
+
+- **Signal K Server's data connections** - All NMEA 2000 data sources configured in Signal K Server
+- **Real-time streaming** - Live data from Signal K Server's data processing pipeline
+- **Device discovery** - Inherits device information discovered by Signal K Server
+
+> **Note**: Data source configuration and recording features are not available in embedded mode as they're managed by the host Signal K Server.
 
 ## How It Works
 
+### Standalone Mode
+
 The visual-analyzer connects to NMEA 2000 data sources and:
 
-1. **Receives NMEA 2000 data** - Connects to serial ports, TCP streams, or files
+1. **Receives NMEA 2000 data** - Connects to serial ports, TCP streams, Signal K servers, SocketCAN interfaces, or files
 2. **Parses messages** - Uses `@canboat/canboatjs` and `@canboat/ts-pgns` for message parsing
 3. **Filters data** - Applies user-defined filters to focus on relevant messages
 4. **Displays information** - Shows parsed message data in an organized, searchable interface
 5. **Device discovery** - Automatically requests and displays device information for detected sources
+6. **Manages connections** - Provides full connection management and configuration capabilities
+
+### Signal K Embedded Mode
+
+When embedded in Signal K Server, the analyzer:
+
+1. **Receives processed data** - Gets NMEA 2000 data from Signal K Server's data pipeline
+2. **Real-time filtering** - Applies filters to live Signal K delta messages
+3. **Displays information** - Shows data within Signal K Server's web interface
+4. **Inherits authentication** - Uses Signal K Server's user authentication system
+5. **Device information** - Displays device metadata managed by Signal K Server
+
+> **Note**: In embedded mode, connection management is handled by Signal K Server. The analyzer focuses purely on data visualization and analysis.
 
 ## Filtering Options
 
@@ -191,6 +253,38 @@ Filter messages by device manufacturer to focus on equipment from specific vendo
 ### JavaScript Filtering
 
 Advanced users can write custom JavaScript expressions for complex filtering logic.
+
+## Data Recording (Standalone Mode Only)
+
+The Visual Analyzer includes powerful data recording capabilities when running in standalone mode, allowing you to capture live NMEA 2000 data streams for later analysis, sharing, or archival purposes.
+
+### Recording Features
+
+- **Multiple output formats** - Record data in various industry-standard formats
+- **Real-time recording** - Capture live data streams without interrupting analysis
+- **Custom filenames** - Use auto-generated timestamps or specify custom filenames  
+- **File management** - Browse, download, and manage recorded files
+- **Progress monitoring** - Track recording status, message count, and file size in real-time
+
+### Supported Recording Formats
+
+- **Source Format (Passthrough)** - Records data exactly as received from the source
+- **Canboat JSON** - Standard and pretty-printed JSON formats for easy parsing
+- **Actisense Formats** - Serial format and N2K ASCII for Actisense devices
+- **Digital Yacht iKonvert** - Native format for iKonvert NMEA 2000 gateways
+- **Yacht Devices RAW** - Both standard and full RAW formats
+- **PCDIN & MXPGN** - Industry-standard proprietary formats
+- **Linux CAN Utils** - Multiple candump formats for Linux-based systems
+
+### Recording Storage
+
+Recorded files are automatically saved to:
+- **Linux/macOS**: `~/.visual-analyzer/recordings/`
+- **Windows**: `%APPDATA%\visual-analyzer\recordings\`
+
+Files are organized with automatic timestamps and include metadata about message counts and file formats.
+
+> **Note**: Recording functionality is only available in standalone mode. When embedded in Signal K Server, use Signal K's built-in data logging features instead.
 
 ## Architecture
 
