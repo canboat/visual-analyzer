@@ -25,6 +25,8 @@ import { SentencePanel } from './SentencePanel'
 import { ConnectionManagerPanel } from './ConnectionManagerPanel'
 import { SendTab } from './SendTab'
 import TransformTab from './TransformTab'
+import RecordingTab from './RecordingTab'
+import { RecordingProvider, useRecording } from '../contexts/RecordingContext'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
 
@@ -138,9 +140,11 @@ const infoPGNS: number[] = [60928, 126998, 126996]
 const SEND_TAB_ID = 'send'
 const ANALYZER_TAB_ID = 'analyzer'
 const TRANSFORM_TAB_ID = 'transform'
+const RECORDING_TAB_ID = 'recording'
 const CONNECTIONS_TAB_ID = 'connections'
 
-const AppPanel = (props: any) => {
+const AppPanelInner = (props: any) => {
+  const { dispatch } = useRecording()
   // Check if we're in embedded mode (SignalK plugin) vs standalone mode
   const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
 
@@ -148,7 +152,7 @@ const AppPanel = (props: any) => {
     const savedTab = loadActiveTab()
     // Validate the saved tab - if in embedded mode, don't allow connections tab
     if (savedTab && (savedTab !== CONNECTIONS_TAB_ID || !isEmbedded)) {
-      const validTabs = [ANALYZER_TAB_ID, SEND_TAB_ID, TRANSFORM_TAB_ID]
+      const validTabs = [ANALYZER_TAB_ID, SEND_TAB_ID, TRANSFORM_TAB_ID, RECORDING_TAB_ID]
       if (!isEmbedded) {
         validTabs.push(CONNECTIONS_TAB_ID)
       }
@@ -430,6 +434,35 @@ const AppPanel = (props: any) => {
           return
         }
 
+        // Handle recording events
+        if (parsed.event === 'recording:started') {
+          // Recording started event
+          console.log('Recording started:', parsed.data)
+          dispatch({ type: 'RECORDING_STARTED', payload: parsed.data })
+          return
+        }
+
+        if (parsed.event === 'recording:stopped') {
+          // Recording stopped event
+          console.log('Recording stopped:', parsed.data)
+          dispatch({ type: 'RECORDING_STOPPED', payload: parsed.data })
+          return
+        }
+
+        if (parsed.event === 'recording:progress') {
+          // Recording progress event
+          console.log('Recording progress:', parsed.data)
+          dispatch({ type: 'RECORDING_PROGRESS', payload: parsed.data })
+          return
+        }
+
+        if (parsed.event === 'recording:error') {
+          // Recording error event
+          console.error('Recording error:', parsed.data)
+          dispatch({ type: 'RECORDING_ERROR', payload: parsed.data })
+          return
+        }
+
         // Handle NMEA data events
         if (parsed.event !== 'canboatjs:rawoutput') {
           return
@@ -679,6 +712,17 @@ const AppPanel = (props: any) => {
         {!isEmbedded && (
           <NavItem>
             <NavLink
+              className={activeTab === RECORDING_TAB_ID ? 'active' : ''}
+              onClick={() => handleTabChange(RECORDING_TAB_ID)}
+              style={{ cursor: 'pointer' }}
+            >
+              Recording
+            </NavLink>
+          </NavItem>
+        )}
+        {!isEmbedded && (
+          <NavItem>
+            <NavLink
               className={activeTab === CONNECTIONS_TAB_ID ? 'active' : ''}
               onClick={() => handleTabChange(CONNECTIONS_TAB_ID)}
               style={{ cursor: 'pointer' }}
@@ -731,6 +775,11 @@ const AppPanel = (props: any) => {
           <TransformTab parser={parser || undefined} />
         </TabPane>
         {!isEmbedded && (
+          <TabPane tabId={RECORDING_TAB_ID}>
+            <RecordingTab />
+          </TabPane>
+        )}
+        {!isEmbedded && (
           <TabPane tabId={CONNECTIONS_TAB_ID}>
             <ConnectionManagerPanel connectionStatus={connectionStatus} onStatusUpdate={setConnectionStatus} />
           </TabPane>
@@ -764,6 +813,14 @@ function requestMetaData(src: number) {
         console.error(`Error requesting metadata for PGN ${num}:`, error)
       })
   })
+}
+
+const AppPanel = (props: any) => {
+  return (
+    <RecordingProvider>
+      <AppPanelInner {...props} />
+    </RecordingProvider>
+  )
 }
 
 export default AppPanel
