@@ -1,6 +1,6 @@
 const { expect } = require('chai')
 const http = require('http')
-const VisualAnalyzerServer = require('../server/server')
+const VisualAnalyzerServer = require('../dist/server.js').default
 
 describe('Visual Analyzer Server', function () {
   let server

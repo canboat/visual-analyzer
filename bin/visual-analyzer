@@ -119,7 +119,25 @@ console.log('╰─────────────────────�
 console.log('')
 
 // Start the server by requiring the main server entry point
-const serverPath = path.join(__dirname, '..', 'server', 'index.js')
+const serverPath = path.join(__dirname, '..', 'dist', 'index.js')
+
+// Check if the TypeScript has been compiled
+if (!fs.existsSync(serverPath)) {
+  console.error('Visual Analyzer server not compiled. Building TypeScript sources...')
+  
+  // Try to run build:server
+  const { execSync } = require('child_process')
+  try {
+    execSync('npm run build:server', { 
+      cwd: path.join(__dirname, '..'),
+      stdio: 'inherit'
+    })
+  } catch (error) {
+    console.error('Failed to compile TypeScript sources:')
+    console.error('Please run "npm run build:server" manually first.')
+    process.exit(1)
+  }
+}
 
 // Handle custom config file if specified
 if (options.configFile) {
