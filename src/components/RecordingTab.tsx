@@ -58,7 +58,10 @@ const RecordingTab: React.FC = () => {
   const [recordingFiles, setRecordingFiles] = useState<RecordingFile[]>([])
   const [customFileName, setCustomFileName] = useState('')
   const [autoGenerateFileName, setAutoGenerateFileName] = useState(true)
-  const [recordingFormat, setRecordingFormat] = useState('canboat-json')
+  const [recordingFormat, setRecordingFormat] = useState(() => {
+    // Load last selected format from localStorage, default to 'canboat-json'
+    return localStorage.getItem('visual-analyzer-recording-format') || 'canboat-json'
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -144,6 +147,12 @@ const RecordingTab: React.FC = () => {
     } catch (err) {
       console.error('Failed to load recording files:', err)
     }
+  }
+
+  const handleFormatChange = (newFormat: string) => {
+    setRecordingFormat(newFormat)
+    // Save to localStorage to remember for next session
+    localStorage.setItem('visual-analyzer-recording-format', newFormat)
   }
 
   const startRecording = async () => {
@@ -372,7 +381,7 @@ const RecordingTab: React.FC = () => {
                       type="select"
                       id="recordingFormat"
                       value={recordingFormat}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRecordingFormat(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFormatChange(e.target.value)}
                     >
                       {recordingFormats.map((format) => (
                         <option key={format.value} value={format.value}>
