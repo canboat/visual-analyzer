@@ -102,7 +102,7 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean; filterOpt
   return null
 }
 
-export const getRowKey = (pgn: PGN, options?: FilterOptions): string => {
+export const getRowKey = (pgn: PGN, options: FilterOptions | undefined): string => {
   let key = `${pgn.getDefinition().Id}-${pgn.pgn}-${pgn.src}`
   if (
     (pgn.getDefinition().Fallback === true && options?.showUnknownProprietaryPGNsOnSeparateLines) ||
@@ -710,6 +710,7 @@ const AppPanel = (props: any) => {
                       data={data}
                       filter={filter}
                       doFiltering={doFiltering}
+                      filterOptions={filterOptions}
                       onRowClicked={(row: PGN) => {
                         selectedPgn.next(row)
                       }}
