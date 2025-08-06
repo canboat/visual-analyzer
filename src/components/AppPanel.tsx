@@ -319,7 +319,7 @@ const AppPanelInner = (props: any) => {
   useEffect(() => {
     const subscription = filterOptions.subscribe((options) => {
       console.log('filterOptions subscription triggered with:', options)
-      
+
       if (parserRef.current) {
         // Update parser options instead of recreating the parser
         parserRef.current.options.useCamel = options?.useCamelCase ?? true
