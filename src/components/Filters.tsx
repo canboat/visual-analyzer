@@ -91,17 +91,19 @@ const toPgnOption = (i: string) =>
 
 const toSrcOption = (i: number, devices?: DeviceMap) => {
   const model = devices?.[i]?.info[126996 as PgnNumber]?.modelId
+  const man = devices?.[i]?.info[60928 as PgnNumber]?.manufacturerCode
   return {
     value: i,
-    label: `${i} ${model ? '(' + model + ')' : ''}`,
+    label: `${i} ${model ? '(' + model + ')' : ''} ${man ? '[' + man + ']' : ''}`,
   }
 }
 
 const toDstOption = (i: number, devices?: DeviceMap) => {
   const model = devices?.[i]?.info[126996 as PgnNumber]?.modelId
+  const man = devices?.[i]?.info[60928 as PgnNumber]?.manufacturerCode
   return {
     value: i,
-    label: `${i} ${model ? '(' + model + ')' : ''}`,
+    label: `${i} ${model ? '(' + model + ')' : ''} ${man ? '[' + man + ']' : ''}`,
   }
 }
 
