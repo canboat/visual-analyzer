@@ -163,6 +163,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
         validPgnSubject.next(undefined)
       }
     } catch (error) {
+      console.error('Error parsing input value:', error)
       setParseError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`)
       selectedPgnSubject.next(null)
       validPgnSubject.next(undefined)
@@ -325,7 +326,7 @@ String format: 2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,0
 Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src": 17, "dst": 255, "pgn": 127250, "description": "Vessel Heading", "fields": {"SID": 0, "Heading": 1.5708, "Deviation": null, "Variation": null, "Reference": "Magnetic"}}'
                     style={{
                       fontFamily: 'monospace',
-                      whiteSpace: 'nowrap',
+                      whiteSpace: 'pre',
                       overflowX: 'auto',
                     }}
                     spellCheck={false}
@@ -375,7 +376,7 @@ Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src":
                     <label htmlFor="transformOutput" className="form-label mb-0">
                       Parsed Result:
                     </label>
-                    {parsedResult && (outputFormat !== 'canboat-json' && outputFormat !== 'canboat-json-camel') && (
+                    {parsedResult && (!(parsedResult instanceof PGN) || (outputFormat !== 'canboat-json' && outputFormat !== 'canboat-json-camel')) && (
                       <button
                         className="btn btn-outline-primary btn-sm"
                         type="button"
@@ -386,7 +387,7 @@ Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src":
                       </button>
                     )}
                   </div>
-                  {parsedResult && (outputFormat === 'canboat-json' || outputFormat === 'canboat-json-camel') ? (
+                  {parsedResult instanceof PGN && (outputFormat === 'canboat-json' || outputFormat === 'canboat-json-camel') ? (
                     <div style={{ border: '1px solid #ced4da', borderRadius: '0.25rem', backgroundColor: '#f8f9fa' }}>
                       <SentencePanel selectedPgn={validPgnSubject as any} info={deviceInfoSubject} />
                     </div>

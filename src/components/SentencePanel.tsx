@@ -439,7 +439,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
       </Nav>
       <TabContent activeTab={activeTab} style={{ flex: 1, overflow: 'auto' }}>
         <TabPane tabId={DATA_TAB_ID}>
-          <Card className="mt-3">
+          <Card>
             <CardHeader className="d-flex justify-content-between align-items-center">
               {tabHeader()}
               <Button size="sm" color="secondary" onClick={copyPgnData} title="Copy PGN data to clipboard">
@@ -453,7 +453,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
         </TabPane>
         {pgnData.input && pgnData.input.length > 0 && (
           <TabPane tabId={INPUT_TAB_ID}>
-            <Card className="mt-3">
+            <Card>
               <CardHeader className="d-flex justify-content-between align-items-center">
                {tabHeader()}
                 <Button size="sm" color="secondary" onClick={copyInputData} title="Copy input data to clipboard">
@@ -474,7 +474,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
         )}
         {definition !== undefined && (
           <TabPane tabId={PGNDEF_TAB_ID}>
-            <Card className="mt-3">
+            <Card>
               <CardHeader>
                {tabHeader()}
               </CardHeader>
@@ -486,7 +486,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
         )}
         {info[pgnData.src!]?.info && (
           <TabPane tabId={DEVICE_TAB_ID}>
-            <Card className="mt-3">
+            <Card>
               <CardHeader>
                 {tabHeader()}
               </CardHeader>
@@ -550,7 +550,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
           </TabPane>
         )}
         <TabPane tabId={MAPPING_TAB_ID}>
-          <Card className="mt-3">
+          <Card>
             <CardHeader>
               {tabHeader()}
             </CardHeader>
