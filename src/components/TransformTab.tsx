@@ -80,6 +80,8 @@ const TransformTab: React.FC<TransformTabProps> = () => {
   })
   const [parsedResult, setParsedResult] = useState<PGN | null>(null)
   const [parseError, setParseError] = useState<string | null>(null)
+  const [signalKResult, setSignalKResult] = useState<string | null>(null)
+  const [signalKLoading, setSignalKLoading] = useState<boolean>(false)
   const [outputFormat, setOutputFormat] = useState<string>(() => {
     try {
       return localStorage.getItem('transformTab-outputFormat') || 'canboat-json'
@@ -105,6 +107,42 @@ const TransformTab: React.FC<TransformTabProps> = () => {
       console.warn('Failed to save output format to localStorage:', error)
     }
   }, [outputFormat])
+
+  // Function to transform to SignalK using the API endpoint
+  const transformToSignalK = async (pgn: PGN): Promise<string> => {
+    try {
+      setSignalKLoading(true)
+      const response = await fetch('/api/transform/signalk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: pgn }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.error || 'SignalK transformation failed')
+      }
+
+      // Format the SignalK deltas for display
+      if (result.signalKDeltas && result.signalKDeltas.length > 0) {
+        return JSON.stringify(result.signalKDeltas, null, 2)
+      } else {
+        return 'No SignalK deltas generated'
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return `Error transforming to SignalK: ${errorMessage}`
+    } finally {
+      setSignalKLoading(false)
+    }
+  }
 
   // Auto-parse whenever input, parser, or output format changes
   useEffect(() => {
@@ -140,7 +178,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
         const lines = inputValue.split('\n').filter((line) => line.trim())
 
         let result: PGN | undefined = undefined
-        parser.options.useCamel = outputFormat === 'canboat-json-camel'
+        parser.options.useCamel = outputFormat === 'canboat-json-camel' || outputFormat === 'signalk'
         for (const line of lines) {
           result = parser.parseString(line)
           if (result) {
@@ -168,19 +206,31 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     }
   }, [inputValue, parser, outputFormat])
 
+  // Handle SignalK transformation when format changes to signalk
+  useEffect(() => {
+    if (outputFormat === 'signalk' && parsedResult) {
+      transformToSignalK(parsedResult).then((result) => {
+        setSignalKResult(result)
+      })
+    } else {
+      setSignalKResult(null)
+    }
+  }, [outputFormat, parsedResult])
+
   const outputFormats = [
     { value: 'canboat-json', label: 'Canboat JSON' },
     { value: 'canboat-json-camel', label: 'Canboat JSON (Camel Case)' },
-    { value: 'actisense', label: 'Actisense Serial Format' },
+    { value: 'actisense', label: 'Actisense Serial' },
     { value: 'actisense-n2k-ascii', label: 'Actisense N2K ASCII' },
-    { value: 'ikonvert', label: 'iKonvert Format' },
-    { value: 'ydwg-full-raw', label: 'Yacht Devices RAW Format' },
-    { value: 'ydwg-raw', label: 'Yacht Devices RAW Send Format' },
-    { value: 'pcdin', label: 'PCDIN Format' },
-    { value: 'mxpgn', label: 'MXPGN Format' },
+    { value: 'ikonvert', label: 'iKonvert' },
+    { value: 'ydwg-full-raw', label: 'Yacht Devices RAW' },
+    { value: 'ydwg-raw', label: 'Yacht Devices RAW Send' },
+    { value: 'pcdin', label: 'PCDIN' },
+    { value: 'mxpgn', label: 'MXPGN' },
     { value: 'candump1', label: 'Linux CAN utils (Angstrom)' },
     { value: 'candump2', label: 'Linux CAN utils (Debian)' },
     { value: 'candump3', label: 'Linux CAN utils (log format)' },
+    { value: 'signalk', label: 'Signal K' },
   ]
 
   const formatOutput = (pgn: PGN, format: string): string => {
@@ -258,6 +308,13 @@ const TransformTab: React.FC<TransformTabProps> = () => {
           }
           return candump3Result || 'Unable to format to candump3 format'
 
+        case 'signalk':
+          // Return the cached SignalK result or loading message
+          if (signalKLoading) {
+            return 'Loading SignalK transformation...'
+          }
+          return signalKResult || 'SignalK transformation not available'
+
         default:
           return JSON.stringify(pgn, null, 2)
       }
@@ -270,6 +327,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     setInputValue('')
     setParsedResult(null)
     setParseError(null)
+    setSignalKResult(null)
     // Clear the subjects as well
     selectedPgnSubject.next(null)
     validPgnSubject.next(undefined)
@@ -278,7 +336,13 @@ const TransformTab: React.FC<TransformTabProps> = () => {
   const handleCopyOutput = async () => {
     if (!parsedResult) return
 
-    const outputText = formatOutput(parsedResult, outputFormat)
+    let outputText: string
+    if (outputFormat === 'signalk') {
+      outputText = signalKResult || 'SignalK transformation not available'
+    } else {
+      outputText = formatOutput(parsedResult, outputFormat)
+    }
+
     try {
       await navigator.clipboard.writeText(outputText)
       // Optional: You could add a toast notification here
