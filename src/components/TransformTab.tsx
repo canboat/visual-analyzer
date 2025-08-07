@@ -120,11 +120,18 @@ const TransformTab: React.FC<TransformTabProps> = () => {
 
       // Try to parse as string format using the parser if available
       if (parser) {
-        const result = parser.parseString(inputValue.trim())
-        if (result) {
-          setParsedResult(result)
-          console.log('Parsed PGN:', result)
-        } else {
+        const lines = inputValue.split('\n').filter(line => line.trim())
+
+        let result: PGN | undefined = undefined
+        for (const line of lines) {
+          result = parser.parseString(line)
+          if (result) {
+            setParsedResult(result)
+            console.log('Parsed PGN:', result)
+            break
+          }
+        }
+        if (!result) {
           setParseError('Failed to parse message - invalid format or unsupported PGN')
         }
       } else {
@@ -155,6 +162,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     try {
       switch (format) {
         case 'canboat-json':
+          delete pgn.input
           return JSON.stringify(pgn, null, 2)
 
         case 'actisense':
