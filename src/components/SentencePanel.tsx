@@ -30,8 +30,8 @@ interface ByteMappingProps {
 }
 
 const ByteMappingComp = ({ pgnData, definition }: ByteMappingProps) => {
-  if (!definition || !pgnData.input || pgnData.input.length === 0) {
-    return <div>No input data or definition available for byte mapping</div>
+  if (!definition || !(pgnData as any).rawData || !(pgnData as any).byteMapping) {
+    return <div>No byte mapping available</div>
   }
 
   // Parse the input data to get raw bytes using canboatjs utilities
@@ -397,11 +397,13 @@ export const SentencePanel = (props: SentencePanelProps) => {
             Data
           </NavLink>
         </NavItem>
-        <NavItem>
-          <NavLink className={activeTab === INPUT_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(INPUT_TAB_ID)}>
-            Input
-          </NavLink>
-        </NavItem>
+        {pgnData.input && pgnData.input.length > 0 && (
+          <NavItem>
+            <NavLink className={activeTab === INPUT_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(INPUT_TAB_ID)}>
+              Input
+            </NavLink>
+          </NavItem>
+        )}
         <NavItem>
           <NavLink className={activeTab === DEVICE_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(DEVICE_TAB_ID)}>
             Device Information
@@ -437,6 +439,27 @@ export const SentencePanel = (props: SentencePanelProps) => {
             </CardBody>
           </Card>
         </TabPane>
+        {pgnData.input && pgnData.input.length > 0 && (
+          <TabPane tabId={INPUT_TAB_ID}>
+            <Card className="mt-3">
+              <CardHeader className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">Input Data</h5>
+                <Button size="sm" color="secondary" onClick={copyInputData} title="Copy input data to clipboard">
+                  Copy
+                </Button>
+              </CardHeader>
+              <CardBody>
+                <div style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                  {(pgnData.input || []).map((input, index) => (
+                    <div key={index} style={{ marginBottom: '5px' }}>
+                      {input}
+                    </div>
+                  ))}
+                </div>
+              </CardBody>
+            </Card>
+          </TabPane>
+        )}
         {definition !== undefined && (
           <TabPane tabId={PGNDEF_TAB_ID}>
             <Card className="mt-3">
