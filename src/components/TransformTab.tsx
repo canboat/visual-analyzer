@@ -34,6 +34,12 @@ import { BehaviorSubject } from 'rxjs'
 import { SentencePanel } from './SentencePanel'
 import { DeviceMap } from '../types'
 
+interface MessageHistory {
+  message: string
+  timestamp: string
+  format: string
+}
+
 interface TransformTabProps {
   // No longer accepting parser from parent
 }
@@ -89,6 +95,8 @@ const TransformTab: React.FC<TransformTabProps> = () => {
       return 'canboat-json'
     }
   })
+  const [messageHistory, setMessageHistory] = useState<MessageHistory[]>([])
+  const [showHistoryDropdown, setShowHistoryDropdown] = useState<boolean>(false)
 
   // Save inputValue to localStorage whenever it changes
   useEffect(() => {
@@ -107,6 +115,108 @@ const TransformTab: React.FC<TransformTabProps> = () => {
       console.warn('Failed to save output format to localStorage:', error)
     }
   }, [outputFormat])
+
+  // Load message history from localStorage on component mount
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('transformTab-messageHistory')
+    if (savedHistory) {
+      try {
+        setMessageHistory(JSON.parse(savedHistory))
+      } catch (error) {
+        console.warn('Failed to parse message history from localStorage:', error)
+      }
+    }
+  }, [])
+
+  // Save message history to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('transformTab-messageHistory', JSON.stringify(messageHistory))
+  }, [messageHistory])
+
+  // Function to detect message format
+  const detectMessageFormat = (message: string): string => {
+    const trimmed = message.trim()
+    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+      return 'JSON'
+    } else {
+      return 'String'
+    }
+  }
+
+  // Function to get a readable description for a message
+  const getMessageDescription = (message: string, format: string): string => {
+    // For multi-line messages, only show the first line
+    const firstLine = message.split('\n')[0]
+
+    if (format !== 'JSON') {
+      return firstLine
+    }
+
+    try {
+      const parsed = JSON.parse(message)
+      if (Array.isArray(parsed)) {
+        // For arrays, show count and first PGN info
+        if (parsed.length > 0 && parsed[0].pgn) {
+          const firstPgn = parsed[0]
+          const desc = firstPgn.description || `PGN ${firstPgn.pgn}`
+          return `${parsed.length} messages: ${desc}${parsed.length > 1 ? ', ...' : ''}`
+        }
+        return `${parsed.length} messages`
+      } else {
+        // For single objects, show PGN description
+        if (parsed.pgn) {
+          return parsed.description || `PGN ${parsed.pgn}`
+        }
+        return 'JSON message'
+      }
+    } catch (error) {
+      return firstLine
+    }
+  }
+
+  // Function to add message to history
+  const addToHistory = (message: string) => {
+    if (!message.trim()) return
+
+    const historyItem: MessageHistory = {
+      message,
+      timestamp: new Date().toISOString(),
+      format: detectMessageFormat(message),
+    }
+
+    setMessageHistory((prev) => {
+      // Remove duplicate if exists
+      const filtered = prev.filter((item) => item.message !== message)
+      // Add new item at the beginning and limit to 20 items
+      return [historyItem, ...filtered].slice(0, 20)
+    })
+  }
+
+  // Function to select message from history
+  const selectFromHistory = (message: string) => {
+    setInputValue(message)
+    setShowHistoryDropdown(false)
+  }
+
+  // Reset history navigation when input changes manually
+  const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputValue(event.target.value)
+  }
+
+  // Function to clear history
+  const clearHistory = () => {
+    if (messageHistory.length > 0 && !confirm('Are you sure you want to clear all message history?')) {
+      return
+    }
+    setMessageHistory([])
+    setShowHistoryDropdown(false)
+  }
+
+  // Function to delete a specific history item
+  const deleteHistoryItem = (index: number, event: React.MouseEvent) => {
+    event.stopPropagation() // Prevent selecting the item when deleting
+    setMessageHistory((prev) => prev.filter((_, i) => i !== index))
+  }
 
   // Function to transform to SignalK using the API endpoint
   const transformToSignalK = async (pgn: PGN): Promise<string> => {
@@ -165,6 +275,8 @@ const TransformTab: React.FC<TransformTabProps> = () => {
           setParsedResult(jsonData as PGN)
           selectedPgnSubject.next(jsonData as PGN)
           validPgnSubject.next(jsonData as PGN)
+          // Add successful parse to history
+          addToHistory(inputValue)
         } else {
           setParseError('Invalid PGN JSON format - missing required pgn field')
           selectedPgnSubject.next(null)
@@ -185,6 +297,8 @@ const TransformTab: React.FC<TransformTabProps> = () => {
             setParsedResult(result)
             selectedPgnSubject.next(result)
             validPgnSubject.next(result)
+            // Add successful parse to history
+            addToHistory(inputValue)
             break
           }
         }
@@ -372,15 +486,128 @@ const TransformTab: React.FC<TransformTabProps> = () => {
               </div>
               <div className="card-body">
                 <div className="form-group">
-                  <label htmlFor="nmea2000Input" className="form-label">
-                    Enter NMEA 2000 message (String or JSON format):
-                  </label>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                      <label htmlFor="nmea2000Input" className="form-label mb-0">
+                        Enter NMEA 2000 message (String or JSON format):
+                      </label>
+                    </div>
+                    {messageHistory.length > 0 && (
+                      <div className="position-relative">
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary btn-sm"
+                          onClick={() => setShowHistoryDropdown(!showHistoryDropdown)}
+                        >
+                          <i className="fas fa-history me-1"></i>
+                          History ({messageHistory.length})
+                        </button>
+                        {showHistoryDropdown && (
+                          <>
+                            <div
+                              className="position-fixed top-0 start-0 w-100 h-100"
+                              style={{ zIndex: 1040 }}
+                              onClick={() => setShowHistoryDropdown(false)}
+                            />
+                            <div
+                              className="position-absolute bg-white border rounded shadow-lg"
+                              style={{
+                                top: '100%',
+                                right: 0,
+                                minWidth: '400px',
+                                maxHeight: '300px',
+                                overflowY: 'auto',
+                                zIndex: 1050,
+                                marginTop: '4px',
+                              }}
+                            >
+                              <div className="p-2 border-bottom bg-light">
+                                <div className="d-flex justify-content-between align-items-center">
+                                  <small className="text-muted fw-bold">Message History</small>
+                                  <div className="d-flex gap-2">
+                                    <button
+                                      type="button"
+                                      className="btn btn-outline-danger btn-sm"
+                                      onClick={clearHistory}
+                                      title="Clear all history"
+                                      style={{ fontSize: '0.75em', padding: '2px 8px' }}
+                                    >
+                                      <i className="fas fa-trash me-1"></i>
+                                      Clear All
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                              {messageHistory.map((item, index) => (
+                                <div
+                                  key={index}
+                                  className="p-2 border-bottom cursor-pointer"
+                                  style={{
+                                    cursor: 'pointer',
+                                    transition: 'background-color 0.2s',
+                                  }}
+                                  onClick={() => selectFromHistory(item.message)}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#f8f9fa'
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = 'transparent'
+                                  }}
+                                >
+                                  <div className="d-flex justify-content-between align-items-start">
+                                    <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                                      <div className="d-flex align-items-center mb-1">
+                                        <span className="badge bg-secondary me-2" style={{ fontSize: '0.7em' }}>
+                                          {item.format}
+                                        </span>
+                                        <small className="text-muted">
+                                          {new Date(item.timestamp).toLocaleString()}
+                                        </small>
+                                      </div>
+                                      <div
+                                        className="font-monospace small text-truncate"
+                                        style={{ fontSize: '0.75em' }}
+                                        title={item.message}
+                                      >
+                                        {getMessageDescription(item.message, item.format)}
+                                      </div>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="btn btn-sm text-danger p-1"
+                                      onClick={(e) => deleteHistoryItem(index, e)}
+                                      title="Delete this item"
+                                      style={{
+                                        fontSize: '14px',
+                                        lineHeight: 1,
+                                        minWidth: '22px',
+                                        height: '22px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '1px solid #dc3545',
+                                        borderRadius: '3px',
+                                        backgroundColor: 'white',
+                                        fontWeight: 'bold',
+                                      }}
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <textarea
                     id="nmea2000Input"
                     className="form-control mb-3"
                     rows={12}
                     value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
+                    onChange={handleInputChange}
                     placeholder='Enter your NMEA 2000 message here (auto-parsed)...
 Examples:
 String format: 2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,00
