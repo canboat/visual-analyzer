@@ -30,8 +30,8 @@ interface ByteMappingProps {
 }
 
 const ByteMappingComp = ({ pgnData, definition }: ByteMappingProps) => {
-  if (!definition || !pgnData.input || pgnData.input.length === 0) {
-    return <div>No input data or definition available for byte mapping</div>
+  if (!definition || !(pgnData as any).rawData || !(pgnData as any).byteMapping) {
+    return <div>No byte mapping available</div>
   }
 
   // Parse the input data to get raw bytes using canboatjs utilities
@@ -379,6 +379,18 @@ export const SentencePanel = (props: SentencePanelProps) => {
   if (pgnData === undefined || pgnData === null) {
     return <div>Select a PGN to view its data</div>
   }
+
+  const tabHeader = () => {
+    return (
+      <small>
+        <strong>PGN:</strong> {pgnData.pgn} |<strong> Source:</strong> {pgnData.src} |<strong> Destination:</strong>{' '}
+        {pgnData.dst}
+        <br />
+        <strong>Description:</strong> {pgnData.description || 'N/A'}
+      </small>
+    )
+  }
+
   let definition: Definition = pgnData.getDefinition()
   //console.debug('pgnData', pgnData)
   return (
@@ -397,16 +409,23 @@ export const SentencePanel = (props: SentencePanelProps) => {
             Data
           </NavLink>
         </NavItem>
-        <NavItem>
-          <NavLink className={activeTab === INPUT_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(INPUT_TAB_ID)}>
-            Input
-          </NavLink>
-        </NavItem>
-        <NavItem>
-          <NavLink className={activeTab === DEVICE_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(DEVICE_TAB_ID)}>
-            Device Information
-          </NavLink>
-        </NavItem>
+        {pgnData.input && pgnData.input.length > 0 && (
+          <NavItem>
+            <NavLink className={activeTab === INPUT_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(INPUT_TAB_ID)}>
+              Input
+            </NavLink>
+          </NavItem>
+        )}
+        {info[pgnData.src!]?.info && (
+          <NavItem>
+            <NavLink
+              className={activeTab === DEVICE_TAB_ID ? 'active ' : ''}
+              onClick={() => setActiveTab(DEVICE_TAB_ID)}
+            >
+              Device Information
+            </NavLink>
+          </NavItem>
+        )}
         <NavItem>
           <NavLink className={activeTab === PGNDEF_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(PGNDEF_TAB_ID)}>
             PGN Definition
@@ -423,11 +442,9 @@ export const SentencePanel = (props: SentencePanelProps) => {
       </Nav>
       <TabContent activeTab={activeTab} style={{ flex: 1, overflow: 'auto' }}>
         <TabPane tabId={DATA_TAB_ID}>
-          <Card className="mt-3">
+          <Card>
             <CardHeader className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">
-                {pgnData.pgn}: {definition?.Description || 'PGN Data'}
-              </h5>
+              {tabHeader()}
               <Button size="sm" color="secondary" onClick={copyPgnData} title="Copy PGN data to clipboard">
                 Copy
               </Button>
@@ -437,105 +454,103 @@ export const SentencePanel = (props: SentencePanelProps) => {
             </CardBody>
           </Card>
         </TabPane>
+        {pgnData.input && pgnData.input.length > 0 && (
+          <TabPane tabId={INPUT_TAB_ID}>
+            <Card>
+              <CardHeader className="d-flex justify-content-between align-items-center">
+                {tabHeader()}
+                <Button size="sm" color="secondary" onClick={copyInputData} title="Copy input data to clipboard">
+                  Copy
+                </Button>
+              </CardHeader>
+              <CardBody>
+                <div style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                  {(pgnData.input || []).map((input, index) => (
+                    <div key={index} style={{ marginBottom: '1px' }}>
+                      {input}
+                    </div>
+                  ))}
+                </div>
+              </CardBody>
+            </Card>
+          </TabPane>
+        )}
         {definition !== undefined && (
           <TabPane tabId={PGNDEF_TAB_ID}>
-            <Card className="mt-3">
-              <CardHeader>
-                <h5 className="mb-0">PGN Definition</h5>
-              </CardHeader>
+            <Card>
+              <CardHeader>{tabHeader()}</CardHeader>
               <CardBody>
                 <pre>{JSON.stringify(definition, null, 2)}</pre>
               </CardBody>
             </Card>
           </TabPane>
         )}
-        <TabPane tabId={DEVICE_TAB_ID}>
-          <Card className="mt-3">
-            <CardHeader>
-              <h5 className="mb-0">Device Information</h5>
-            </CardHeader>
-            <CardBody>
-              {info[pgnData.src!]?.info ? (
-                <div>
-                  {Object.entries(info[pgnData.src!].info).map(([pgnNumber, pgnInfo]: [string, any]) => (
-                    <Card key={pgnNumber} className="mb-3" style={{ border: '1px solid #e0e0e0' }}>
-                      <CardHeader style={{ backgroundColor: '#f8f9fa', padding: '10px 15px' }}>
-                        <h6 className="mb-0" style={{ color: '#495057' }}>
-                          PGN {pgnNumber}: {pgnInfo.description || 'Unknown'}
-                        </h6>
-                      </CardHeader>
-                      <CardBody style={{ padding: '15px' }}>
-                        <div className="row">
-                          {Object.entries(pgnInfo)
-                            .filter(([key]) => key !== 'description')
-                            .map(([key, value]: [string, any]) => (
-                              <div key={key} className="col-md-6 mb-2">
-                                <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                                  <strong
-                                    style={{
-                                      minWidth: '150px',
-                                      marginRight: '10px',
-                                      color: '#6c757d',
-                                      textTransform: 'capitalize',
-                                    }}
-                                  >
-                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}:
-                                  </strong>
-                                  <span
-                                    style={{
-                                      wordBreak: 'break-word',
-                                      color: '#212529',
-                                    }}
-                                  >
-                                    {value}
-                                  </span>
+        {info[pgnData.src!]?.info && (
+          <TabPane tabId={DEVICE_TAB_ID}>
+            <Card>
+              <CardHeader>{tabHeader()}</CardHeader>
+              <CardBody>
+                {info[pgnData.src!]?.info ? (
+                  <div>
+                    {Object.entries(info[pgnData.src!].info).map(([pgnNumber, pgnInfo]: [string, any]) => (
+                      <Card key={pgnNumber} className="mb-3" style={{ border: '1px solid #e0e0e0' }}>
+                        <CardHeader style={{ backgroundColor: '#f8f9fa', padding: '10px 15px' }}>
+                          <h6 className="mb-0" style={{ color: '#495057' }}>
+                            PGN {pgnNumber}: {pgnInfo.description || 'Unknown'}
+                          </h6>
+                        </CardHeader>
+                        <CardBody style={{ padding: '15px' }}>
+                          <div className="row">
+                            {Object.entries(pgnInfo)
+                              .filter(([key]) => key !== 'description')
+                              .map(([key, value]: [string, any]) => (
+                                <div key={key} className="col-md-6 mb-2">
+                                  <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                                    <strong
+                                      style={{
+                                        minWidth: '150px',
+                                        marginRight: '10px',
+                                        color: '#6c757d',
+                                        textTransform: 'capitalize',
+                                      }}
+                                    >
+                                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}:
+                                    </strong>
+                                    <span
+                                      style={{
+                                        wordBreak: 'break-word',
+                                        color: '#212529',
+                                      }}
+                                    >
+                                      {value}
+                                    </span>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
-                        </div>
-                      </CardBody>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div
-                  style={{
-                    textAlign: 'center',
-                    color: '#6c757d',
-                    padding: '40px',
-                    fontStyle: 'italic',
-                  }}
-                >
-                  No device information available for this source
-                </div>
-              )}
-            </CardBody>
-          </Card>
-        </TabPane>
-        <TabPane tabId={INPUT_TAB_ID}>
-          <Card className="mt-3">
-            <CardHeader className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Input Data</h5>
-              <Button size="sm" color="secondary" onClick={copyInputData} title="Copy input data to clipboard">
-                Copy
-              </Button>
-            </CardHeader>
-            <CardBody>
-              <div style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                {(pgnData.input || []).map((input, index) => (
-                  <div key={index} style={{ marginBottom: '5px' }}>
-                    {input}
+                              ))}
+                          </div>
+                        </CardBody>
+                      </Card>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </CardBody>
-          </Card>
-        </TabPane>
+                ) : (
+                  <div
+                    style={{
+                      textAlign: 'center',
+                      color: '#6c757d',
+                      padding: '40px',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    No device information available for this source
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+          </TabPane>
+        )}
         <TabPane tabId={MAPPING_TAB_ID}>
-          <Card className="mt-3">
-            <CardHeader>
-              <h5 className="mb-0">Byte Mapping</h5>
-            </CardHeader>
+          <Card>
+            <CardHeader>{tabHeader()}</CardHeader>
             <CardBody>
               <ByteMappingComp pgnData={pgnData} definition={definition} />
             </CardBody>

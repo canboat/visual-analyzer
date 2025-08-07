@@ -30,12 +30,22 @@ import {
   pgnToCandump3,
 } from '@canboat/canboatjs'
 import { PGN } from '@canboat/ts-pgns'
+import { BehaviorSubject } from 'rxjs'
+import { SentencePanel } from './SentencePanel'
+import { DeviceMap } from '../types'
 
 interface TransformTabProps {
   // No longer accepting parser from parent
 }
 
 const TransformTab: React.FC<TransformTabProps> = () => {
+  // Create BehaviorSubject instances for SentencePanel (replays last value to new subscribers)
+  const selectedPgnSubject = useMemo(() => new BehaviorSubject<PGN | null>(null), [])
+  const deviceInfoSubject = useMemo(() => new BehaviorSubject<DeviceMap>({}), [])
+
+  // Create filtered subject that only emits valid PGN values (no nulls)
+  const validPgnSubject = useMemo(() => new BehaviorSubject<PGN | undefined>(undefined), [])
+
   // Create our own parser instance with appropriate options
   const parser = useMemo(() => {
     const newParser = new FromPgn({
@@ -45,7 +55,9 @@ const TransformTab: React.FC<TransformTabProps> = () => {
       useCamelCompat: false,
       returnNonMatches: true,
       createPGNObjects: true,
-      includeInputData: true,
+      includeInputData: false,
+      includeRawData: true,
+      includeByteMapping: true,
     })
 
     newParser.on('error', (pgn: any, error: any) => {
@@ -99,6 +111,8 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     if (!inputValue.trim()) {
       setParsedResult(null)
       setParseError(null)
+      selectedPgnSubject.next(null)
+      validPgnSubject.next(undefined)
       return
     }
 
@@ -111,9 +125,13 @@ const TransformTab: React.FC<TransformTabProps> = () => {
         // If it's already a valid PGN JSON object, use it directly
         if (jsonData.pgn && typeof jsonData.pgn === 'number') {
           setParsedResult(jsonData as PGN)
+          selectedPgnSubject.next(jsonData as PGN)
+          validPgnSubject.next(jsonData as PGN)
           console.log('JSON PGN loaded:', jsonData)
         } else {
           setParseError('Invalid PGN JSON format - missing required pgn field')
+          selectedPgnSubject.next(null)
+          validPgnSubject.next(undefined)
         }
         return
       }
@@ -128,18 +146,27 @@ const TransformTab: React.FC<TransformTabProps> = () => {
           result = parser.parseString(line)
           if (result) {
             setParsedResult(result)
+            selectedPgnSubject.next(result)
+            validPgnSubject.next(result)
             console.log('Parsed PGN:', result)
             break
           }
         }
         if (!result) {
           setParseError('Failed to parse message - invalid format or unsupported PGN')
+          selectedPgnSubject.next(null)
+          validPgnSubject.next(undefined)
         }
       } else {
         setParseError('Parser not available')
+        selectedPgnSubject.next(null)
+        validPgnSubject.next(undefined)
       }
     } catch (error) {
+      console.error('Error parsing input value:', error)
       setParseError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      selectedPgnSubject.next(null)
+      validPgnSubject.next(undefined)
     }
   }, [inputValue, parser, outputFormat])
 
@@ -245,6 +272,9 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     setInputValue('')
     setParsedResult(null)
     setParseError(null)
+    // Clear the subjects as well
+    selectedPgnSubject.next(null)
+    validPgnSubject.next(undefined)
   }
 
   const handleCopyOutput = async () => {
@@ -296,7 +326,7 @@ String format: 2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,0
 Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src": 17, "dst": 255, "pgn": 127250, "description": "Vessel Heading", "fields": {"SID": 0, "Heading": 1.5708, "Deviation": null, "Variation": null, "Reference": "Magnetic"}}'
                     style={{
                       fontFamily: 'monospace',
-                      whiteSpace: 'nowrap',
+                      whiteSpace: 'pre',
                       overflowX: 'auto',
                     }}
                     spellCheck={false}
@@ -346,26 +376,35 @@ Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src":
                     <label htmlFor="transformOutput" className="form-label mb-0">
                       Parsed Result:
                     </label>
-                    {parsedResult && (
-                      <button
-                        className="btn btn-outline-primary btn-sm"
-                        type="button"
-                        onClick={handleCopyOutput}
-                        title="Copy output to clipboard"
-                      >
-                        Copy
-                      </button>
-                    )}
+                    {parsedResult &&
+                      (!(parsedResult instanceof PGN) ||
+                        (outputFormat !== 'canboat-json' && outputFormat !== 'canboat-json-camel')) && (
+                        <button
+                          className="btn btn-outline-primary btn-sm"
+                          type="button"
+                          onClick={handleCopyOutput}
+                          title="Copy output to clipboard"
+                        >
+                          Copy
+                        </button>
+                      )}
                   </div>
-                  <textarea
-                    id="transformOutput"
-                    className="form-control"
-                    rows={9}
-                    value={parsedResult ? formatOutput(parsedResult, outputFormat) : ''}
-                    readOnly
-                    placeholder="Parsed message will appear here..."
-                    style={{ fontFamily: 'monospace', backgroundColor: '#f8f9fa' }}
-                  />
+                  {parsedResult instanceof PGN &&
+                  (outputFormat === 'canboat-json' || outputFormat === 'canboat-json-camel') ? (
+                    <div style={{ border: '1px solid #ced4da', borderRadius: '0.25rem', backgroundColor: '#f8f9fa' }}>
+                      <SentencePanel selectedPgn={validPgnSubject as any} info={deviceInfoSubject} />
+                    </div>
+                  ) : (
+                    <textarea
+                      id="transformOutput"
+                      className="form-control"
+                      rows={9}
+                      value={parsedResult ? formatOutput(parsedResult, outputFormat) : ''}
+                      readOnly
+                      placeholder="Parsed message will appear here..."
+                      style={{ fontFamily: 'monospace', backgroundColor: '#f8f9fa' }}
+                    />
+                  )}
                 </div>
 
                 {parsedResult && (
