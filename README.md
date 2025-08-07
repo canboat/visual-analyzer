@@ -212,22 +212,26 @@ The Visual Analyzer supports multiple data source types when running as a standa
 The Visual Analyzer supports the following NMEA 2000 gateways and adapters:
 
 **Serial/USB Devices:**
+
 - **Actisense NGT-1** - Industry-standard USB NMEA 2000 gateway with full bidirectional support
 - **Digital Yacht iKonvert** - Serial to NMEA 2000 converter with proprietary protocol support (NOT WORKING)
 - **Yacht Devices YDEN-02** - Ethernet NMEA 2000 gateway
 
 **Network Devices:**
+
 - **Actisense W2K-1** - WiFi NMEA 2000 gateway with TCP connectivity
 - **Yacht Devices YDWG-02** - WiFi-enabled version with network connectivity
 - **Digital Yacht NavLink2** - WiFi marine gateway with UDP broadcast support (NOT WORKING)
 - **Network data concentrators** - Some TCP/UDP enabled marine data servers
 
 **CAN Bus Interfaces (Linux Only):**
+
 - **SocketCAN compatible adapters** - Direct Linux CAN bus interface support
 - **Various CAN-to-USB adapters** - Hardware interfaces compatible with SocketCAN drivers
 - **Embedded CAN controllers** - Direct hardware CAN interface access
 
 **Supported Data Formats:**
+
 - **Actisense Serial Format** - Standard Actisense ASCII format
 - **Actisense N2K ASCII** - Human-readable Actisense format
 - **iKonvert Format** - Digital Yacht proprietary binary format
@@ -235,7 +239,6 @@ The Visual Analyzer supports the following NMEA 2000 gateways and adapters:
 - **PCDIN Format** - Chetco Digital Instruments format
 - **MXPGN Format** - MiniPlex-3 proprietary format
 - **SocketCAN Format** - Linux CAN bus native format
-
 
 ### Signal K Embedded Mode
 
