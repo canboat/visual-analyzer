@@ -398,13 +398,20 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
         this.emit('error', error)
         reject(error)
       })
+      this.udpSocket.bind(this.options.networkPort, () => {
+        this.udpSocket!.setBroadcast(true)
+        this.isConnected = true
+        this.emit('connected')
+      })
 
+      /*
       this.udpSocket.bind(this.options.networkPort!, this.options.networkHost!, () => {
         console.log(`UDP socket bound to ${this.options.networkHost}:${this.options.networkPort}`)
         this.isConnected = true
         this.emit('connected')
         resolve()
       })
+        */
     })
   }
 
