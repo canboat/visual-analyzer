@@ -5,12 +5,14 @@
 
 A powerful web-based tool for visually analyzing and debugging NMEA 2000 data streams in real-time. This application provides an intuitive interface for monitoring, filtering, and analyzing NMEA 2000 PGN (Parameter Group Number) messages.
 
-<img width="1429" height="873" alt="Screenshot 2025-08-06 at 7 52 22 PM" src="https://github.com/user-attachments/assets/950d0609-3e9c-4b6c-91d5-41b40256fa2b" />
-<img width="1378" height="500" alt="Screenshot 2025-08-06 at 7 52 53 PM" src="https://github.com/user-attachments/assets/bf614aae-799c-4a67-b024-0169855fb890" />
-<img width="1442" height="655" alt="Screenshot 2025-08-06 at 5 52 58 PM" src="https://github.com/user-attachments/assets/ce61f336-9b79-4386-8d4c-1ff482cc4cff" />
-<img width="1442" height="782" alt="Screenshot 2025-08-06 at 5 53 55 PM" src="https://github.com/user-attachments/assets/0c502c10-e2ea-4892-8dd3-69be97ea8a43" />
-<img width="1452" height="489" alt="Screenshot 2025-08-06 at 5 55 02 PM" src="https://github.com/user-attachments/assets/c347985d-f71f-4ca3-a9c5-b1edc24eb037" />
-<img width="1370" height="703" alt="Screenshot 2025-08-06 at 7 54 55 PM" src="https://github.com/user-attachments/assets/a23ec639-ae24-4a99-bcfd-cbbe8832bf9f" />
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0;">
+  <img width="300" alt="Main Interface" src="https://github.com/user-attachments/assets/950d0609-3e9c-4b6c-91d5-41b40256fa2b" />
+  <img width="300" alt="Data Analysis" src="https://github.com/user-attachments/assets/bf614aae-799c-4a67-b024-0169855fb890" />
+  <img width="300" alt="Message Filtering" src="https://github.com/user-attachments/assets/ce61f336-9b79-4386-8d4c-1ff482cc4cff" />
+  <img width="300" alt="Device Information" src="https://github.com/user-attachments/assets/0c502c10-e2ea-4892-8dd3-69be97ea8a43" />
+  <img width="300" alt="Connection Settings" src="https://github.com/user-attachments/assets/c347985d-f71f-4ca3-a9c5-b1edc24eb037" />
+  <img width="300" alt="Recording Features" src="https://github.com/user-attachments/assets/a23ec639-ae24-4a99-bcfd-cbbe8832bf9f" />
+</div>
 
 ## Installation & Usage
 
