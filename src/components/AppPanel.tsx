@@ -120,7 +120,9 @@ export const getRowKey = (pgn: PGN, options: FilterOptions | undefined): string 
 const createFieldDataHash = (fields: any): string => {
   try {
     // Serialize the fields object to a stable string representation
-    const serialized = JSON.stringify(fields, (key, value) => (key !== 'data' ? value : undefined))
+    const serialized = JSON.stringify(fields, (key, value) =>
+      key !== 'data' && key !== 'input' && key !== 'rawData' && key !== 'byteMapping' ? value : undefined,
+    )
 
     // Simple djb2 hash algorithm implementation
     let hash = 5381
@@ -302,6 +304,8 @@ const AppPanelInner = (props: any) => {
         returnNonMatches: true,
         createPGNObjects: true,
         includeInputData: true,
+        includeRawData: true,
+        includeByteMapping: true,
       })
 
       initialParser.on('error', (pgn: any, error: any) => {
