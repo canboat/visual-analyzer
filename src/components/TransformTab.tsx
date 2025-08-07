@@ -94,7 +94,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     }
   }, [outputFormat])
 
-  // Auto-parse whenever input or parser changes
+  // Auto-parse whenever input, parser, or output format changes
   useEffect(() => {
     if (!inputValue.trim()) {
       setParsedResult(null)
@@ -123,6 +123,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
         const lines = inputValue.split('\n').filter(line => line.trim())
 
         let result: PGN | undefined = undefined
+        parser.options.useCamel = outputFormat === 'canboat-json-camel'
         for (const line of lines) {
           result = parser.parseString(line)
           if (result) {
@@ -140,10 +141,11 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     } catch (error) {
       setParseError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
-  }, [inputValue, parser])
+  }, [inputValue, parser, outputFormat])
 
   const outputFormats = [
     { value: 'canboat-json', label: 'Canboat JSON' },
+    { value: 'canboat-json-camel', label: 'Canboat JSON (Camel Case)' },
     { value: 'actisense', label: 'Actisense Serial Format' },
     { value: 'actisense-n2k-ascii', label: 'Actisense N2K ASCII' },
     { value: 'ikonvert', label: 'iKonvert Format' },
@@ -162,6 +164,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     try {
       switch (format) {
         case 'canboat-json':
+        case 'canboat-json-camel':
           delete pgn.input
           return JSON.stringify(pgn, null, 2)
 
