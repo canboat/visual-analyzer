@@ -488,7 +488,7 @@ class VisualAnalyzerServer {
         }
 
         let nmea2000Data: any[]
-        
+
         // Handle different input formats
         if (typeof data === 'string') {
           // Try to parse as JSON first
@@ -498,7 +498,7 @@ class VisualAnalyzerServer {
           } catch (jsonParseError) {
             // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
             const lines = data.split(/\r?\n/).filter((line: string) => line.trim())
-            
+
             if (lines.length === 0) {
               return res.status(400).json({
                 success: false,
@@ -546,7 +546,7 @@ class VisualAnalyzerServer {
         // Transform each NMEA 2000 message to SignalK using N2kMapper
         const signalKDeltas: any[] = []
         const errors: Array<{ message: any; error: string }> = []
-        
+
         for (const nmea2000Message of nmea2000Data) {
           try {
             const signalKDelta = this.n2kMapper.toDelta(nmea2000Message)

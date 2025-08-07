@@ -125,7 +125,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
       }
 
       const result = await response.json()
-      
+
       if (!result.success) {
         throw new Error(result.error || 'SignalK transformation failed')
       }
@@ -209,7 +209,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
   // Handle SignalK transformation when format changes to signalk
   useEffect(() => {
     if (outputFormat === 'signalk' && parsedResult) {
-      transformToSignalK(parsedResult).then(result => {
+      transformToSignalK(parsedResult).then((result) => {
         setSignalKResult(result)
       })
     } else {
