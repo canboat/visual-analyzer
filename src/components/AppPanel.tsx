@@ -744,7 +744,7 @@ const AppPanelInner = (props: any) => {
           <SendTab />
         </TabPane>
         <TabPane tabId={TRANSFORM_TAB_ID}>
-          <TransformTab />
+          <TransformTab isEmbedded={isEmbedded} />
         </TabPane>
         {!isEmbedded && (
           <TabPane tabId={RECORDING_TAB_ID}>

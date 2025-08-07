@@ -41,10 +41,10 @@ interface MessageHistory {
 }
 
 interface TransformTabProps {
-  // No longer accepting parser from parent
+  isEmbedded?: boolean
 }
 
-const TransformTab: React.FC<TransformTabProps> = () => {
+const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   // Create BehaviorSubject instances for SentencePanel (replays last value to new subscribers)
   const selectedPgnSubject = useMemo(() => new BehaviorSubject<PGN | null>(null), [])
   const deviceInfoSubject = useMemo(() => new BehaviorSubject<DeviceMap>({}), [])
@@ -115,6 +115,13 @@ const TransformTab: React.FC<TransformTabProps> = () => {
       console.warn('Failed to save output format to localStorage:', error)
     }
   }, [outputFormat])
+
+  // Reset output format if signalk is selected but we're in embedded mode
+  useEffect(() => {
+    if (isEmbedded && outputFormat === 'signalk') {
+      setOutputFormat('canboat-json')
+    }
+  }, [isEmbedded, outputFormat])
 
   // Load message history from localStorage on component mount
   useEffect(() => {
@@ -344,7 +351,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     { value: 'candump1', label: 'Linux CAN utils (Angstrom)' },
     { value: 'candump2', label: 'Linux CAN utils (Debian)' },
     { value: 'candump3', label: 'Linux CAN utils (log format)' },
-    { value: 'signalk', label: 'Signal K' },
+    ...(isEmbedded ? [] : [{ value: 'signalk', label: 'Signal K' }]),
   ]
 
   const formatOutput = (pgn: PGN, format: string): string => {
