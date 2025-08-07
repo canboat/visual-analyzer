@@ -451,7 +451,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
               <CardBody>
                 <div style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                   {(pgnData.input || []).map((input, index) => (
-                    <div key={index} style={{ marginBottom: '5px' }}>
+                    <div key={index} style={{ marginBottom: '1px' }}>
                       {input}
                     </div>
                   ))}
@@ -532,25 +532,6 @@ export const SentencePanel = (props: SentencePanelProps) => {
                   No device information available for this source
                 </div>
               )}
-            </CardBody>
-          </Card>
-        </TabPane>
-        <TabPane tabId={INPUT_TAB_ID}>
-          <Card className="mt-3">
-            <CardHeader className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">Input Data</h5>
-              <Button size="sm" color="secondary" onClick={copyInputData} title="Copy input data to clipboard">
-                Copy
-              </Button>
-            </CardHeader>
-            <CardBody>
-              <div style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                {(pgnData.input || []).map((input, index) => (
-                  <div key={index} style={{ marginBottom: '5px' }}>
-                    {input}
-                  </div>
-                ))}
-              </div>
             </CardBody>
           </Card>
         </TabPane>
