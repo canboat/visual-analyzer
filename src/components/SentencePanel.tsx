@@ -16,66 +16,27 @@
 
 import React, { useState } from 'react'
 
-import { PGN } from '@canboat/ts-pgns'
+import { PGN, Definition } from '@canboat/ts-pgns'
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
 import { DeviceInformation, DeviceMap } from '../types'
-import { Definition, findMatchingDefinition } from '@canboat/ts-pgns'
-import { parseN2kString } from '@canboat/canboatjs'
+import { ByteMap, ByteMapping, RepeatingByteMapping } from '@canboat/canboatjs'
 import { Nav, NavItem, NavLink, TabContent, TabPane, Card, CardHeader, CardBody, Button } from 'reactstrap'
+import { raw } from 'express'
 
 interface ByteMappingProps {
   pgnData: PGN
   definition: Definition | undefined
 }
 
-const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
+const ByteMappingComp = ({ pgnData, definition }: ByteMappingProps) => {
   if (!definition || !pgnData.input || pgnData.input.length === 0) {
     return <div>No input data or definition available for byte mapping</div>
   }
 
   // Parse the input data to get raw bytes using canboatjs utilities
   const getRawBytes = (): number[] => {
-    // pgnData.input is an array of NMEA sentences that may contain multiple lines
-    // for fast-packet PGNs that span multiple CAN frames
-    if (!pgnData.input || pgnData.input.length === 0) return []
-
-    let allBytes: number[] = []
-
-    // Process each input line
-    for (const inputLine of pgnData.input) {
-      if (!inputLine) continue
-
-      try {
-        // Use canboatjs parseN2kString to parse different input formats
-        // This handles multiple formats: Actisense, N2K ASCII, YDGW Raw, etc.
-        const parseResult = parseN2kString(inputLine, {})
-
-        if (parseResult && parseResult.data && !parseResult.error) {
-          // parseResult.data is a Buffer containing the raw bytes
-          const lineBytes = Array.from(parseResult.data) as number[]
-          allBytes = allBytes.concat(lineBytes)
-          continue // Successfully parsed with canboatjs
-        }
-      } catch (error) {
-        console.warn('Failed to parse input line with parseN2kString:', inputLine, error)
-      }
-
-      // Fallback to simple parsing for manual input
-      try {
-        // Split by comma and get the hex bytes (starting from index 6)
-        const parts = inputLine.split(',')
-        if (parts.length >= 7) {
-          const hexBytes = parts.slice(6).filter((part) => part.length === 2)
-          const lineBytes = hexBytes.map((hex) => parseInt(hex, 16))
-          allBytes = allBytes.concat(lineBytes)
-        }
-      } catch (error) {
-        console.warn('Failed to parse input line:', inputLine, error)
-      }
-    }
-
-    return allBytes
+    return (pgnData as any).rawData || []
   }
 
   const rawBytes = getRawBytes()
@@ -108,58 +69,21 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
       const byteStart = Math.floor(bitStart / 8)
       const byteEnd = Math.floor(bitEnd / 8)
 
-      // Extract raw value from bytes
-      let rawValue = 'N/A'
-      if (byteStart < rawBytes.length && byteEnd < rawBytes.length) {
-        if (byteStart === byteEnd) {
-          // Field is within a single byte
-          const bitInByteStart = bitStart % 8
-          const mask = ((1 << bitLength) - 1) << bitInByteStart
-          rawValue = `0x${((rawBytes[byteStart] & mask) >> bitInByteStart).toString(16).toUpperCase()}`
-        } else {
-          // Field spans multiple bytes
-          const bytes = rawBytes.slice(byteStart, byteEnd + 1)
-          rawValue = bytes.map((b: number) => `0x${b.toString(16).padStart(2, '0').toUpperCase()}`).join(' ')
+      let mapping: ByteMapping | undefined = undefined
 
-          // Field spans multiple bytes - extract bits across multiple bytes
-          /*
-          let combinedValue = 0
-          let bitsRemaining = bitLength
-          let currentBitPos = bitStart
-
-          while (bitsRemaining > 0) {
-            const currentByte = Math.floor(currentBitPos / 8)
-            const bitPosInByte = currentBitPos % 8
-            const bitsToReadFromThisByte = Math.min(8 - bitPosInByte, bitsRemaining)
-
-            if (currentByte < rawBytes.length) {
-              const mask = ((1 << bitsToReadFromThisByte) - 1) << bitPosInByte
-              const extractedBits = (rawBytes[currentByte] & mask) >> bitPosInByte
-              combinedValue |= extractedBits << (bitLength - bitsRemaining)
-            }
-
-            bitsRemaining -= bitsToReadFromThisByte
-            currentBitPos += bitsToReadFromThisByte
-          }
-
-          rawValue = `0x${combinedValue.toString(16).toUpperCase()}`
-          */
-        }
+      if (repetitionIndex !== undefined) {
+        const listData: RepeatingByteMapping[] = (pgnData as any).byteMapping?.list
+        mapping = listData[repetitionIndex][field.Id]
+      } else {
+        mapping = (pgnData as any).byteMapping?.[field.Id]
       }
 
-      // Get parsed value from PGN data - handle repeating fields
       let parsedValue = 'N/A'
-      if (repetitionIndex !== undefined) {
-        // For repeating fields, look in the list array
-        const listData = (pgnData.fields as any).list
-        if (listData && listData[repetitionIndex] && listData[repetitionIndex][field.Id] !== undefined) {
-          parsedValue = JSON.stringify(listData[repetitionIndex][field.Id])
-        }
-      } else {
-        // For non-repeating fields, look directly in fields
-        if ((pgnData.fields as any)[field.Id] !== undefined) {
-          parsedValue = JSON.stringify((pgnData.fields as any)[field.Id])
-        }
+      let rawValue = 'N/A'
+
+      if (mapping) {
+        parsedValue = typeof mapping.value !== 'string' ? JSON.stringify(mapping.value) : mapping.value
+        rawValue = mapping.bytes.map((b: number) => `0x${b.toString(16).padStart(2, '0').toUpperCase()}`).join(' ')
       }
 
       const baseFieldIndex =
@@ -180,11 +104,11 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
             )}
           </td>
           <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
-            {bitStart} - {bitEnd} ({bitLength} bits)
+            {bitStart}-{bitEnd} ({bitLength})
           </td>
           <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
             {byteStart}
-            {byteStart !== byteEnd ? ` - ${byteEnd}` : ''}
+            {byteStart !== byteEnd ? `-${byteEnd}` : ''}
           </td>
           <td style={{ padding: '8px', border: '1px solid #dee2e6', fontFamily: 'monospace' }}>{rawValue}</td>
           <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>{parsedValue}</td>
@@ -269,11 +193,7 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
 
     return (
       <div style={{ fontFamily: 'monospace', fontSize: '14px' }}>
-        <h6>Input Lines: {pgnData.input?.length || 0}</h6>
         <div style={{ marginBottom: '10px', fontSize: '12px', color: '#6c757d' }}>
-          {pgnData.input && pgnData.input.length > 1 && (
-            <div>Multi-frame PGN detected - combining {pgnData.input.length} input lines</div>
-          )}
           {hasRepeatingFields && (
             <div>
               Repeating fields detected: {definition.RepeatingFieldSet1Size} fields repeat {repetitionCount} times
@@ -300,8 +220,8 @@ const ByteMapping = ({ pgnData, definition }: ByteMappingProps) => {
                 <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>Field</th>
                 <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>Bit Range</th>
                 <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>Byte Range</th>
-                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>Raw Value</th>
-                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>Parsed Value</th>
+                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>Bytes</th>
+                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>Value</th>
               </tr>
             </thead>
             <tbody>
@@ -424,10 +344,18 @@ export const SentencePanel = (props: SentencePanelProps) => {
   const pgnData = useObservableState<PGN>(props.selectedPgn)
   const info = useObservableState<DeviceMap>(props.info, {})
 
+  const pgnToJson = (pgn: PGN): string => {
+    return JSON.stringify(
+      pgn,
+      (key, value) => (key === 'input' || key === 'rawData' || key === 'byteMapping' ? undefined : value),
+      2,
+    )
+  }
+
   const copyPgnData = async () => {
     if (pgnData) {
       try {
-        const dataToSave = JSON.stringify(pgnData, (key, value) => (key === 'input' ? undefined : value), 2)
+        const dataToSave = pgnToJson(pgnData)
         await navigator.clipboard.writeText(dataToSave)
         // You could add a toast notification here if desired
       } catch (err) {
@@ -505,7 +433,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
               </Button>
             </CardHeader>
             <CardBody>
-              <pre>{JSON.stringify(pgnData, (key, value) => (key === 'input' ? undefined : value), 2)}</pre>
+              <pre>{pgnToJson(pgnData)}</pre>
             </CardBody>
           </Card>
         </TabPane>
@@ -609,7 +537,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
               <h5 className="mb-0">Byte Mapping</h5>
             </CardHeader>
             <CardBody>
-              <ByteMapping pgnData={pgnData} definition={definition} />
+              <ByteMappingComp pgnData={pgnData} definition={definition} />
             </CardBody>
           </Card>
         </TabPane>
