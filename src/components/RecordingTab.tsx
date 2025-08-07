@@ -57,11 +57,9 @@ const RecordingTab: React.FC = () => {
 
   // Update local state when context state changes
   useEffect(() => {
-    console.log('Recording context updated:', recordingContextState)
     if (recordingContextState.lastUpdate) {
       setRecordingStatus((prevStatus) => {
         const newStatus = recordingContextState.status
-        console.log('Updating recording status from context:', newStatus)
 
         // Handle errors from WebSocket events
         if (newStatus.error) {
@@ -72,7 +70,6 @@ const RecordingTab: React.FC = () => {
 
         // Refresh file list when recording starts/stops
         if (newStatus.isRecording !== prevStatus.isRecording) {
-          console.log('Recording state changed, refreshing file list')
           setTimeout(() => loadRecordingFiles(), 100) // Small delay to ensure backend is ready
         }
 
@@ -116,7 +113,6 @@ const RecordingTab: React.FC = () => {
       const response = await fetch('/api/recording/status')
       if (response.ok) {
         const status = await response.json()
-        console.log('Loaded initial recording status:', status)
         // Update both local state and context
         setRecordingStatus(status)
         dispatch({ type: 'SET_STATUS', payload: status })
@@ -165,7 +161,6 @@ const RecordingTab: React.FC = () => {
       if (response.ok) {
         const result = await response.json()
         // Don't set local state here - it will be updated via WebSocket events
-        console.log('Recording started successfully:', result)
         // Refresh file list
         loadRecordingFiles()
       } else {
@@ -192,7 +187,6 @@ const RecordingTab: React.FC = () => {
 
       if (response.ok) {
         // Don't set local state here - it will be updated via WebSocket events
-        console.log('Recording stopped successfully')
         // Refresh file list to show the completed recording
         loadRecordingFiles()
       } else {
