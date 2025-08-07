@@ -1,6 +1,6 @@
 {
   "name": "@canboat/visual-analyzer",
-  "version": "1.10.0",
+  "version": "1.10.1",
   "description": "NMEA 2000 data visualization utility (requires SK Server >= 2.15)",
   "main": "index.js",
   "bin": {
