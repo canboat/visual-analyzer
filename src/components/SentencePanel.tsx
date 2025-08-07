@@ -382,9 +382,9 @@ export const SentencePanel = (props: SentencePanelProps) => {
 
   const tabHeader = () => {
     return (
-       <small>
-        <strong>PGN:</strong> {pgnData.pgn} |<strong> Source:</strong> {pgnData.src} |
-        <strong> Destination:</strong> {pgnData.dst}
+      <small>
+        <strong>PGN:</strong> {pgnData.pgn} |<strong> Source:</strong> {pgnData.src} |<strong> Destination:</strong>{' '}
+        {pgnData.dst}
         <br />
         <strong>Description:</strong> {pgnData.description || 'N/A'}
       </small>
@@ -418,7 +418,10 @@ export const SentencePanel = (props: SentencePanelProps) => {
         )}
         {info[pgnData.src!]?.info && (
           <NavItem>
-            <NavLink className={activeTab === DEVICE_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(DEVICE_TAB_ID)}>
+            <NavLink
+              className={activeTab === DEVICE_TAB_ID ? 'active ' : ''}
+              onClick={() => setActiveTab(DEVICE_TAB_ID)}
+            >
               Device Information
             </NavLink>
           </NavItem>
@@ -455,7 +458,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
           <TabPane tabId={INPUT_TAB_ID}>
             <Card>
               <CardHeader className="d-flex justify-content-between align-items-center">
-               {tabHeader()}
+                {tabHeader()}
                 <Button size="sm" color="secondary" onClick={copyInputData} title="Copy input data to clipboard">
                   Copy
                 </Button>
@@ -475,9 +478,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
         {definition !== undefined && (
           <TabPane tabId={PGNDEF_TAB_ID}>
             <Card>
-              <CardHeader>
-               {tabHeader()}
-              </CardHeader>
+              <CardHeader>{tabHeader()}</CardHeader>
               <CardBody>
                 <pre>{JSON.stringify(definition, null, 2)}</pre>
               </CardBody>
@@ -487,9 +488,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
         {info[pgnData.src!]?.info && (
           <TabPane tabId={DEVICE_TAB_ID}>
             <Card>
-              <CardHeader>
-                {tabHeader()}
-              </CardHeader>
+              <CardHeader>{tabHeader()}</CardHeader>
               <CardBody>
                 {info[pgnData.src!]?.info ? (
                   <div>
@@ -551,9 +550,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
         )}
         <TabPane tabId={MAPPING_TAB_ID}>
           <Card>
-            <CardHeader>
-              {tabHeader()}
-            </CardHeader>
+            <CardHeader>{tabHeader()}</CardHeader>
             <CardBody>
               <ByteMappingComp pgnData={pgnData} definition={definition} />
             </CardBody>

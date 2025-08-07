@@ -57,7 +57,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
       createPGNObjects: true,
       includeInputData: false,
       includeRawData: true,
-      includeByteMapping: true
+      includeByteMapping: true,
     })
 
     newParser.on('error', (pgn: any, error: any) => {
@@ -376,18 +376,21 @@ Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src":
                     <label htmlFor="transformOutput" className="form-label mb-0">
                       Parsed Result:
                     </label>
-                    {parsedResult && (!(parsedResult instanceof PGN) || (outputFormat !== 'canboat-json' && outputFormat !== 'canboat-json-camel')) && (
-                      <button
-                        className="btn btn-outline-primary btn-sm"
-                        type="button"
-                        onClick={handleCopyOutput}
-                        title="Copy output to clipboard"
-                      >
-                        Copy
-                      </button>
-                    )}
+                    {parsedResult &&
+                      (!(parsedResult instanceof PGN) ||
+                        (outputFormat !== 'canboat-json' && outputFormat !== 'canboat-json-camel')) && (
+                        <button
+                          className="btn btn-outline-primary btn-sm"
+                          type="button"
+                          onClick={handleCopyOutput}
+                          title="Copy output to clipboard"
+                        >
+                          Copy
+                        </button>
+                      )}
                   </div>
-                  {parsedResult instanceof PGN && (outputFormat === 'canboat-json' || outputFormat === 'canboat-json-camel') ? (
+                  {parsedResult instanceof PGN &&
+                  (outputFormat === 'canboat-json' || outputFormat === 'canboat-json-camel') ? (
                     <div style={{ border: '1px solid #ced4da', borderRadius: '0.25rem', backgroundColor: '#f8f9fa' }}>
                       <SentencePanel selectedPgn={validPgnSubject as any} info={deviceInfoSubject} />
                     </div>
