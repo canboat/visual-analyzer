@@ -30,7 +30,7 @@ import {
   pgnToCandump3,
 } from '@canboat/canboatjs'
 import { PGN } from '@canboat/ts-pgns'
-import { Subject } from 'rxjs'
+import { BehaviorSubject } from 'rxjs'
 import { SentencePanel } from './SentencePanel'
 import { DeviceMap } from '../types'
 
@@ -39,9 +39,12 @@ interface TransformTabProps {
 }
 
 const TransformTab: React.FC<TransformTabProps> = () => {
-  // Create Subject instances for SentencePanel
-  const selectedPgnSubject = useMemo(() => new Subject<PGN>(), [])
-  const deviceInfoSubject = useMemo(() => new Subject<DeviceMap>(), [])
+  // Create BehaviorSubject instances for SentencePanel (replays last value to new subscribers)
+  const selectedPgnSubject = useMemo(() => new BehaviorSubject<PGN | null>(null), [])
+  const deviceInfoSubject = useMemo(() => new BehaviorSubject<DeviceMap>({}), [])
+
+  // Create filtered subject that only emits valid PGN values (no nulls)
+  const validPgnSubject = useMemo(() => new BehaviorSubject<PGN | undefined>(undefined), [])
 
   // Create our own parser instance with appropriate options
   const parser = useMemo(() => {
@@ -52,7 +55,9 @@ const TransformTab: React.FC<TransformTabProps> = () => {
       useCamelCompat: false,
       returnNonMatches: true,
       createPGNObjects: true,
-      includeInputData: true,
+      includeInputData: false,
+      includeRawData: true,
+      includeByteMapping: true
     })
 
     newParser.on('error', (pgn: any, error: any) => {
@@ -106,7 +111,8 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     if (!inputValue.trim()) {
       setParsedResult(null)
       setParseError(null)
-      selectedPgnSubject.next(null as any)
+      selectedPgnSubject.next(null)
+      validPgnSubject.next(undefined)
       return
     }
 
@@ -120,10 +126,12 @@ const TransformTab: React.FC<TransformTabProps> = () => {
         if (jsonData.pgn && typeof jsonData.pgn === 'number') {
           setParsedResult(jsonData as PGN)
           selectedPgnSubject.next(jsonData as PGN)
+          validPgnSubject.next(jsonData as PGN)
           console.log('JSON PGN loaded:', jsonData)
         } else {
           setParseError('Invalid PGN JSON format - missing required pgn field')
-          selectedPgnSubject.next(null as any)
+          selectedPgnSubject.next(null)
+          validPgnSubject.next(undefined)
         }
         return
       }
@@ -139,21 +147,25 @@ const TransformTab: React.FC<TransformTabProps> = () => {
           if (result) {
             setParsedResult(result)
             selectedPgnSubject.next(result)
+            validPgnSubject.next(result)
             console.log('Parsed PGN:', result)
             break
           }
         }
         if (!result) {
           setParseError('Failed to parse message - invalid format or unsupported PGN')
-          selectedPgnSubject.next(null as any)
+          selectedPgnSubject.next(null)
+          validPgnSubject.next(undefined)
         }
       } else {
         setParseError('Parser not available')
-        selectedPgnSubject.next(null as any)
+        selectedPgnSubject.next(null)
+        validPgnSubject.next(undefined)
       }
     } catch (error) {
       setParseError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      selectedPgnSubject.next(null as any)
+      selectedPgnSubject.next(null)
+      validPgnSubject.next(undefined)
     }
   }, [inputValue, parser, outputFormat])
 
@@ -259,8 +271,9 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     setInputValue('')
     setParsedResult(null)
     setParseError(null)
-    // Clear the subject as well
-    selectedPgnSubject.next(null as any)
+    // Clear the subjects as well
+    selectedPgnSubject.next(null)
+    validPgnSubject.next(undefined)
   }
 
   const handleCopyOutput = async () => {
@@ -375,7 +388,7 @@ Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src":
                   </div>
                   {parsedResult && (outputFormat === 'canboat-json' || outputFormat === 'canboat-json-camel') ? (
                     <div style={{ border: '1px solid #ced4da', borderRadius: '0.25rem', backgroundColor: '#f8f9fa' }}>
-                      <SentencePanel selectedPgn={selectedPgnSubject} info={deviceInfoSubject} />
+                      <SentencePanel selectedPgn={validPgnSubject as any} info={deviceInfoSubject} />
                     </div>
                   ) : (
                     <textarea
