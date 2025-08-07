@@ -85,11 +85,6 @@ interface ConnectionManagerPanelProps {
 }
 
 export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ connectionStatus, onStatusUpdate }) => {
-  // Add logging to track connectionStatus changes
-  console.log('=== CONNECTION MANAGER PANEL RENDER ===')
-  console.log('connectionStatus prop:', connectionStatus)
-  console.log('connectionStatus.error:', connectionStatus?.error)
-  console.log('onStatusUpdate callback available:', !!onStatusUpdate)
   const [config, setConfig] = useState<ServerConfig | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -121,11 +116,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
     }
     return config?.connection.isConnected || false
   }
-
-  // Add debugging
-  React.useEffect(() => {
-    console.log('ConnectionManagerPanel received connectionStatus:', connectionStatus)
-  }, [connectionStatus])
 
   useEffect(() => {
     loadConfiguration()
@@ -755,19 +745,13 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                       )}
                     </div>
                     {/* Display connection error if present */}
-                    {(() => {
-                      console.log('>>> ERROR DISPLAY CHECK <<<')
-                      console.log('connectionStatus:', connectionStatus)
-                      console.log('connectionStatus?.error:', connectionStatus?.error)
-                      console.log('Error display will show:', !!connectionStatus?.error)
-                      return connectionStatus?.error ? (
-                        <div className="mt-2">
-                          <div className="alert alert-danger alert-sm mb-0" role="alert">
-                            <strong>Connection Error:</strong> {connectionStatus.error}
-                          </div>
+                    {connectionStatus?.error ? (
+                      <div className="mt-2">
+                        <div className="alert alert-danger alert-sm mb-0" role="alert">
+                          <strong>Connection Error:</strong> {connectionStatus.error}
                         </div>
-                      ) : null
-                    })()}
+                      </div>
+                    ) : null}
                   </div>
                   <div className="d-flex align-items-center">
                     <div className="d-flex flex-column">

@@ -201,23 +201,6 @@ const AppPanelInner = (props: any) => {
     saveActiveTab(tabId)
   }
 
-  // Debug function to test error display
-  const testErrorDisplay = () => {
-    console.log('Testing error display...')
-    setConnectionStatus({
-      isConnected: false,
-      lastUpdate: new Date().toISOString(),
-      error: 'Test connection error: Connection refused to localhost:60002 (ECONNREFUSED)',
-    })
-  }
-
-  // Make it available globally for testing
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      ;(window as any).testErrorDisplay = testErrorDisplay
-    }
-  }, [])
-
   // Make debugging functions available globally
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -295,7 +278,6 @@ const AppPanelInner = (props: any) => {
   // Initialize parser once
   useEffect(() => {
     if (!parser) {
-      console.log('Creating parser for the first time')
       const initialParser = new FromPgn({
         returnNulls: true,
         checkForInvalidFields: true,
@@ -313,7 +295,6 @@ const AppPanelInner = (props: any) => {
         console.error(error.stack)
       })
 
-      console.log('Parser created once with initial options')
       setParser(initialParser)
       parserRef.current = initialParser
     }
@@ -322,32 +303,15 @@ const AppPanelInner = (props: any) => {
   // Update parser options when filterOptions change
   useEffect(() => {
     const subscription = filterOptions.subscribe((options) => {
-      console.log('filterOptions subscription triggered with:', options)
-
       if (parserRef.current) {
         // Update parser options instead of recreating the parser
         parserRef.current.options.useCamel = options?.useCamelCase ?? true
-        console.log(`Parser options updated with useCamel: ${options?.useCamelCase ?? true}`)
         filterOptionsRef.current = options
       }
     })
 
     return () => subscription.unsubscribe()
   }, [filterOptions])
-
-  // Debug parser state
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      ;(window as any).checkParserState = () => {
-        console.log('Parser state:', parser)
-        console.log('Parser ref:', parserRef.current)
-        console.log('Parser state is null:', parser === null)
-        console.log('Parser ref is null:', parserRef.current === null)
-        console.log('Parser state is defined:', parser !== undefined)
-        console.log('Parser ref is defined:', parserRef.current !== undefined)
-      }
-    }
-  }, [parser])
 
   const deleteAllKeys = (obj: any) => {
     Object.keys(obj).forEach((key) => {
@@ -359,17 +323,14 @@ const AppPanelInner = (props: any) => {
   useEffect(() => {
     const loadInitialStatus = async () => {
       try {
-        console.log('Loading initial connection status...')
         const response = await fetch('/api/config')
         if (response.ok) {
           const config = await response.json()
-          console.log('Received config:', config)
           const initialStatus = {
             isConnected: config.connection?.isConnected || false,
             lastUpdate: config.connection?.lastUpdate || new Date().toISOString(),
             error: config.connection?.error || undefined, // Include any persisted error
           }
-          console.log('Initial connection status loaded:', initialStatus)
           setConnectionStatus(initialStatus)
         }
       } catch (error) {
@@ -487,7 +448,6 @@ const AppPanelInner = (props: any) => {
 
         // Don't process data if parser is not ready yet
         if (!parserRef.current) {
-          console.log('Parser not ready yet, skipping message processing')
           return
         }
 
@@ -552,7 +512,6 @@ const AppPanelInner = (props: any) => {
           webSocket = new WebSocket(`ws://${window.location.host}`)
 
           webSocket.onopen = () => {
-            console.log('WebSocket connected')
             // Subscribe to connection events
             webSocket?.send(
               JSON.stringify({
@@ -614,15 +573,12 @@ const AppPanelInner = (props: any) => {
 
   // Initialize filter settings from localStorage on component mount
   useEffect(() => {
-    console.log('Initializing filter settings...')
     const savedSettings = loadFilterSettings()
     if (savedSettings) {
-      console.log('Loading saved settings:', savedSettings)
       filter.next(savedSettings.filter)
       doFiltering.next(savedSettings.doFiltering)
       filterOptions.next(savedSettings.filterOptions)
     } else {
-      console.log('No saved settings, using defaults')
       // Set default values if no saved settings
       filter.next({})
       doFiltering.next(false)
@@ -632,7 +588,6 @@ const AppPanelInner = (props: any) => {
         showPgn126208OnSeparateLines: false,
       })
     }
-    console.log('Filter settings initialization complete')
   }, [])
 
   // Save filter settings to localStorage when they change

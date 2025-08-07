@@ -127,7 +127,6 @@ const TransformTab: React.FC<TransformTabProps> = () => {
           setParsedResult(jsonData as PGN)
           selectedPgnSubject.next(jsonData as PGN)
           validPgnSubject.next(jsonData as PGN)
-          console.log('JSON PGN loaded:', jsonData)
         } else {
           setParseError('Invalid PGN JSON format - missing required pgn field')
           selectedPgnSubject.next(null)
@@ -148,7 +147,6 @@ const TransformTab: React.FC<TransformTabProps> = () => {
             setParsedResult(result)
             selectedPgnSubject.next(result)
             validPgnSubject.next(result)
-            console.log('Parsed PGN:', result)
             break
           }
         }
@@ -284,7 +282,6 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     try {
       await navigator.clipboard.writeText(outputText)
       // Optional: You could add a toast notification here
-      console.log('Output copied to clipboard')
     } catch (error) {
       console.error('Failed to copy to clipboard:', error)
       // Fallback for older browsers
