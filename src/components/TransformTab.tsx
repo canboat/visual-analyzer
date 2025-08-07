@@ -120,11 +120,18 @@ const TransformTab: React.FC<TransformTabProps> = () => {
 
       // Try to parse as string format using the parser if available
       if (parser) {
-        const result = parser.parseString(inputValue.trim())
-        if (result) {
-          setParsedResult(result)
-          console.log('Parsed PGN:', result)
-        } else {
+        const lines = inputValue.split('\n').filter(line => line.trim())
+
+        let result: PGN | undefined = undefined
+        for (const line of lines) {
+          result = parser.parseString(line)
+          if (result) {
+            setParsedResult(result)
+            console.log('Parsed PGN:', result)
+            break
+          }
+        }
+        if (!result) {
           setParseError('Failed to parse message - invalid format or unsupported PGN')
         }
       } else {
@@ -155,6 +162,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     try {
       switch (format) {
         case 'canboat-json':
+          delete pgn.input
           return JSON.stringify(pgn, null, 2)
 
         case 'actisense':
@@ -283,7 +291,11 @@ const TransformTab: React.FC<TransformTabProps> = () => {
 Examples:
 String format: 2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,00
 Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src": 17, "dst": 255, "pgn": 127250, "description": "Vessel Heading", "fields": {"SID": 0, "Heading": 1.5708, "Deviation": null, "Variation": null, "Reference": "Magnetic"}}'
-                    style={{ fontFamily: 'monospace' }}
+                    style={{ 
+                      fontFamily: 'monospace', 
+                      whiteSpace: 'nowrap', 
+                      overflowX: 'auto' 
+                    }}
                     spellCheck={false}
                   />
                 </div>
