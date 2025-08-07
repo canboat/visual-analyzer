@@ -28,6 +28,7 @@ The Visual Analyzer can also be run as a standalone web server, making it perfec
 - Independent analysis without requiring Signal K Server
 - Quick troubleshooting and debugging of NMEA 2000 systems
 - Field testing and diagnostics
+- **SignalK transformation** - Convert NMEA 2000 data to SignalK format via REST API
 
 #### Quick Start
 
@@ -184,6 +185,7 @@ Example `config.json`:
   - Linux CAN utils (candump) formats
 - **Recording management** - Start/stop recording with custom filenames and format selection
 - **File management** - Browse, download, and delete recorded files
+- **SignalK transformation API** - REST endpoint to convert NMEA 2000 data to SignalK delta format
 
 ### Signal K Embedded Mode Features
 

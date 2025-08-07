@@ -181,6 +181,7 @@ const TransformTab: React.FC<TransformTabProps> = () => {
     { value: 'candump1', label: 'Linux CAN utils (Angstrom)' },
     { value: 'candump2', label: 'Linux CAN utils (Debian)' },
     { value: 'candump3', label: 'Linux CAN utils (log format)' },
+    { value: 'signalk', label: 'Signal K Format' },
   ]
 
   const formatOutput = (pgn: PGN, format: string): string => {

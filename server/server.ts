@@ -22,6 +22,7 @@ import * as fs from 'fs'
 import * as os from 'os'
 import NMEADataProvider from './nmea-provider'
 import { FromPgn } from '@canboat/canboatjs'
+import { N2kMapper } from '@signalk/n2k-signalk'
 import { RecordingService } from './recording-service'
 import {
   Config,
@@ -47,6 +48,7 @@ class VisualAnalyzerServer {
   private nmeaProvider: INMEAProvider | null = null
   private currentConfig: Config
   private canboatParser: FromPgn
+  private n2kMapper: N2kMapper
   private connectionState: ConnectionState
   private recordingService: RecordingService
 
@@ -76,6 +78,9 @@ class VisualAnalyzerServer {
 
     // Initialize canboatjs parser for string input parsing
     this.canboatParser = new FromPgn()
+
+    // Initialize N2kMapper for SignalK transformation
+    this.n2kMapper = new N2kMapper({})
 
     // Initialize recording service
     this.recordingService = new RecordingService()
@@ -467,6 +472,114 @@ class VisualAnalyzerServer {
           success: false,
           error: errorMessage,
         } as ApiResponse)
+      }
+    })
+
+    // SignalK transformation endpoint
+    this.app.post('/api/transform/signalk', (req: Request, res: Response) => {
+      try {
+        const { data } = req.body
+
+        if (!data) {
+          return res.status(400).json({
+            success: false,
+            error: 'Missing required field: data',
+          })
+        }
+
+        let nmea2000Data: any[]
+        
+        // Handle different input formats
+        if (typeof data === 'string') {
+          // Try to parse as JSON first
+          try {
+            const jsonParsed = JSON.parse(data)
+            nmea2000Data = Array.isArray(jsonParsed) ? jsonParsed : [jsonParsed]
+          } catch (jsonParseError) {
+            // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
+            const lines = data.split(/\r?\n/).filter((line: string) => line.trim())
+            
+            if (lines.length === 0) {
+              return res.status(400).json({
+                success: false,
+                error: 'No valid lines found in input',
+              })
+            }
+
+            nmea2000Data = []
+            for (const line of lines) {
+              const trimmedLine = line.trim()
+              if (trimmedLine) {
+                try {
+                  const parsed = this.canboatParser.parseString(trimmedLine)
+                  if (parsed) {
+                    nmea2000Data.push(parsed)
+                  } else {
+                    console.warn(`Unable to parse line: ${trimmedLine}`)
+                  }
+                } catch (lineParseError) {
+                  const errorMessage = lineParseError instanceof Error ? lineParseError.message : 'Unknown error'
+                  console.warn(`Error parsing line "${trimmedLine}": ${errorMessage}`)
+                  // Continue processing other lines instead of failing
+                }
+              }
+            }
+
+            if (nmea2000Data.length === 0) {
+              return res.status(400).json({
+                success: false,
+                error: 'No valid NMEA 2000 messages could be parsed from input',
+              })
+            }
+          }
+        } else if (Array.isArray(data)) {
+          nmea2000Data = data
+        } else if (typeof data === 'object') {
+          nmea2000Data = [data]
+        } else {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid data format. Expected string, object, or array.',
+          })
+        }
+
+        // Transform each NMEA 2000 message to SignalK using N2kMapper
+        const signalKDeltas: any[] = []
+        const errors: Array<{ message: any; error: string }> = []
+        
+        for (const nmea2000Message of nmea2000Data) {
+          try {
+            const signalKDelta = this.n2kMapper.toDelta(nmea2000Message)
+            if (signalKDelta && signalKDelta.updates && signalKDelta.updates.length > 0) {
+              signalKDeltas.push(signalKDelta)
+            } else {
+              console.warn('N2kMapper returned empty or invalid delta for:', nmea2000Message)
+            }
+          } catch (transformError) {
+            const errorMessage = transformError instanceof Error ? transformError.message : 'Unknown error'
+            console.error('Error transforming NMEA 2000 to SignalK:', transformError)
+            errors.push({
+              message: nmea2000Message,
+              error: errorMessage,
+            })
+          }
+        }
+
+        // Return success response with SignalK deltas
+        res.json({
+          success: true,
+          message: `${nmea2000Data.length} message(s) processed, ${signalKDeltas.length} SignalK delta(s) generated`,
+          messagesProcessed: nmea2000Data.length,
+          signalKDeltas: signalKDeltas,
+          errors: errors.length > 0 ? errors : undefined,
+        })
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.error('Error processing SignalK transformation request:', error)
+        res.status(500).json({
+          success: false,
+          error: errorMessage,
+        })
       }
     })
 
