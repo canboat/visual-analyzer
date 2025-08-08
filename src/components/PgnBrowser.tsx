@@ -34,13 +34,7 @@ import {
   ListGroup,
   ListGroupItem,
 } from 'reactstrap'
-import { 
-  getAllPGNs, 
-  Definition,
-  getEnumeration,
-  getBitEnumeration,
-  getFieldTypeEnumeration 
-} from '@canboat/ts-pgns'
+import { getAllPGNs, Definition, getEnumeration, getBitEnumeration, getFieldTypeEnumeration } from '@canboat/ts-pgns'
 
 interface PgnBrowserProps {}
 
@@ -190,12 +184,12 @@ const PgnRow = React.memo(
                             <code>{field.Name}</code>
                           </td>
                           <td>
-                            <Badge 
-                              color={hasLookupValues(field) ? "primary" : "light"} 
-                              className={hasLookupValues(field) ? "text-white" : "text-dark"} 
-                              style={{ 
-                                fontSize: '0.7em', 
-                                cursor: hasLookupValues(field) ? 'pointer' : 'default' 
+                            <Badge
+                              color={hasLookupValues(field) ? 'primary' : 'light'}
+                              className={hasLookupValues(field) ? 'text-white' : 'text-dark'}
+                              style={{
+                                fontSize: '0.7em',
+                                cursor: hasLookupValues(field) ? 'pointer' : 'default',
                               }}
                               onClick={hasLookupValues(field) ? () => showLookupPopup(field) : undefined}
                               title={hasLookupValues(field) ? 'Click to view lookup values' : undefined}
@@ -238,7 +232,7 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
   const [expandedPgn, setExpandedPgn] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
-  
+
   // Modal state for lookup values
   const [lookupModal, setLookupModal] = useState<{
     isOpen: boolean
@@ -249,7 +243,7 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
     isOpen: false,
     field: null,
     enumValues: null,
-    title: ''
+    title: '',
   })
 
   // Debounce search term to improve performance
@@ -359,29 +353,29 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
       const enumeration = getEnumeration(field.LookupEnumeration)
       if (enumeration) {
         title = `${field.LookupEnumeration} Values`
-        enumValues = enumeration.EnumValues.map(v => ({
+        enumValues = enumeration.EnumValues.map((v) => ({
           name: v.Name,
-          value: v.Value
+          value: v.Value,
         }))
       }
     } else if (field.LookupBitEnumeration) {
       const bitEnumeration = getBitEnumeration(field.LookupBitEnumeration)
       if (bitEnumeration) {
         title = `${field.LookupBitEnumeration} Bit Values`
-        enumValues = bitEnumeration.EnumBitValues.map(v => ({
+        enumValues = bitEnumeration.EnumBitValues.map((v) => ({
           name: v.Name,
           value: `Bit ${v.Bit}`,
-          description: `Bit position ${v.Bit}`
+          description: `Bit position ${v.Bit}`,
         }))
       }
     } else if (field.LookupFieldTypeEnumeration) {
       const fieldTypeEnum = getFieldTypeEnumeration(field.LookupFieldTypeEnumeration)
       if (fieldTypeEnum) {
         title = `${field.LookupFieldTypeEnumeration} Field Type Values`
-        enumValues = fieldTypeEnum.EnumFieldTypeValues.map(v => ({
+        enumValues = fieldTypeEnum.EnumFieldTypeValues.map((v) => ({
           name: v.name,
           value: v.value,
-          description: `${v.FieldType}${v.Unit ? ` (${v.Unit})` : ''}${v.Resolution ? ` - Resolution: ${v.Resolution}` : ''}`
+          description: `${v.FieldType}${v.Unit ? ` (${v.Unit})` : ''}${v.Resolution ? ` - Resolution: ${v.Resolution}` : ''}`,
         }))
       }
     }
@@ -390,25 +384,28 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
   }, [])
 
   // Function to show lookup popup
-  const showLookupPopup = useCallback((field: any) => {
-    const { enumValues, title } = getLookupValues(field)
-    if (enumValues.length > 0) {
-      setLookupModal({
-        isOpen: true,
-        field,
-        enumValues,
-        title
-      })
-    }
-  }, [getLookupValues])
+  const showLookupPopup = useCallback(
+    (field: any) => {
+      const { enumValues, title } = getLookupValues(field)
+      if (enumValues.length > 0) {
+        setLookupModal({
+          isOpen: true,
+          field,
+          enumValues,
+          title,
+        })
+      }
+    },
+    [getLookupValues],
+  )
 
-  // Function to close lookup popup  
+  // Function to close lookup popup
   const closeLookupPopup = useCallback(() => {
     setLookupModal({
       isOpen: false,
       field: null,
       enumValues: null,
-      title: ''
+      title: '',
     })
   }, [])
 
@@ -536,7 +533,7 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
           </div>
         )}
       </CardBody>
-      
+
       {/* Lookup Values Modal */}
       <Modal isOpen={lookupModal.isOpen} toggle={closeLookupPopup} size="lg">
         <ModalHeader toggle={closeLookupPopup}>
@@ -552,9 +549,7 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
                 <ListGroupItem key={index} className="d-flex justify-content-between align-items-start">
                   <div className="ms-2 me-auto">
                     <div className="fw-bold">{enumValue.name}</div>
-                    {enumValue.description && (
-                      <small className="text-muted">{enumValue.description}</small>
-                    )}
+                    {enumValue.description && <small className="text-muted">{enumValue.description}</small>}
                   </div>
                   <Badge color="primary" pill>
                     {enumValue.value}

@@ -21,7 +21,21 @@ import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
 import { DeviceInformation, DeviceMap } from '../types'
 import { ByteMap, ByteMapping, RepeatingByteMapping } from '@canboat/canboatjs'
-import { Nav, NavItem, NavLink, TabContent, TabPane, Card, CardHeader, CardBody, Button, Row, Col, Table, Badge } from 'reactstrap'
+import {
+  Nav,
+  NavItem,
+  NavLink,
+  TabContent,
+  TabPane,
+  Card,
+  CardHeader,
+  CardBody,
+  Button,
+  Row,
+  Col,
+  Table,
+  Badge,
+} from 'reactstrap'
 import { raw } from 'express'
 
 interface ByteMappingProps {
@@ -632,21 +646,39 @@ const PgnDefinitionComp = ({ definition }: PgnDefinitionProps) => {
         <Col md={8}>
           <h6>PGN Details</h6>
           <dl className="row" style={{ marginBottom: '0.5rem', lineHeight: '1.2' }}>
-            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>ID:</dt>
+            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
+              ID:
+            </dt>
             <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
               <code>{definition.Id}</code>
             </dd>
-            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>PGN:</dt>
+            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
+              PGN:
+            </dt>
             <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
               <code>{definition.PGN}</code>
             </dd>
-            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Description:</dt>
-            <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>{definition.Description}</dd>
-            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Type:</dt>
-            <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>{definition.Type}</dd>
-            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Priority:</dt>
-            <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>{definition.Priority}</dd>
-            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Complete:</dt>
+            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
+              Description:
+            </dt>
+            <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
+              {definition.Description}
+            </dd>
+            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
+              Type:
+            </dt>
+            <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
+              {definition.Type}
+            </dd>
+            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
+              Priority:
+            </dt>
+            <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
+              {definition.Priority}
+            </dd>
+            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
+              Complete:
+            </dt>
             <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
               <Badge color={definition.Complete ? 'success' : 'warning'}>
                 {definition.Complete ? 'Complete' : 'Incomplete'}
@@ -654,19 +686,29 @@ const PgnDefinitionComp = ({ definition }: PgnDefinitionProps) => {
             </dd>
             {definition.Length && (
               <>
-                <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Length:</dt>
-                <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>{definition.Length} bytes</dd>
+                <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
+                  Length:
+                </dt>
+                <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
+                  {definition.Length} bytes
+                </dd>
               </>
             )}
             {definition.TransmissionInterval && (
               <>
-                <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Interval:</dt>
-                <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>{definition.TransmissionInterval}ms</dd>
+                <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
+                  Interval:
+                </dt>
+                <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
+                  {definition.TransmissionInterval}ms
+                </dd>
               </>
             )}
             {definition.URL && (
               <>
-                <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Reference:</dt>
+                <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
+                  Reference:
+                </dt>
                 <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
                   <a href={definition.URL} target="_blank" rel="noopener noreferrer">
                     Documentation
@@ -676,7 +718,9 @@ const PgnDefinitionComp = ({ definition }: PgnDefinitionProps) => {
             )}
             {definition.Fallback && (
               <>
-                <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Fallback:</dt>
+                <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
+                  Fallback:
+                </dt>
                 <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
                   <Badge color="info" size="sm">
                     Yes
@@ -710,21 +754,29 @@ const PgnDefinitionComp = ({ definition }: PgnDefinitionProps) => {
                       <code style={{ fontSize: '0.8em' }}>{field.Name}</code>
                     </td>
                     <td>
-                      <Badge 
-                        color="light" 
-                        className="text-dark" 
-                        style={{ 
-                          fontSize: '0.7em'
+                      <Badge
+                        color="light"
+                        className="text-dark"
+                        style={{
+                          fontSize: '0.7em',
                         }}
                       >
                         {formatFieldType(field.FieldType)}
                       </Badge>
                     </td>
                     <td style={{ fontSize: '0.8em' }}>{getFieldSize(field)}</td>
-                    <td>{field.Unit && <code className="small" style={{ fontSize: '0.7em' }}>{field.Unit}</code>}</td>
+                    <td>
+                      {field.Unit && (
+                        <code className="small" style={{ fontSize: '0.7em' }}>
+                          {field.Unit}
+                        </code>
+                      )}
+                    </td>
                     <td>
                       {field.Resolution && field.Resolution !== 1 && (
-                        <code className="small" style={{ fontSize: '0.7em' }}>{field.Resolution}</code>
+                        <code className="small" style={{ fontSize: '0.7em' }}>
+                          {field.Resolution}
+                        </code>
                       )}
                     </td>
                     <td>
@@ -739,7 +791,7 @@ const PgnDefinitionComp = ({ definition }: PgnDefinitionProps) => {
       )}
 
       {/* Repeating Fields Info */}
-      {(definition.RepeatingFieldSet1Size && definition.RepeatingFieldSet1Size > 0) && (
+      {definition.RepeatingFieldSet1Size && definition.RepeatingFieldSet1Size > 0 && (
         <div className="mt-3">
           <h6>Repeating Fields Configuration</h6>
           <dl className="row">
