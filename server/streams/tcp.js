@@ -111,9 +111,9 @@ TcpStream.prototype.pipe = function (pipeTo) {
     })
     .on('error', (err) => {
       let msg = err
-      if ( err.message && err.message.length > 0) {
+      if (err.message && err.message.length > 0) {
         msg = err.message
-      } else if ( err.errors ) {
+      } else if (err.errors) {
         msg = err.errors
       }
       this.options.app.setProviderError(this.options.providerId, msg)
