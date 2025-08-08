@@ -385,15 +385,15 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
   // Helper function to get field definition by ID
   const getFieldDefinition = (fieldId: string) => {
     if (!definition?.Fields) return undefined
-    return definition.Fields.find((f) => (f.Id === fieldId || f.Name === fieldId))
+    return definition.Fields.find((f) => f.Id === fieldId || f.Name === fieldId)
   }
 
   // Helper function to get a human-readable field name
   const getFieldDisplayName = (fieldId: string, fieldDef?: any) => {
     if (fieldDef?.Name) {
-       return fieldDef.Name
+      return fieldDef.Name
     }
-    
+
     return fieldId
   }
 
@@ -479,7 +479,9 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
 
     return (
       <div style={{ marginTop: '15px' }}>
-        <h6 style={{ marginBottom: '10px', color: '#495057', fontSize: '13px' }}>Repeating Data ({listData.length} entries)</h6>
+        <h6 style={{ marginBottom: '10px', color: '#495057', fontSize: '13px' }}>
+          Repeating Data ({listData.length} entries)
+        </h6>
         {listData.map((item: any, index: number) => (
           <div
             key={index}
@@ -535,7 +537,9 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
   return (
     <div style={{ padding: '6px' }}>
       <div style={{ marginBottom: '12px' }}>
-        <h5 style={{ color: '#495057', marginBottom: '8px', fontSize: '14px' }}>{pgnData.description || `PGN ${pgnData.pgn}`}</h5>
+        <h5 style={{ color: '#495057', marginBottom: '8px', fontSize: '14px' }}>
+          {pgnData.description || `PGN ${pgnData.pgn}`}
+        </h5>
         <div
           style={{
             fontSize: '11px',
@@ -560,30 +564,36 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
 
       {renderFields()}
       {renderListFields()}
-      
+
       {/* Add PGN Explanation if available */}
       {definition?.Explanation && (
-        <div style={{ 
-          marginTop: '20px', 
-          padding: '10px', 
-          backgroundColor: '#f1f8ff', 
-          border: '1px solid #c1d7f0',
-          borderRadius: '4px'
-        }}>
-          <h6 style={{ 
-            color: '#495057', 
-            fontSize: '12px', 
-            marginBottom: '6px',
-            fontWeight: 'bold'
-          }}>
+        <div
+          style={{
+            marginTop: '20px',
+            padding: '10px',
+            backgroundColor: '#f1f8ff',
+            border: '1px solid #c1d7f0',
+            borderRadius: '4px',
+          }}
+        >
+          <h6
+            style={{
+              color: '#495057',
+              fontSize: '12px',
+              marginBottom: '6px',
+              fontWeight: 'bold',
+            }}
+          >
             PGN Explanation
           </h6>
-          <div style={{ 
-            fontSize: '11px', 
-            color: '#495057', 
-            lineHeight: '1.4',
-            textAlign: 'justify'
-          }}>
+          <div
+            style={{
+              fontSize: '11px',
+              color: '#495057',
+              lineHeight: '1.4',
+              textAlign: 'justify',
+            }}
+          >
             {definition.Explanation}
           </div>
         </div>
