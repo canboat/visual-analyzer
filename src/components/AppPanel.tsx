@@ -156,7 +156,7 @@ const AppPanelInner = (props: any) => {
     const savedTab = loadActiveTab()
     // Validate the saved tab - if in embedded mode, don't allow connections tab
     if (savedTab && (savedTab !== CONNECTIONS_TAB_ID || !isEmbedded)) {
-      const validTabs = [ANALYZER_TAB_ID, SEND_TAB_ID, TRANSFORM_TAB_ID, RECORDING_TAB_ID]
+      const validTabs = [ANALYZER_TAB_ID, SEND_TAB_ID, TRANSFORM_TAB_ID, RECORDING_TAB_ID, PGN_BROWSER_TAB_ID]
       if (!isEmbedded) {
         validTabs.push(CONNECTIONS_TAB_ID)
       }
