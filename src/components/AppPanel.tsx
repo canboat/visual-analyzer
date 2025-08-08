@@ -807,11 +807,11 @@ const AppPanelInner = (props: any) => {
             </NavItem>
           )}
         </Nav>
-        
+
         {/* Small connection status indicator */}
         <div className="d-flex align-items-center">
           <small className="text-muted me-2">Connection:</small>
-          <span 
+          <span
             className={`badge ${connectionStatus.isConnected ? 'bg-success' : 'bg-danger'}`}
             title={connectionStatus.error || 'Connection status'}
           >
