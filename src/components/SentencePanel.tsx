@@ -21,7 +21,7 @@ import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
 import { DeviceInformation, DeviceMap } from '../types'
 import { ByteMap, ByteMapping, RepeatingByteMapping } from '@canboat/canboatjs'
-import { Nav, NavItem, NavLink, TabContent, TabPane, Card, CardHeader, CardBody, Button } from 'reactstrap'
+import { Nav, NavItem, NavLink, TabContent, TabPane, Card, CardHeader, CardBody, Button, Row, Col, Table, Badge } from 'reactstrap'
 import { raw } from 'express'
 
 interface ByteMappingProps {
@@ -602,6 +602,177 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
   )
 }
 
+interface PgnDefinitionProps {
+  definition: Definition
+}
+
+const PgnDefinitionComp = ({ definition }: PgnDefinitionProps) => {
+  // Helper function to format field types
+  const formatFieldType = (fieldType?: string) => {
+    if (!fieldType) return 'Unknown'
+    return fieldType
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (l) => l.toUpperCase())
+  }
+
+  // Helper function to get field size
+  const getFieldSize = (field: any) => {
+    if (field.BitLength) {
+      if (typeof field.BitLength === 'number') {
+        return field.BitLength % 8 === 0 ? `${field.BitLength / 8} bytes` : `${field.BitLength} bits`
+      }
+    }
+    return ''
+  }
+
+  // Helper function to check if field has lookup values
+  const hasLookupValues = (field: any) => {
+    return !!(field.LookupEnumeration || field.LookupBitEnumeration || field.LookupFieldTypeEnumeration)
+  }
+
+  return (
+    <div className="p-3">
+      <Row>
+        <Col md={8}>
+          <h6>PGN Details</h6>
+          <dl className="row" style={{ marginBottom: '0.5rem', lineHeight: '1.2' }}>
+            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>ID:</dt>
+            <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
+              <code>{definition.Id}</code>
+            </dd>
+            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>PGN:</dt>
+            <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
+              <code>{definition.PGN}</code>
+            </dd>
+            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Description:</dt>
+            <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>{definition.Description}</dd>
+            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Type:</dt>
+            <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>{definition.Type}</dd>
+            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Priority:</dt>
+            <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>{definition.Priority}</dd>
+            <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Complete:</dt>
+            <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
+              <Badge color={definition.Complete ? 'success' : 'warning'}>
+                {definition.Complete ? 'Complete' : 'Incomplete'}
+              </Badge>
+            </dd>
+            {definition.Length && (
+              <>
+                <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Length:</dt>
+                <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>{definition.Length} bytes</dd>
+              </>
+            )}
+            {definition.TransmissionInterval && (
+              <>
+                <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Interval:</dt>
+                <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>{definition.TransmissionInterval}ms</dd>
+              </>
+            )}
+            {definition.URL && (
+              <>
+                <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Reference:</dt>
+                <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
+                  <a href={definition.URL} target="_blank" rel="noopener noreferrer">
+                    Documentation
+                  </a>
+                </dd>
+              </>
+            )}
+            {definition.Fallback && (
+              <>
+                <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>Fallback:</dt>
+                <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
+                  <Badge color="info" size="sm">
+                    Yes
+                  </Badge>
+                </dd>
+              </>
+            )}
+          </dl>
+        </Col>
+      </Row>
+
+      {definition.Fields && definition.Fields.length > 0 && (
+        <div className="mt-3">
+          <h6>Fields ({definition.Fields.length})</h6>
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            <Table size="sm" bordered>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Size</th>
+                  <th>Unit</th>
+                  <th>Resolution</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {definition.Fields.map((field, index) => (
+                  <tr key={index}>
+                    <td>
+                      <code style={{ fontSize: '0.8em' }}>{field.Name}</code>
+                    </td>
+                    <td>
+                      <Badge 
+                        color={hasLookupValues(field) ? "primary" : "light"} 
+                        className={hasLookupValues(field) ? "text-white" : "text-dark"} 
+                        style={{ 
+                          fontSize: '0.7em'
+                        }}
+                        title={hasLookupValues(field) ? 'This field has lookup values' : undefined}
+                      >
+                        {formatFieldType(field.FieldType)}
+                        {hasLookupValues(field) && (
+                          <i className="fas fa-info-circle ms-1" style={{ fontSize: '0.6em' }} />
+                        )}
+                      </Badge>
+                    </td>
+                    <td style={{ fontSize: '0.8em' }}>{getFieldSize(field)}</td>
+                    <td>{field.Unit && <code className="small" style={{ fontSize: '0.7em' }}>{field.Unit}</code>}</td>
+                    <td>
+                      {field.Resolution && field.Resolution !== 1 && (
+                        <code className="small" style={{ fontSize: '0.7em' }}>{field.Resolution}</code>
+                      )}
+                    </td>
+                    <td>
+                      <small style={{ fontSize: '0.75em', lineHeight: '1.3' }}>{field.Description}</small>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </div>
+      )}
+
+      {/* Repeating Fields Info */}
+      {(definition.RepeatingFieldSet1Size && definition.RepeatingFieldSet1Size > 0) && (
+        <div className="mt-3">
+          <h6>Repeating Fields Configuration</h6>
+          <dl className="row">
+            <dt className="col-sm-4">Repeating Size:</dt>
+            <dd className="col-sm-8">{definition.RepeatingFieldSet1Size} fields</dd>
+            {definition.RepeatingFieldSet1StartField && (
+              <>
+                <dt className="col-sm-4">Start Field:</dt>
+                <dd className="col-sm-8">Field #{definition.RepeatingFieldSet1StartField}</dd>
+              </>
+            )}
+            {definition.RepeatingFieldSet1CountField && (
+              <>
+                <dt className="col-sm-4">Count Field:</dt>
+                <dd className="col-sm-8">Field #{definition.RepeatingFieldSet1CountField}</dd>
+              </>
+            )}
+          </dl>
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface SentencePanelProps {
   selectedPgn: Subject<PGN>
   info: Subject<DeviceMap>
@@ -769,8 +940,8 @@ export const SentencePanel = (props: SentencePanelProps) => {
           <TabPane tabId={PGNDEF_TAB_ID}>
             <Card>
               <CardHeader>{tabHeader()}</CardHeader>
-              <CardBody>
-                <pre>{JSON.stringify(definition, null, 2)}</pre>
+              <CardBody style={{ padding: 0 }}>
+                <PgnDefinitionComp definition={definition} />
               </CardBody>
             </Card>
           </TabPane>
