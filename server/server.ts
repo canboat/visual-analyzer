@@ -53,7 +53,7 @@ class VisualAnalyzerServer {
   private recordingService: RecordingService
   private outAvailable: boolean = false
 
-  constructor() {
+  constructor(port?: number) {
     this.publicDir = path.join(__dirname, '../public')
 
     // Platform-appropriate config file location
@@ -74,7 +74,7 @@ class VisualAnalyzerServer {
 
     this.port = process.env.VISUAL_ANALYZER_PORT
       ? parseInt(process.env.VISUAL_ANALYZER_PORT, 10)
-      : this.currentConfig.port || 8080
+      : port || this.currentConfig.port || 8080
     this.app = express()
     this.server = http.createServer(this.app)
     this.wss = new WebSocketServer({ server: this.server })

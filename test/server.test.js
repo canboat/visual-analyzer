@@ -8,7 +8,7 @@ describe('Visual Analyzer Server', function () {
 
   before(function (done) {
     // Create server instance for testing
-    server = new VisualAnalyzerServer({ port: testPort })
+    server = new VisualAnalyzerServer(testPort)
     server.start()
 
     // Wait for server to start
