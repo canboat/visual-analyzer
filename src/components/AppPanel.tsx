@@ -196,6 +196,7 @@ const AppPanelInner = (props: any) => {
   const sentInfoReq: number[] = []
   const [outAvailable, setOutAvailable] = useState(false)
   const outAvailableRef = useRef(false)
+  let sentReqAll = false
 
   // Handler for tab changes with persistence
   const handleTabChange = (tabId: string) => {
@@ -360,9 +361,17 @@ const AppPanelInner = (props: any) => {
         const parsed = JSON.parse(messageData)
         //console.log('Parsed WebSocket event:', parsed.event, parsed)
 
+        if ( isEmbedded && sentReqAll === false ) {
+          sentReqAll = true
+          setOutAvailable(true)
+          outAvailableRef.current = true
+          requestMetaData(255)
+        }
+
         // Handle connection status events
         if (parsed.event === 'nmea:connected') {
           // Clear all data when reconnecting
+          console.log('NMEA connection established')
 
           setList((prev: any) => {
             data.next({})
@@ -399,6 +408,7 @@ const AppPanelInner = (props: any) => {
           console.log('NMEA output available - can now request metadata')
           setOutAvailable(true)
           outAvailableRef.current = true
+          requestMetaData(255)
           return
         }
 
@@ -500,7 +510,7 @@ const AppPanelInner = (props: any) => {
           }
 
           if (sentInfoReq.indexOf(pgn!.src!) === -1) {
-            if (outAvailableRef.current) {
+            if (outAvailableRef.current ) {
               sentInfoReq.push(pgn!.src!)
               // NMEA output is available, can request metadata immediately
               requestMetaData(pgn!.src!)
@@ -779,10 +789,10 @@ const AppPanelInner = (props: any) => {
   )
 }
 
-function requestMetaData(src: number) {
-  console.log(`Requesting metadata for source ${src}`)
+function requestMetaData(dst: number) {
+  console.log(`Requesting metadata for source ${dst}`)
   infoPGNS.forEach((num) => {
-    const pgn = new PGN_59904({ pgn: num })
+    const pgn = new PGN_59904({ pgn: num }, dst)
 
     const body = { value: JSON.stringify(pgn), sendToN2K: true }
     fetch(`/skServer/inputTest`, {
