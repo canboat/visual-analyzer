@@ -29,7 +29,6 @@ import {
   ConnectionState,
   WebSocketMessage,
   BroadcastMessage,
-  NMEAProviderOptions,
   ApiResponse,
   ConfigurationResponse,
   ConnectionProfile,
@@ -73,7 +72,7 @@ class VisualAnalyzerServer {
 
     this.currentConfig = this.loadConfiguration()
 
-    this.port = process.env.VISUAL_ANALYZER_PORT ? parseInt(process.env.VISUAL_ANALYZER_PORT, 10) : this.currentConfig.server?.port || 8080
+    this.port = process.env.VISUAL_ANALYZER_PORT ? parseInt(process.env.VISUAL_ANALYZER_PORT, 10) : this.currentConfig.port || 8080
     this.app = express()
     this.server = http.createServer(this.app)
     this.wss = new WebSocketServer({ server: this.server })
@@ -85,7 +84,7 @@ class VisualAnalyzerServer {
     this.n2kMapper = new N2kMapper({})
 
     // Initialize recording service
-    this.recordingService = new RecordingService()
+    this.recordingService = new RecordingService(this.configDir)
 
     // Set up recording service event listeners
     this.recordingService.on('started', (status) => {
@@ -733,10 +732,10 @@ class VisualAnalyzerServer {
   }
 
   // Method to integrate with actual NMEA 2000 data sources
-  public connectToNMEASource(options: NMEAProviderOptions): void {
+  public connectToNMEASource(options: ConnectionProfile): void {
     console.log('Connecting to NMEA 2000 source with options:', options)
 
-    this.nmeaProvider = new NMEADataProvider(options)
+    this.nmeaProvider = new NMEADataProvider(options, this.configDir)
 
     // Set up event listeners for NMEA data
     this.nmeaProvider.on('nmea-data', (data: any) => {
@@ -991,12 +990,6 @@ class VisualAnalyzerServer {
   }
 
   public updateConfiguration(newConfig: Partial<Config>): void {
-    if (newConfig.server) {
-      if (newConfig.server.port && newConfig.server.port !== this.port) {
-        throw new Error('Port changes require a server restart')
-      }
-    }
-
     if (newConfig.connections) {
       this.currentConfig.connections = { ...this.currentConfig.connections, ...newConfig.connections }
       this.saveConfigToFile()

@@ -64,12 +64,11 @@ export class RecordingService extends EventEmitter {
   private fileStream: fs.WriteStream | null = null
   private recordingsDir: string
 
-  constructor() {
+  constructor(configPath: string) {
     super()
 
     // Create recordings directory
-    const homeDir = os.homedir()
-    this.recordingsDir = path.join(homeDir, '.visual-analyzer', 'recordings')
+    this.recordingsDir = path.join(configPath, '.visual-analyzer', 'recordings')
     this.ensureRecordingsDirectory()
   }
 

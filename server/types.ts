@@ -53,19 +53,9 @@ export interface ConnectionsConfig {
   profiles: Record<string, ConnectionProfile>
 }
 
-export interface ServerConfig {
-  port?: number
-}
-
 export interface Config {
   port: number
   connections: ConnectionsConfig
-  server?: ServerConfig
-}
-
-export interface FileConfig {
-  server?: ServerConfig
-  connections?: ConnectionsConfig
 }
 
 // Connection State
@@ -88,11 +78,6 @@ export interface BroadcastMessage {
   timestamp: string
   error?: string
   auth?: any
-}
-
-// NMEA Provider Options
-export interface NMEAProviderOptions extends ConnectionProfile {
-  type: 'serial' | 'network' | 'signalk' | 'socketcan' | 'file'
 }
 
 // API Response Types
@@ -153,9 +138,9 @@ export interface InputTestRequest {
 
 // NMEA Provider Interface
 export interface INMEAProvider extends EventEmitter {
-  options: NMEAProviderOptions
-  isConnected: boolean
-  authToken: string | null
+  options: ConnectionProfile
+  //isConnected: boolean
+  //authToken: string | null
 
   connect(): Promise<void>
   disconnect(): void

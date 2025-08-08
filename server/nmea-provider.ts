@@ -18,13 +18,14 @@ import { EventEmitter } from 'events'
 import WebSocket from 'ws'
 import * as fs from 'fs'
 import * as readline from 'readline'
-import { NMEAProviderOptions, SignalKMessage, SignalKLoginMessage, SignalKLoginResponse, INMEAProvider } from './types'
+import { SignalKMessage, SignalKLoginMessage, SignalKLoginResponse, INMEAProvider, ConnectionProfile, Config } from './types'
 import CanDevice from './n2k-device'
 
 class NMEADataProvider extends EventEmitter implements INMEAProvider {
-  public options: NMEAProviderOptions
-  public isConnected: boolean = false
-  public authToken: string | null = null
+  public options: ConnectionProfile
+  private configPath: string
+  private isConnected: boolean = false
+  private authToken: string | null = null
   private authRequestId: number = 0
   private pendingAuthResolve: ((value: boolean) => void) | null = null
 
@@ -39,9 +40,10 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
   private lineQueue: string[] = []
   private isProcessingQueue: boolean = false
 
-  constructor(options: NMEAProviderOptions = {} as NMEAProviderOptions) {
+  constructor(options: ConnectionProfile, configPath: string) {
     super()
     this.options = options
+    this.configPath = configPath
   }
 
   public async connect(): Promise<void> {
@@ -188,6 +190,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
 
   public getServerApp(): any {
     return {
+      config: { configPath: this.configPath },
       setProviderError: (providerId: string, msg: string) => {
         console.error(`NMEADataProvider error: ${msg}`)
         this.emit('error', new Error(msg))
