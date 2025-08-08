@@ -626,11 +626,6 @@ const PgnDefinitionComp = ({ definition }: PgnDefinitionProps) => {
     return ''
   }
 
-  // Helper function to check if field has lookup values
-  const hasLookupValues = (field: any) => {
-    return !!(field.LookupEnumeration || field.LookupBitEnumeration || field.LookupFieldTypeEnumeration)
-  }
-
   return (
     <div className="p-3">
       <Row>
@@ -716,17 +711,13 @@ const PgnDefinitionComp = ({ definition }: PgnDefinitionProps) => {
                     </td>
                     <td>
                       <Badge 
-                        color={hasLookupValues(field) ? "primary" : "light"} 
-                        className={hasLookupValues(field) ? "text-white" : "text-dark"} 
+                        color="light" 
+                        className="text-dark" 
                         style={{ 
                           fontSize: '0.7em'
                         }}
-                        title={hasLookupValues(field) ? 'This field has lookup values' : undefined}
                       >
                         {formatFieldType(field.FieldType)}
-                        {hasLookupValues(field) && (
-                          <i className="fas fa-info-circle ms-1" style={{ fontSize: '0.6em' }} />
-                        )}
                       </Badge>
                     </td>
                     <td style={{ fontSize: '0.8em' }}>{getFieldSize(field)}</td>
