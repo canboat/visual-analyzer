@@ -20,7 +20,7 @@
     "prettier": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc.js",
     "format": "npm run lint:fix && npm run prettier",
     "start": "webpack serve --config webpack.config.js",
-    "server": "npm run build:server && node dist/index.js",
+    "server": "node dist/index.js",
     "dev": "concurrently \"npm run watch\" \"npm run server:dev\" \"npm run server\""
   },
   "keywords": [

@@ -155,36 +155,9 @@ The server uses a `server/config.json` file for persistent configuration. The se
 
 Basic server configuration can be overridden with environment variables:
 
-- `PORT`: Server port (default: 8080)
-- `PUBLIC_DIR`: Directory containing built web assets (default: ./public)
+- `VISUAL_ANALYZER_PORT`: Server port (default: 8080)
+- `VISUAL_ANALYZER_CONFIG`: Config file location
 
-#### Legacy Environment Variable Configuration (Standalone Mode)
-
-For backward compatibility, you can still configure data sources using environment variables (though the web interface is recommended):
-
-**SignalK Server:**
-
-```bash
-SIGNALK_URL=http://localhost:3000 npm run server
-```
-
-**Serial Port (NMEA 2000 Gateway):**
-
-```bash
-SERIAL_PORT=/dev/ttyUSB0 BAUD_RATE=115200 npm run server
-```
-
-**Network Source (TCP):**
-
-```bash
-NETWORK_HOST=192.168.1.100 NETWORK_PORT=2000 NETWORK_PROTOCOL=tcp npm run server
-```
-
-**Network Source (UDP):**
-
-```bash
-NETWORK_HOST=192.168.1.100 NETWORK_PORT=2000 NETWORK_PROTOCOL=udp npm run server
-```
 
 ### Multiple Sources (Standalone Mode Only)
 

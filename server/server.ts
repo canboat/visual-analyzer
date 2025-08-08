@@ -42,6 +42,7 @@ class VisualAnalyzerServer {
   private port: number
   private publicDir: string
   private configFile: string
+  private configDir: string
   private app: Express
   private server: http.Server
   private wss: WebSocketServer
@@ -53,10 +54,9 @@ class VisualAnalyzerServer {
   private recordingService: RecordingService
   private outAvailable: boolean = false
 
-  constructor(options: Partial<Config> = {}) {
-    this.port = options.port || 8080
+  constructor() {
     this.publicDir = path.join(__dirname, '../public')
-
+    
     // Platform-appropriate config file location
     let configDir: string
     if (process.platform === 'win32') {
@@ -66,16 +66,17 @@ class VisualAnalyzerServer {
       // On Unix-like systems, use ~/.visual-analyzer
       configDir = path.join(os.homedir(), '.visual-analyzer')
     }
+    this.configDir = configDir
 
     const defaultConfigPath = path.join(configDir, 'config.json')
     this.configFile = process.env.VISUAL_ANALYZER_CONFIG || defaultConfigPath
+
+    this.currentConfig = this.loadConfiguration()
+
+    this.port = process.env.VISUAL_ANALYZER_PORT ? parseInt(process.env.VISUAL_ANALYZER_PORT, 10) : this.currentConfig.server?.port || 8080
     this.app = express()
     this.server = http.createServer(this.app)
     this.wss = new WebSocketServer({ server: this.server })
-    this.currentConfig = {
-      port: this.port,
-      connections: { activeConnection: null, profiles: {} },
-    }
 
     // Initialize canboatjs parser for string input parsing
     this.canboatParser = new FromPgn()
@@ -129,27 +130,31 @@ class VisualAnalyzerServer {
       error: null,
     }
 
-    // Load configuration on startup
-    this.loadConfiguration()
-
     this.setupRoutes()
     this.setupWebSocket()
+
+    console.log('Starting Visual Analyzer Server with configuration:')
+    console.log(`  Port: ${this.currentConfig.port}`)
+    console.log(`  Active Connection: ${this.currentConfig.connections?.activeConnection || 'None configured'}`)
   }
 
-  // Load configuration when server starts
-  private loadConfiguration(): void {
+  private loadConfiguration(): Config {
+    let currentConfig = {
+      port: 8080,
+      connections: {
+        activeConnection: null,
+        profiles: {},
+      }
+    }
+
     try {
       if (fs.existsSync(this.configFile)) {
         const data = fs.readFileSync(this.configFile, 'utf8')
         const config = JSON.parse(data)
 
         // Merge with defaults
-        this.currentConfig = {
-          port: this.port,
-          connections: {
-            activeConnection: null,
-            profiles: {},
-          },
+        currentConfig = {
+          ...currentConfig,
           ...config,
         }
 
@@ -161,7 +166,7 @@ class VisualAnalyzerServer {
         console.log(`Configuration loaded from ${this.configFile}`)
 
         // Auto-connect to active connection if specified
-        if (this.currentConfig.connections.activeConnection) {
+        if (currentConfig.connections.activeConnection) {
           setTimeout(() => {
             this.connectToActiveProfile()
           }, 2000) // Wait 2 seconds after server startup
@@ -180,6 +185,7 @@ class VisualAnalyzerServer {
     } catch (error) {
       console.error('Error loading configuration:', error)
     }
+    return currentConfig
   }
 
   private connectToActiveProfile(): void {
@@ -1130,19 +1136,3 @@ class VisualAnalyzerServer {
 }
 
 export default VisualAnalyzerServer
-
-// If this file is run directly, start the server
-if (require.main === module) {
-  const server = new VisualAnalyzerServer({
-    port: process.env.PORT ? parseInt(process.env.PORT, 10) : 8080,
-  })
-
-  server.start()
-
-  // Graceful shutdown
-  process.on('SIGINT', () => {
-    console.log('\nShutting down gracefully...')
-    server.stop()
-    process.exit(0)
-  })
-}
