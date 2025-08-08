@@ -15,24 +15,11 @@
  */
 
 import { EventEmitter } from 'events'
-import { serial as ActisenseStream, iKonvert as iKonvertStream, pgnToActisenseN2KAsciiFormat } from '@canboat/canboatjs'
-import * as net from 'net'
-import * as dgram from 'dgram'
 import WebSocket from 'ws'
 import * as fs from 'fs'
 import * as readline from 'readline'
 import { NMEAProviderOptions, SignalKMessage, SignalKLoginMessage, SignalKLoginResponse, INMEAProvider } from './types'
-import TcpStream from './streams/tcp'
 import CanDevice from './n2k-device'
-
-interface SerialPortLike {
-  pipe(parser: any): any
-  on(event: string, callback: (...args: any[]) => void): void
-}
-
-interface ReadlineParserLike {
-  on(event: string, callback: (data: string) => void): void
-}
 
 class NMEADataProvider extends EventEmitter implements INMEAProvider {
   public options: NMEAProviderOptions
@@ -64,7 +51,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
       } else if (this.options.type === 'file') {
         await this.connectToFile()
       } else {
-        this.canDevice = new CanDevice(this, this.options)
+        this.canDevice = new CanDevice(this.getServerApp(), this.options)
         await this.canDevice.start()
         this.isConnected = true
         this.emit('connected')
@@ -227,196 +214,6 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     }
   }
 
-<<<<<<< Updated upstream
-  private async connectToSerial(): Promise<void> {
-    try {
-      const deviceType = this.options.deviceType || 'Actisense'
-      console.log(`Connecting to serial port: ${this.options.serialPort} (${deviceType})`)
-
-      if (deviceType === 'Actisense' || deviceType === 'Actisense ASCII') {
-        // Use ActisenseStream from canboatjs for Actisense NGT-1 devices
-        this.serialStream = new (ActisenseStream as any)({
-          device: this.options.serialPort!,
-          baudrate: this.options.baudRate!,
-          reconnect: false,
-          app: this.getServerApp(),
-        })
-
-        console.log('Actisense serial connection established using canboatjs ActisenseStream')
-        this.isConnected = true
-        this.emit('connected')
-      } else if (deviceType === 'iKonvert') {
-        // Use iKonvertStream from canboatjs for Digital Yacht iKonvert devices
-
-        this.serialStream = new SerialPortStream({
-          app: this.getServerApp(),
-          device: this.options.serialPort!,
-          baudrate: this.options.baudRate || 230400,
-          toStdout: 'ikonvertOut',
-        })
-
-        this.iKonvertStream = new (iKonvertStream as any)({
-          app: this.getServerApp(),
-          tcp: false,
-        })
-
-        this.serialStream.pipe(this.iKonvertStream)
-
-        console.log('iKonvert serial connection established using canboatjs iKonvertStream')
-        this.isConnected = true
-        this.emit('connected')
-      } else {
-        // Fall back to generic serial port handling for other devices
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const SerialPort = require('serialport')
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { ReadlineParser } = require('@serialport/parser-readline')
-
-        this.serialPort = new SerialPort({
-          path: this.options.serialPort!,
-          baudRate: this.options.baudRate || 115200,
-        })
-
-        // Configure parser based on device type
-        const delimiter = this.getDelimiterForDevice(deviceType)
-        const parser: ReadlineParserLike = this.serialPort!.pipe(new ReadlineParser({ delimiter }))
-
-        parser.on('data', (line: string) => {
-          const trimmed = line.trim()
-          if (trimmed) {
-            this.emit('raw-nmea', trimmed)
-          }
-        })
-
-        this.serialPort!.on('error', (error: Error) => {
-          console.error('Serial port error:', error)
-          this.emit('error', error)
-        })
-
-        console.log(`Generic serial port connected successfully for ${deviceType}`)
-      }
-    } catch (error) {
-      console.error('Failed to connect to serial port:', error)
-      throw error
-    }
-  }
-
-  private async connectToNetwork(): Promise<void> {
-    if (this.options.deviceType === 'NavLink2') {
-      await this.connectToNavLink2()
-    } else {
-      if (this.options.networkProtocol === 'udp') {
-        await this.connectToUDP()
-      } else {
-        await this.connectToTCP()
-      }
-    }
-  }
-
-  private async connectToNavLink2(): Promise<void> {
-    return new Promise((resolve) => {
-      this.tcpStream = new TcpStream({
-        app: this.getServerApp(),
-        port: this.options.networkPort!,
-        host: this.options.networkHost!,
-        toStdout: 'navlink2-out',
-      })
-
-      this.iKonvertStream = new (iKonvertStream as any)({
-        app: this.getServerApp(),
-        tcp: true,
-      })
-      this.tcpStream.pipe(this.iKonvertStream)
-      resolve()
-    })
-  }
-
-  private async connectToTCP(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.tcpClient = new net.Socket()
-
-      this.tcpClient.connect(this.options.networkPort!, this.options.networkHost!, () => {
-        console.log(`Connected to TCP server: ${this.options.networkHost}:${this.options.networkPort}`)
-        this.isConnected = true
-        this.emit('connected')
-        resolve()
-      })
-
-      this.tcpClient.on('data', (data: Buffer) => {
-        const lines = data.toString().split(/\r?\n/)
-        lines.forEach((line) => {
-          const trimmed = line.trim()
-          if (trimmed) {
-            this.emit('raw-nmea', trimmed)
-          }
-        })
-      })
-
-      this.tcpClient.on('error', (error: Error) => {
-        console.error('TCP connection error:', error)
-        this.emit('error', error)
-        reject(error)
-      })
-
-      this.tcpClient.on('close', () => {
-        console.log('TCP connection closed')
-        this.isConnected = false
-        this.emit('disconnected')
-      })
-    })
-  }
-
-  private async connectToUDP(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.udpSocket = dgram.createSocket('udp4')
-
-      this.udpSocket.on('message', (message: Buffer, _remote: dgram.RemoteInfo) => {
-        const lines = message.toString().split(/\r?\n/)
-        lines.forEach((line) => {
-          const trimmed = line.trim()
-          if (trimmed) {
-            this.emit('raw-nmea', trimmed)
-          }
-        })
-      })
-
-      this.udpSocket.on('error', (error: Error) => {
-        console.error('UDP socket error:', error)
-        this.emit('error', error)
-        reject(error)
-      })
-
-      this.udpSocket.bind(this.options.networkPort!, this.options.networkHost!, () => {
-        console.log(`UDP socket bound to ${this.options.networkHost}:${this.options.networkPort}`)
-        this.isConnected = true
-        this.emit('connected')
-        resolve()
-      })
-    })
-  }
-
-  private async connectToSocketCAN(): Promise<void> {
-    try {
-      console.log(`Connecting to SocketCAN interface: ${this.options.socketcanInterface}`)
-
-      this.canbusStream = canbus({
-        canDevice: this.options.socketcanInterface!,
-        preferredAddress: 0,
-        transmitPGNs: [],
-        app: this.getServerApp(),
-      })
-
-      console.log('SocketCAN connection established using canboatjs canbus')
-      this.isConnected = true
-      this.emit('connected')
-    } catch (error) {
-      console.error('Failed to connect to SocketCAN:', error)
-      throw error
-    }
-  }
-
-=======
->>>>>>> Stashed changes
   private async connectToFile(): Promise<void> {
     try {
       console.log(`Opening file for playback: ${this.options.filePath}`)

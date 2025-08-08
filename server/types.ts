@@ -25,13 +25,7 @@ export interface ConnectionProfile {
   // Serial connection specific
   serialPort?: string
   baudRate?: number
-  deviceType?:
-    | 'Actisense'
-    | 'Actisense ASCII'
-    | 'iKonvert'
-    | 'Yacht Devices RAW'
-    | 'NavLink2'
-    | 'SocketCAN'
+  deviceType?: 'Actisense' | 'Actisense ASCII' | 'iKonvert' | 'Yacht Devices RAW' | 'NavLink2' | 'SocketCAN'
 
   // Network connection specific
   networkHost?: string

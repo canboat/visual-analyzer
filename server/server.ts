@@ -679,7 +679,7 @@ class VisualAnalyzerServer {
               }),
             )
           }
-          if ( this.outAvailable) {
+          if (this.outAvailable) {
             ws.send(
               JSON.stringify({
                 event: 'nmea:out-available',

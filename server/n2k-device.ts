@@ -16,7 +16,6 @@
 
 import { EventEmitter } from 'stream'
 import { ConnectionProfile } from './types'
-import NMEADataProvider from './nmea-provider'
 import TcpStream from './streams/tcp'
 import UdpStream from './streams/udp'
 import SerialStream from './streams/serialport'
@@ -39,12 +38,12 @@ const outEvent = 'n2k-device-out'
 
 class CanDevice extends EventEmitter {
   private options: ConnectionProfile
-  private provider: NMEADataProvider
+  private app: any
   private stream: any
   private netStream: TcpStream | UdpStream | null = null
   private serialStream: any = null
 
-  constructor(provider: NMEADataProvider, options: ConnectionProfile) {
+  constructor(app: any, options: ConnectionProfile) {
     super()
     this.options = options
     this.provider = provider
@@ -53,8 +52,7 @@ class CanDevice extends EventEmitter {
   public async start() {
     return new Promise((resolve, reject) => {
       try {
-        const app = this.provider.getServerApp()
-        const n2kOptions = this.getN2kDeviceOptions(app)
+        const n2kOptions = this.getN2kDeviceOptions(this.app)
 
         if (this.options.type === 'socketcan') {
           this.stream = canbus({ ...n2kOptions, canDevice: this.options.socketcanInterface })
@@ -62,14 +60,14 @@ class CanDevice extends EventEmitter {
         } else if (this.options.type === 'network') {
           if (this.options.networkProtocol === 'tcp') {
             this.netStream = new TcpStream({
-              app,
+              app: this.app,
               port: this.options.networkPort!,
               host: this.options.networkHost!,
               outEvent,
             })
           } else {
             this.netStream = new UdpStream({
-              app,
+              app: this.app,
               port: this.options.networkPort!,
               host: this.options.networkHost!,
               outEvent,
@@ -83,46 +81,45 @@ class CanDevice extends EventEmitter {
             )
           } else if (this.options.deviceType === 'iKonvert') {
             this.stream = iKonvert({
-              app,
+              app: this.app,
               tcp: true,
               outEvent,
             })
           } else if (this.options.deviceType === 'Actisense ASCII') {
-            this.stream = W2k01({
-              app,
-            }, 'ascii', outEvent)
-
+            this.stream = W2k01(
+              {
+                app: this.app,
+              },
+              'ascii',
+              outEvent,
+            )
           }
 
           const liner = new Liner({}) as any
           this.netStream.pipe(liner)
           liner.pipe(this.stream)
           this.stream.pipe(new NullStream())
-
         } else if (this.options.type === 'serial') {
           if (this.options.deviceType === 'Actisense') {
             this.stream = new (ActisenseStream as any)({
               device: this.options.serialPort!,
               baudrate: this.options.baudRate!,
               reconnect: false,
-              app,
+              app: this.app,
             })
           } else if (this.options.deviceType === 'Yacht Devices RAW') {
             this.serialStream = new SerialStream({
-              app,
+              app: this.app,
               device: this.options.serialPort!,
               baudrate: this.options.baudRate || 38400,
               reconnect: false,
               toStdout: outEvent,
             })
 
-            this.stream = Ydwg02(
-              { ...n2kOptions, createDevice: true, ydgwOutEvent: outEvent },
-              'usb',
-            )
+            this.stream = Ydwg02({ ...n2kOptions, createDevice: true, ydgwOutEvent: outEvent }, 'usb')
           } else if (this.options.deviceType === 'iKonvert') {
             this.serialStream = new SerialStream({
-              app,
+              app: this.app,
               device: this.options.serialPort!,
               baudrate: this.options.baudRate || 230400,
               reconnect: false,
@@ -130,7 +127,7 @@ class CanDevice extends EventEmitter {
             })
 
             this.stream = iKonvert({
-              app,
+              app: this.app,
               tcp: false,
             })
 
