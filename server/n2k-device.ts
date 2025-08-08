@@ -55,33 +55,35 @@ class CanDevice extends EventEmitter {
         const n2kOptions = this.getN2kDeviceOptions(this.app)
 
         if (this.options.type === 'socketcan') {
-          this.stream = canbus({ ...n2kOptions, canDevice: this.options.socketcanInterface })
+          this.stream = canbus({
+            ...n2kOptions,
+            providerId: this.options.deviceType,
+            canDevice: this.options.socketcanInterface,
+          })
           this.stream.pipe(new NullStream())
         } else if (this.options.type === 'network') {
+          const netOptions = {
+            app: this.app,
+            providerId: this.options.deviceType,
+            port: this.options.networkPort!,
+            host: this.options.networkHost!,
+            outEvent,
+          }
           if (this.options.networkProtocol === 'tcp') {
-            this.netStream = new TcpStream({
-              app: this.app,
-              port: this.options.networkPort!,
-              host: this.options.networkHost!,
-              outEvent,
-            })
+            this.netStream = new TcpStream(netOptions)
           } else {
-            this.netStream = new UdpStream({
-              app: this.app,
-              port: this.options.networkPort!,
-              host: this.options.networkHost!,
-              outEvent,
-            })
+            this.netStream = new UdpStream(netOptions)
           }
 
           if (this.options.deviceType === 'Yacht Devices RAW') {
             this.stream = Ydwg02(
-              { ...n2kOptions, createDevice: true, forwardPGNs: true, ydgwOutEvent: outEvent },
+              { ...n2kOptions, providerId: this.options.deviceType, createDevice: true, ydgwOutEvent: outEvent },
               'net',
             )
           } else if (this.options.deviceType === 'iKonvert') {
             this.stream = iKonvert({
               app: this.app,
+              providerId: this.options.deviceType,
               tcp: true,
               outEvent,
             })
@@ -89,6 +91,7 @@ class CanDevice extends EventEmitter {
             this.stream = W2k01(
               {
                 app: this.app,
+                providerId: this.options.deviceType,
               },
               'ascii',
               outEvent,
@@ -102,6 +105,7 @@ class CanDevice extends EventEmitter {
         } else if (this.options.type === 'serial') {
           if (this.options.deviceType === 'Actisense') {
             this.stream = new (ActisenseStream as any)({
+              providerId: this.options.deviceType,
               device: this.options.serialPort!,
               baudrate: this.options.baudRate!,
               reconnect: false,
@@ -110,6 +114,7 @@ class CanDevice extends EventEmitter {
           } else if (this.options.deviceType === 'Yacht Devices RAW') {
             this.serialStream = new SerialStream({
               app: this.app,
+              providerId: this.options.deviceType,
               device: this.options.serialPort!,
               baudrate: this.options.baudRate || 38400,
               reconnect: false,
@@ -120,6 +125,7 @@ class CanDevice extends EventEmitter {
           } else if (this.options.deviceType === 'iKonvert') {
             this.serialStream = new SerialStream({
               app: this.app,
+              providerId: this.options.deviceType,
               device: this.options.serialPort!,
               baudrate: this.options.baudRate || 230400,
               reconnect: false,
@@ -128,6 +134,7 @@ class CanDevice extends EventEmitter {
 
             this.stream = iKonvert({
               app: this.app,
+              providerId: this.options.deviceType,
               tcp: false,
             })
 
@@ -162,6 +169,7 @@ class CanDevice extends EventEmitter {
   private getN2kDeviceOptions(app: any) {
     return {
       app,
+      providerId: this.options.deviceType,
       preferredAddress: this.options.sourceAddress || 11,
       disableDefaultTransmitPGNs: true,
       addressClaim: new PGN_60928({

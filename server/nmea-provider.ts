@@ -18,7 +18,7 @@ import { EventEmitter } from 'events'
 import WebSocket from 'ws'
 import * as fs from 'fs'
 import * as readline from 'readline'
-import { SignalKMessage, SignalKLoginMessage, SignalKLoginResponse, INMEAProvider, ConnectionProfile, Config } from './types'
+import { SignalKMessage, SignalKLoginMessage, SignalKLoginResponse, INMEAProvider, ConnectionProfile } from './types'
 import CanDevice from './n2k-device'
 
 class NMEADataProvider extends EventEmitter implements INMEAProvider {
@@ -192,11 +192,11 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     return {
       config: { configPath: this.configPath },
       setProviderError: (providerId: string, msg: string) => {
-        console.error(`NMEADataProvider error: ${msg}`)
+        console.error(`${providerId} error: ${msg}`)
         this.emit('error', new Error(msg))
       },
       setProviderStatus: (providerId: string, msg: string) => {
-        console.log(`NMEADataProvider status: ${msg}`)
+        console.log(`${providerId} status: ${msg}`)
       },
       on: (event: string, callback: (...args: any[]) => void) => {
         this.on(event, callback)

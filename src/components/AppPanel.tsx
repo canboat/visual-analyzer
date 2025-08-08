@@ -361,7 +361,7 @@ const AppPanelInner = (props: any) => {
         const parsed = JSON.parse(messageData)
         //console.log('Parsed WebSocket event:', parsed.event, parsed)
 
-        if ( isEmbedded && sentReqAll === false ) {
+        if (isEmbedded && sentReqAll === false) {
           sentReqAll = true
           setOutAvailable(true)
           outAvailableRef.current = true
@@ -510,7 +510,7 @@ const AppPanelInner = (props: any) => {
           }
 
           if (sentInfoReq.indexOf(pgn!.src!) === -1) {
-            if (outAvailableRef.current ) {
+            if (outAvailableRef.current) {
               sentInfoReq.push(pgn!.src!)
               // NMEA output is available, can request metadata immediately
               requestMetaData(pgn!.src!)

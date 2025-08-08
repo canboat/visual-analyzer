@@ -17,8 +17,8 @@
       "type": "node",
       "env": {
         "DEBUG": "canboatjs:yddevice"
-      },
-      "outputCapture": "std"
+      }
+      //"outputCapture": "std"
     }
   ]
 }

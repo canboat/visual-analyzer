@@ -71,6 +71,7 @@ TcpStream.prototype.pipe = function (pipeTo) {
     })
   }
 
+  let firstConnect = true
   this.re = require('reconnect-core')(function () {
     return net.connect.apply(null, arguments)
   })({ maxDelay: 5 * 1000 }, (tcpStream) => {
@@ -96,9 +97,13 @@ TcpStream.prototype.pipe = function (pipeTo) {
       that.debug(msg)
     })
     .on('reconnect', (n, delay) => {
-      const msg = `Reconnect ${this.options.host} ${this.options.port} retry ${n} delay ${delay}`
-      this.options.app.setProviderError(this.options.providerId, msg)
-      that.debug(msg)
+      if (firstConnect) {
+        firstConnect = false
+      } else {
+        const msg = `Reconnect ${this.options.host} ${this.options.port} retry ${n} delay ${delay}`
+        this.options.app.setProviderError(this.options.providerId, msg)
+        that.debug(msg)
+      }
     })
     .on('disconnect', () => {
       delete this.tcpStream

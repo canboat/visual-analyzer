@@ -158,7 +158,6 @@ Basic server configuration can be overridden with environment variables:
 - `VISUAL_ANALYZER_PORT`: Server port (default: 8080)
 - `VISUAL_ANALYZER_CONFIG`: Config file location
 
-
 ### Multiple Sources (Standalone Mode Only)
 
 The server supports multiple simultaneous data sources. You can configure multiple connection profiles and activate them through the web interface, or use multiple environment variables simultaneously for legacy configuration.

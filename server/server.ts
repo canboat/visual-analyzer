@@ -55,7 +55,7 @@ class VisualAnalyzerServer {
 
   constructor() {
     this.publicDir = path.join(__dirname, '../public')
-    
+
     // Platform-appropriate config file location
     let configDir: string
     if (process.platform === 'win32') {
@@ -72,7 +72,9 @@ class VisualAnalyzerServer {
 
     this.currentConfig = this.loadConfiguration()
 
-    this.port = process.env.VISUAL_ANALYZER_PORT ? parseInt(process.env.VISUAL_ANALYZER_PORT, 10) : this.currentConfig.port || 8080
+    this.port = process.env.VISUAL_ANALYZER_PORT
+      ? parseInt(process.env.VISUAL_ANALYZER_PORT, 10)
+      : this.currentConfig.port || 8080
     this.app = express()
     this.server = http.createServer(this.app)
     this.wss = new WebSocketServer({ server: this.server })
@@ -143,7 +145,7 @@ class VisualAnalyzerServer {
       connections: {
         activeConnection: null,
         profiles: {},
-      }
+      },
     }
 
     try {
