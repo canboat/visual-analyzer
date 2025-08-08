@@ -930,7 +930,6 @@ export const SentencePanel = (props: SentencePanelProps) => {
         {definition !== undefined && (
           <TabPane tabId={PGNDEF_TAB_ID}>
             <Card>
-              <CardHeader>{tabHeader()}</CardHeader>
               <CardBody style={{ padding: 0 }}>
                 <PgnDefinitionComp definition={definition} />
               </CardBody>
