@@ -560,6 +560,34 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
 
       {renderFields()}
       {renderListFields()}
+      
+      {/* Add PGN Explanation if available */}
+      {definition?.Explanation && (
+        <div style={{ 
+          marginTop: '20px', 
+          padding: '10px', 
+          backgroundColor: '#f1f8ff', 
+          border: '1px solid #c1d7f0',
+          borderRadius: '4px'
+        }}>
+          <h6 style={{ 
+            color: '#495057', 
+            fontSize: '12px', 
+            marginBottom: '6px',
+            fontWeight: 'bold'
+          }}>
+            PGN Explanation
+          </h6>
+          <div style={{ 
+            fontSize: '11px', 
+            color: '#495057', 
+            lineHeight: '1.4',
+            textAlign: 'justify'
+          }}>
+            {definition.Explanation}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -667,13 +695,13 @@ export const SentencePanel = (props: SentencePanelProps) => {
               className={activeTab === DEVICE_TAB_ID ? 'active ' : ''}
               onClick={() => setActiveTab(DEVICE_TAB_ID)}
             >
-              Device Information
+              Device Info
             </NavLink>
           </NavItem>
         )}
         <NavItem>
           <NavLink className={activeTab === PGNDEF_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(PGNDEF_TAB_ID)}>
-            PGN Definition
+            Definition
           </NavLink>
         </NavItem>
         <NavItem>
