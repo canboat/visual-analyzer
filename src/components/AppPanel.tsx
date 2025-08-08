@@ -532,14 +532,50 @@ const AppPanelInner = (props: any) => {
             events: 'canboatjs:rawoutput',
           })
 
+          // Set connection status for embedded mode - assume connected if websocket was created
+          setConnectionStatus({
+            isConnected: true,
+            lastUpdate: new Date().toISOString(),
+            error: undefined,
+          })
+
           webSocket.onmessage = (x: any) => {
             handleWebSocketMessage(x.data)
+          }
+
+          // Add error handling for embedded WebSocket if possible
+          if (webSocket.onerror) {
+            webSocket.onerror = (error: any) => {
+              console.error('Embedded WebSocket error:', error)
+              setConnectionStatus((prev) => ({
+                isConnected: false,
+                lastUpdate: new Date().toISOString(),
+                error: 'SignalK WebSocket connection error',
+              }))
+            }
+          }
+
+          if (webSocket.onclose) {
+            webSocket.onclose = () => {
+              console.log('Embedded WebSocket disconnected')
+              setConnectionStatus((prev) => ({
+                isConnected: false,
+                lastUpdate: new Date().toISOString(),
+                error: 'SignalK WebSocket connection closed',
+              }))
+            }
           }
         } else {
           // Use direct WebSocket connection in standalone mode
           webSocket = new WebSocket(`ws://${window.location.host}`)
 
           webSocket.onopen = () => {
+            console.log('WebSocket connection established')
+            setConnectionStatus({
+              isConnected: true,
+              lastUpdate: new Date().toISOString(),
+              error: undefined,
+            })
             // Subscribe to connection events
             webSocket?.send(
               JSON.stringify({
@@ -555,6 +591,11 @@ const AppPanelInner = (props: any) => {
 
           webSocket.onclose = () => {
             console.log('WebSocket disconnected')
+            setConnectionStatus((prev) => ({
+              isConnected: false,
+              lastUpdate: new Date().toISOString(),
+              error: 'WebSocket connection closed',
+            }))
             // Attempt to reconnect after a delay in standalone mode
             if (reconnectTimeout) {
               clearTimeout(reconnectTimeout)
@@ -564,10 +605,20 @@ const AppPanelInner = (props: any) => {
 
           webSocket.onerror = (error: Event) => {
             console.error('WebSocket error:', error)
+            setConnectionStatus((prev) => ({
+              isConnected: false,
+              lastUpdate: new Date().toISOString(),
+              error: 'WebSocket connection error occurred',
+            }))
           }
         }
       } catch (error) {
         console.error('Failed to create WebSocket:', error)
+        setConnectionStatus((prev) => ({
+          isConnected: false,
+          lastUpdate: new Date().toISOString(),
+          error: `Failed to create WebSocket connection: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        }))
         if (!isEmbedded && reconnectTimeout) {
           clearTimeout(reconnectTimeout)
         }
@@ -681,57 +732,93 @@ const AppPanelInner = (props: any) => {
 
   return (
     <div>
-      <Nav tabs>
-        <NavItem>
-          <NavLink
-            className={activeTab === ANALYZER_TAB_ID ? 'active' : ''}
-            onClick={() => handleTabChange(ANALYZER_TAB_ID)}
-            style={{ cursor: 'pointer' }}
-          >
-            NMEA 2000 Analyzer
-          </NavLink>
-        </NavItem>
-        <NavItem>
-          <NavLink
-            className={activeTab === SEND_TAB_ID ? 'active' : ''}
-            onClick={() => handleTabChange(SEND_TAB_ID)}
-            style={{ cursor: 'pointer' }}
-          >
-            Send
-          </NavLink>
-        </NavItem>
-        <NavItem>
-          <NavLink
-            className={activeTab === TRANSFORM_TAB_ID ? 'active' : ''}
-            onClick={() => handleTabChange(TRANSFORM_TAB_ID)}
-            style={{ cursor: 'pointer' }}
-          >
-            Transform
-          </NavLink>
-        </NavItem>
-        {!isEmbedded && (
+      {/* Connection Status Error Banner */}
+      {!connectionStatus.isConnected && (
+        <div className="alert alert-danger mb-3" role="alert">
+          <div className="d-flex align-items-center">
+            <i className="fas fa-exclamation-triangle me-2"></i>
+            <div className="flex-grow-1">
+              <strong>Connection Error:</strong> No WebSocket connection to NMEA 2000 data source.
+              {connectionStatus.error && (
+                <div className="mt-1 small">
+                  <strong>Details:</strong> {connectionStatus.error}
+                </div>
+              )}
+              <div className="mt-1 small text-muted">
+                Last update: {new Date(connectionStatus.lastUpdate).toLocaleString()}
+              </div>
+            </div>
+            <div className="ms-2">
+              <span className="badge bg-danger">Disconnected</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="d-flex align-items-center justify-content-between mb-2">
+        <Nav tabs>
           <NavItem>
             <NavLink
-              className={activeTab === RECORDING_TAB_ID ? 'active' : ''}
-              onClick={() => handleTabChange(RECORDING_TAB_ID)}
+              className={activeTab === ANALYZER_TAB_ID ? 'active' : ''}
+              onClick={() => handleTabChange(ANALYZER_TAB_ID)}
               style={{ cursor: 'pointer' }}
             >
-              Recording
+              NMEA 2000 Analyzer
             </NavLink>
           </NavItem>
-        )}
-        {!isEmbedded && (
           <NavItem>
             <NavLink
-              className={activeTab === CONNECTIONS_TAB_ID ? 'active' : ''}
-              onClick={() => handleTabChange(CONNECTIONS_TAB_ID)}
+              className={activeTab === SEND_TAB_ID ? 'active' : ''}
+              onClick={() => handleTabChange(SEND_TAB_ID)}
               style={{ cursor: 'pointer' }}
             >
-              Connections
+              Send
             </NavLink>
           </NavItem>
-        )}
-      </Nav>
+          <NavItem>
+            <NavLink
+              className={activeTab === TRANSFORM_TAB_ID ? 'active' : ''}
+              onClick={() => handleTabChange(TRANSFORM_TAB_ID)}
+              style={{ cursor: 'pointer' }}
+            >
+              Transform
+            </NavLink>
+          </NavItem>
+          {!isEmbedded && (
+            <NavItem>
+              <NavLink
+                className={activeTab === RECORDING_TAB_ID ? 'active' : ''}
+                onClick={() => handleTabChange(RECORDING_TAB_ID)}
+                style={{ cursor: 'pointer' }}
+              >
+                Recording
+              </NavLink>
+            </NavItem>
+          )}
+          {!isEmbedded && (
+            <NavItem>
+              <NavLink
+                className={activeTab === CONNECTIONS_TAB_ID ? 'active' : ''}
+                onClick={() => handleTabChange(CONNECTIONS_TAB_ID)}
+                style={{ cursor: 'pointer' }}
+              >
+                Connections
+              </NavLink>
+            </NavItem>
+          )}
+        </Nav>
+
+        {/* Small connection status indicator */}
+        <div className="d-flex align-items-center">
+          <small className="text-muted me-2">Connection:</small>
+          <span
+            className={`badge ${connectionStatus.isConnected ? 'bg-success' : 'bg-danger'}`}
+            title={connectionStatus.error || 'Connection status'}
+          >
+            {connectionStatus.isConnected ? 'Connected' : 'Disconnected'}
+          </span>
+        </div>
+      </div>
       <TabContent activeTab={activeTab}>
         <TabPane tabId={ANALYZER_TAB_ID}>
           <Card>
