@@ -83,7 +83,7 @@ const ByteMappingComp = ({ pgnData, definition }: ByteMappingProps) => {
 
       if (mapping) {
         parsedValue = typeof mapping.value !== 'string' ? JSON.stringify(mapping.value) : mapping.value
-        rawValue = mapping.bytes.map((b: number) => `0x${b.toString(16).padStart(2, '0').toUpperCase()}`).join(' ')
+        rawValue = mapping.bytes.map((b: number) => `${b.toString(16).padStart(2, '0').toUpperCase()}`).join(' ')
       }
 
       const baseFieldIndex =
@@ -385,23 +385,16 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
   // Helper function to get field definition by ID
   const getFieldDefinition = (fieldId: string) => {
     if (!definition?.Fields) return undefined
-    return definition.Fields.find((f) => f.Id === fieldId)
+    return definition.Fields.find((f) => (f.Id === fieldId || f.Name === fieldId))
   }
 
   // Helper function to get a human-readable field name
   const getFieldDisplayName = (fieldId: string, fieldDef?: any) => {
     if (fieldDef?.Name) {
-      // Convert camelCase to Title Case
-      return fieldDef.Name.replace(/([A-Z])/g, ' $1')
-        .replace(/^./, (str: string) => str.toUpperCase())
-        .trim()
+       return fieldDef.Name
     }
-
-    // Convert fieldId camelCase to Title Case as fallback
+    
     return fieldId
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, (str: string) => str.toUpperCase())
-      .trim()
   }
 
   // Render regular fields
@@ -427,11 +420,11 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
             <div
               key={fieldId}
               style={{
-                marginBottom: '12px',
-                padding: '10px',
+                marginBottom: '6px',
+                padding: '6px 8px',
                 backgroundColor: '#f8f9fa',
                 border: '1px solid #e9ecef',
-                borderRadius: '4px',
+                borderRadius: '3px',
               }}
             >
               <div
@@ -442,15 +435,16 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
                   flexWrap: 'wrap',
                 }}
               >
-                <div style={{ flex: '1 1 200px', marginRight: '10px' }}>
-                  <strong style={{ color: '#495057', fontSize: '14px' }}>{displayName}</strong>
+                <div style={{ flex: '1 1 200px', marginRight: '8px' }}>
+                  <strong style={{ color: '#495057', fontSize: '12px' }}>{displayName}</strong>
                   {fieldDef?.Description && (
                     <div
                       style={{
-                        fontSize: '12px',
+                        fontSize: '10px',
                         color: '#6c757d',
-                        marginTop: '2px',
+                        marginTop: '1px',
                         fontStyle: 'italic',
+                        lineHeight: '1.2',
                       }}
                     >
                       {fieldDef.Description}
@@ -460,7 +454,7 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
                 <div
                   style={{
                     textAlign: 'right',
-                    fontSize: '16px',
+                    fontSize: '12px',
                     fontWeight: '500',
                     color: '#212529',
                     flex: '0 0 auto',
@@ -484,31 +478,31 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
     }
 
     return (
-      <div style={{ marginTop: '20px' }}>
-        <h6 style={{ marginBottom: '15px', color: '#495057' }}>Repeating Data ({listData.length} entries)</h6>
+      <div style={{ marginTop: '15px' }}>
+        <h6 style={{ marginBottom: '10px', color: '#495057', fontSize: '13px' }}>Repeating Data ({listData.length} entries)</h6>
         {listData.map((item: any, index: number) => (
           <div
             key={index}
             style={{
-              marginBottom: '15px',
-              border: '2px solid #dee2e6',
-              borderRadius: '6px',
+              marginBottom: '10px',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
               backgroundColor: '#ffffff',
             }}
           >
             <div
               style={{
                 backgroundColor: '#e9ecef',
-                padding: '8px 12px',
+                padding: '5px 8px',
                 borderBottom: '1px solid #dee2e6',
                 fontWeight: 'bold',
-                fontSize: '14px',
+                fontSize: '11px',
                 color: '#495057',
               }}
             >
               Entry #{index + 1}
             </div>
-            <div style={{ padding: '12px' }}>
+            <div style={{ padding: '6px' }}>
               {Object.entries(item).map(([fieldId, value]) => {
                 const fieldDef = getFieldDefinition(fieldId)
                 const displayName = getFieldDisplayName(fieldId, fieldDef)
@@ -521,8 +515,9 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      padding: '6px 0',
+                      padding: '3px 0',
                       borderBottom: '1px solid #f8f9fa',
+                      fontSize: '11px',
                     }}
                   >
                     <span style={{ fontWeight: '500', color: '#495057' }}>{displayName}:</span>
@@ -538,17 +533,18 @@ const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
   }
 
   return (
-    <div style={{ padding: '10px' }}>
-      <div style={{ marginBottom: '20px' }}>
-        <h5 style={{ color: '#495057', marginBottom: '15px' }}>{pgnData.description || `PGN ${pgnData.pgn}`}</h5>
+    <div style={{ padding: '6px' }}>
+      <div style={{ marginBottom: '12px' }}>
+        <h5 style={{ color: '#495057', marginBottom: '8px', fontSize: '14px' }}>{pgnData.description || `PGN ${pgnData.pgn}`}</h5>
         <div
           style={{
-            fontSize: '13px',
+            fontSize: '11px',
             color: '#6c757d',
             backgroundColor: '#e9ecef',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            marginBottom: '20px',
+            padding: '5px 8px',
+            borderRadius: '3px',
+            marginBottom: '12px',
+            lineHeight: '1.3',
           }}
         >
           <strong>Source:</strong> {pgnData.src} | <strong>Destination:</strong> {pgnData.dst || 'N/A'} |{' '}
@@ -650,12 +646,12 @@ export const SentencePanel = (props: SentencePanelProps) => {
             className={activeTab === READABLE_TAB_ID ? 'active ' : ''}
             onClick={() => setActiveTab(READABLE_TAB_ID)}
           >
-            Human Readable
+            Data
           </NavLink>
         </NavItem>
         <NavItem>
           <NavLink className={activeTab === DATA_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(DATA_TAB_ID)}>
-            Data
+            JSON
           </NavLink>
         </NavItem>
         {pgnData.input && pgnData.input.length > 0 && (
