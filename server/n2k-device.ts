@@ -46,7 +46,7 @@ class CanDevice extends EventEmitter {
   constructor(app: any, options: ConnectionProfile) {
     super()
     this.options = options
-    this.provider = provider
+    this.app = app
   }
 
   public async start() {
