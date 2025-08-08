@@ -328,6 +328,246 @@ const ByteMappingComp = ({ pgnData, definition }: ByteMappingProps) => {
   return renderByteMapping()
 }
 
+interface HumanReadableProps {
+  pgnData: PGN
+  definition: Definition | undefined
+}
+
+const HumanReadableComp = ({ pgnData, definition }: HumanReadableProps) => {
+  if (!pgnData.fields) {
+    return <div>No field data available</div>
+  }
+
+  // Helper function to format field values in a human-readable way
+  const formatFieldValue = (value: any, field?: any): string => {
+    if (value === null || value === undefined) {
+      return 'N/A'
+    }
+
+    // Handle special value formatting
+    if (typeof value === 'number') {
+      // Check if it's a special "not available" value
+      if (value === 0xffff || value === 0xff || value === 0xffffffff) {
+        return 'Not Available'
+      }
+
+      // Format numbers with appropriate precision
+      if (field?.Unit) {
+        if (value % 1 === 0) {
+          return `${value} ${field.Unit}`
+        } else {
+          return `${value.toFixed(3)} ${field.Unit}`
+        }
+      }
+
+      return value.toString()
+    }
+
+    if (typeof value === 'string') {
+      return value
+    }
+
+    if (typeof value === 'boolean') {
+      return value ? 'Yes' : 'No'
+    }
+
+    if (Array.isArray(value)) {
+      return value.join(', ')
+    }
+
+    if (typeof value === 'object') {
+      return JSON.stringify(value)
+    }
+
+    return String(value)
+  }
+
+  // Helper function to get field definition by ID
+  const getFieldDefinition = (fieldId: string) => {
+    if (!definition?.Fields) return undefined
+    return definition.Fields.find((f) => f.Id === fieldId)
+  }
+
+  // Helper function to get a human-readable field name
+  const getFieldDisplayName = (fieldId: string, fieldDef?: any) => {
+    if (fieldDef?.Name) {
+      // Convert camelCase to Title Case
+      return fieldDef.Name.replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (str: string) => str.toUpperCase())
+        .trim()
+    }
+
+    // Convert fieldId camelCase to Title Case as fallback
+    return fieldId
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str: string) => str.toUpperCase())
+      .trim()
+  }
+
+  // Render regular fields
+  const renderFields = () => {
+    const fieldEntries = Object.entries(pgnData.fields)
+    if (fieldEntries.length === 0) {
+      return <div>No field data available</div>
+    }
+
+    return (
+      <div>
+        {fieldEntries.map(([fieldId, value]) => {
+          // Skip special fields that are not actual data fields
+          if (fieldId === 'list' || fieldId === 'timestamp' || fieldId === 'prio') {
+            return null
+          }
+
+          const fieldDef = getFieldDefinition(fieldId)
+          const displayName = getFieldDisplayName(fieldId, fieldDef)
+          const formattedValue = formatFieldValue(value, fieldDef)
+
+          return (
+            <div
+              key={fieldId}
+              style={{
+                marginBottom: '12px',
+                padding: '10px',
+                backgroundColor: '#f8f9fa',
+                border: '1px solid #e9ecef',
+                borderRadius: '4px',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div style={{ flex: '1 1 200px', marginRight: '10px' }}>
+                  <strong style={{ color: '#495057', fontSize: '14px' }}>{displayName}</strong>
+                  {fieldDef?.Description && (
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        color: '#6c757d',
+                        marginTop: '2px',
+                        fontStyle: 'italic',
+                      }}
+                    >
+                      {fieldDef.Description}
+                    </div>
+                  )}
+                </div>
+                <div
+                  style={{
+                    textAlign: 'right',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    color: '#212529',
+                    flex: '0 0 auto',
+                  }}
+                >
+                  {formattedValue}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // Render repeating/list fields
+  const renderListFields = () => {
+    const listData = (pgnData.fields as any).list
+    if (!listData || !Array.isArray(listData) || listData.length === 0) {
+      return null
+    }
+
+    return (
+      <div style={{ marginTop: '20px' }}>
+        <h6 style={{ marginBottom: '15px', color: '#495057' }}>Repeating Data ({listData.length} entries)</h6>
+        {listData.map((item: any, index: number) => (
+          <div
+            key={index}
+            style={{
+              marginBottom: '15px',
+              border: '2px solid #dee2e6',
+              borderRadius: '6px',
+              backgroundColor: '#ffffff',
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: '#e9ecef',
+                padding: '8px 12px',
+                borderBottom: '1px solid #dee2e6',
+                fontWeight: 'bold',
+                fontSize: '14px',
+                color: '#495057',
+              }}
+            >
+              Entry #{index + 1}
+            </div>
+            <div style={{ padding: '12px' }}>
+              {Object.entries(item).map(([fieldId, value]) => {
+                const fieldDef = getFieldDefinition(fieldId)
+                const displayName = getFieldDisplayName(fieldId, fieldDef)
+                const formattedValue = formatFieldValue(value, fieldDef)
+
+                return (
+                  <div
+                    key={`${index}-${fieldId}`}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '6px 0',
+                      borderBottom: '1px solid #f8f9fa',
+                    }}
+                  >
+                    <span style={{ fontWeight: '500', color: '#495057' }}>{displayName}:</span>
+                    <span style={{ color: '#212529' }}>{formattedValue}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ padding: '10px' }}>
+      <div style={{ marginBottom: '20px' }}>
+        <h5 style={{ color: '#495057', marginBottom: '15px' }}>{pgnData.description || `PGN ${pgnData.pgn}`}</h5>
+        <div
+          style={{
+            fontSize: '13px',
+            color: '#6c757d',
+            backgroundColor: '#e9ecef',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            marginBottom: '20px',
+          }}
+        >
+          <strong>Source:</strong> {pgnData.src} | <strong>Destination:</strong> {pgnData.dst || 'N/A'} |{' '}
+          <strong>Priority:</strong> {(pgnData.fields as any)?.prio || 'N/A'}
+          {(pgnData.fields as any)?.timestamp && (
+            <span>
+              {' '}
+              | <strong>Timestamp:</strong> {new Date((pgnData.fields as any).timestamp).toLocaleString()}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {renderFields()}
+      {renderListFields()}
+    </div>
+  )
+}
+
 interface SentencePanelProps {
   selectedPgn: Subject<PGN>
   info: Subject<DeviceMap>
@@ -338,9 +578,10 @@ const PGNDEF_TAB_ID = 'pgndef'
 const DEVICE_TAB_ID = 'device'
 const INPUT_TAB_ID = 'input'
 const MAPPING_TAB_ID = 'mapping'
+const READABLE_TAB_ID = 'readable'
 
 export const SentencePanel = (props: SentencePanelProps) => {
-  const [activeTab, setActiveTab] = useState(DATA_TAB_ID)
+  const [activeTab, setActiveTab] = useState(READABLE_TAB_ID)
   const pgnData = useObservableState<PGN>(props.selectedPgn)
   const info = useObservableState<DeviceMap>(props.info, {})
 
@@ -405,6 +646,14 @@ export const SentencePanel = (props: SentencePanelProps) => {
     >
       <Nav tabs>
         <NavItem>
+          <NavLink
+            className={activeTab === READABLE_TAB_ID ? 'active ' : ''}
+            onClick={() => setActiveTab(READABLE_TAB_ID)}
+          >
+            Human Readable
+          </NavLink>
+        </NavItem>
+        <NavItem>
           <NavLink className={activeTab === DATA_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(DATA_TAB_ID)}>
             Data
           </NavLink>
@@ -441,6 +690,13 @@ export const SentencePanel = (props: SentencePanelProps) => {
         </NavItem>
       </Nav>
       <TabContent activeTab={activeTab} style={{ flex: 1, overflow: 'auto' }}>
+        <TabPane tabId={READABLE_TAB_ID}>
+          <Card>
+            <CardBody>
+              <HumanReadableComp pgnData={pgnData} definition={definition} />
+            </CardBody>
+          </Card>
+        </TabPane>
         <TabPane tabId={DATA_TAB_ID}>
           <Card>
             <CardHeader className="d-flex justify-content-between align-items-center">
