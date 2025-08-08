@@ -29,7 +29,6 @@ import {
   ConnectionState,
   WebSocketMessage,
   BroadcastMessage,
-  NMEAProviderOptions,
   ApiResponse,
   ConfigurationResponse,
   ConnectionProfile,
@@ -42,6 +41,7 @@ class VisualAnalyzerServer {
   private port: number
   private publicDir: string
   private configFile: string
+  private configDir: string
   private app: Express
   private server: http.Server
   private wss: WebSocketServer
@@ -51,9 +51,9 @@ class VisualAnalyzerServer {
   private n2kMapper: N2kMapper
   private connectionState: ConnectionState
   private recordingService: RecordingService
+  private outAvailable: boolean = false
 
-  constructor(options: Partial<Config> = {}) {
-    this.port = options.port || 8080
+  constructor(port?: number) {
     this.publicDir = path.join(__dirname, '../public')
 
     // Platform-appropriate config file location
@@ -65,16 +65,19 @@ class VisualAnalyzerServer {
       // On Unix-like systems, use ~/.visual-analyzer
       configDir = path.join(os.homedir(), '.visual-analyzer')
     }
+    this.configDir = configDir
 
     const defaultConfigPath = path.join(configDir, 'config.json')
     this.configFile = process.env.VISUAL_ANALYZER_CONFIG || defaultConfigPath
+
+    this.currentConfig = this.loadConfiguration()
+
+    this.port = process.env.VISUAL_ANALYZER_PORT
+      ? parseInt(process.env.VISUAL_ANALYZER_PORT, 10)
+      : port || this.currentConfig.port || 8080
     this.app = express()
     this.server = http.createServer(this.app)
     this.wss = new WebSocketServer({ server: this.server })
-    this.currentConfig = {
-      port: this.port,
-      connections: { activeConnection: null, profiles: {} },
-    }
 
     // Initialize canboatjs parser for string input parsing
     this.canboatParser = new FromPgn()
@@ -83,7 +86,7 @@ class VisualAnalyzerServer {
     this.n2kMapper = new N2kMapper({})
 
     // Initialize recording service
-    this.recordingService = new RecordingService()
+    this.recordingService = new RecordingService(this.configDir)
 
     // Set up recording service event listeners
     this.recordingService.on('started', (status) => {
@@ -128,27 +131,31 @@ class VisualAnalyzerServer {
       error: null,
     }
 
-    // Load configuration on startup
-    this.loadConfiguration()
-
     this.setupRoutes()
     this.setupWebSocket()
+
+    console.log('Starting Visual Analyzer Server with configuration:')
+    console.log(`  Port: ${this.currentConfig.port}`)
+    console.log(`  Active Connection: ${this.currentConfig.connections?.activeConnection || 'None configured'}`)
   }
 
-  // Load configuration when server starts
-  private loadConfiguration(): void {
+  private loadConfiguration(): Config {
+    let currentConfig = {
+      port: 8080,
+      connections: {
+        activeConnection: null,
+        profiles: {},
+      },
+    }
+
     try {
       if (fs.existsSync(this.configFile)) {
         const data = fs.readFileSync(this.configFile, 'utf8')
         const config = JSON.parse(data)
 
         // Merge with defaults
-        this.currentConfig = {
-          port: this.port,
-          connections: {
-            activeConnection: null,
-            profiles: {},
-          },
+        currentConfig = {
+          ...currentConfig,
           ...config,
         }
 
@@ -160,7 +167,7 @@ class VisualAnalyzerServer {
         console.log(`Configuration loaded from ${this.configFile}`)
 
         // Auto-connect to active connection if specified
-        if (this.currentConfig.connections.activeConnection) {
+        if (currentConfig.connections.activeConnection) {
           setTimeout(() => {
             this.connectToActiveProfile()
           }, 2000) // Wait 2 seconds after server startup
@@ -179,6 +186,7 @@ class VisualAnalyzerServer {
     } catch (error) {
       console.error('Error loading configuration:', error)
     }
+    return currentConfig
   }
 
   private connectToActiveProfile(): void {
@@ -238,6 +246,7 @@ class VisualAnalyzerServer {
         res.json({ success: true, message: 'Connection profile activated successfully' })
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.error('Error activating connection profile:', error)
         res.status(400).json({ success: false, error: errorMessage })
       }
     })
@@ -247,6 +256,7 @@ class VisualAnalyzerServer {
         this.restartNMEAConnection()
         res.json({ success: true, message: 'Connection restart initiated' })
       } catch (error) {
+        console.error('Error restarting connection:', error)
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         res.status(500).json({ success: false, error: errorMessage })
       }
@@ -676,6 +686,14 @@ class VisualAnalyzerServer {
               }),
             )
           }
+          if (this.outAvailable) {
+            ws.send(
+              JSON.stringify({
+                event: 'nmea:out-available',
+                timestamp: new Date().toISOString(),
+              }),
+            )
+          }
         }
 
         // Start sending data for the requested subscription
@@ -716,10 +734,10 @@ class VisualAnalyzerServer {
   }
 
   // Method to integrate with actual NMEA 2000 data sources
-  public connectToNMEASource(options: NMEAProviderOptions): void {
+  public connectToNMEASource(options: ConnectionProfile): void {
     console.log('Connecting to NMEA 2000 source with options:', options)
 
-    this.nmeaProvider = new NMEADataProvider(options)
+    this.nmeaProvider = new NMEADataProvider(options, this.configDir)
 
     // Set up event listeners for NMEA data
     this.nmeaProvider.on('nmea-data', (data: any) => {
@@ -824,6 +842,14 @@ class VisualAnalyzerServer {
       this.broadcast(connectionData)
     })
 
+    this.nmeaProvider.on('nmea2000OutAvailable', () => {
+      this.outAvailable = true
+      this.broadcast({
+        event: 'nmea:out-available',
+        timestamp: new Date().toISOString(),
+      })
+    })
+
     this.nmeaProvider.on('disconnected', () => {
       console.log('NMEA data source disconnected')
 
@@ -833,7 +859,7 @@ class VisualAnalyzerServer {
         error: this.connectionState.error, // Keep existing error if any
         lastUpdate: new Date().toISOString(),
       }
-
+      this.outAvailable = false
       this.broadcast({
         event: 'nmea:disconnected',
         timestamp: new Date().toISOString(),
@@ -966,12 +992,6 @@ class VisualAnalyzerServer {
   }
 
   public updateConfiguration(newConfig: Partial<Config>): void {
-    if (newConfig.server) {
-      if (newConfig.server.port && newConfig.server.port !== this.port) {
-        throw new Error('Port changes require a server restart')
-      }
-    }
-
     if (newConfig.connections) {
       this.currentConfig.connections = { ...this.currentConfig.connections, ...newConfig.connections }
       this.saveConfigToFile()
@@ -1111,19 +1131,3 @@ class VisualAnalyzerServer {
 }
 
 export default VisualAnalyzerServer
-
-// If this file is run directly, start the server
-if (require.main === module) {
-  const server = new VisualAnalyzerServer({
-    port: process.env.PORT ? parseInt(process.env.PORT, 10) : 8080,
-  })
-
-  server.start()
-
-  // Graceful shutdown
-  process.on('SIGINT', () => {
-    console.log('\nShutting down gracefully...')
-    server.stop()
-    process.exit(0)
-  })
-}

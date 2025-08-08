@@ -194,6 +194,9 @@ const AppPanelInner = (props: any) => {
     loading: true,
   })
   const sentInfoReq: number[] = []
+  const [outAvailable, setOutAvailable] = useState(false)
+  const outAvailableRef = useRef(false)
+  let sentReqAll = false
 
   // Handler for tab changes with persistence
   const handleTabChange = (tabId: string) => {
@@ -358,9 +361,17 @@ const AppPanelInner = (props: any) => {
         const parsed = JSON.parse(messageData)
         //console.log('Parsed WebSocket event:', parsed.event, parsed)
 
+        if (isEmbedded && sentReqAll === false) {
+          sentReqAll = true
+          setOutAvailable(true)
+          outAvailableRef.current = true
+          requestMetaData(255)
+        }
+
         // Handle connection status events
         if (parsed.event === 'nmea:connected') {
           // Clear all data when reconnecting
+          console.log('NMEA connection established')
 
           setList((prev: any) => {
             data.next({})
@@ -381,6 +392,9 @@ const AppPanelInner = (props: any) => {
           })
 
           sentInfoReq.length = 0
+          // Reset out available when reconnecting
+          setOutAvailable(false)
+          outAvailableRef.current = false
 
           setConnectionStatus({
             isConnected: true,
@@ -390,8 +404,18 @@ const AppPanelInner = (props: any) => {
           return
         }
 
+        if (parsed.event === 'nmea:out-available') {
+          console.log('NMEA output available - can now request metadata')
+          setOutAvailable(true)
+          outAvailableRef.current = true
+          requestMetaData(255)
+          return
+        }
+
         if (parsed.event === 'nmea:disconnected') {
           console.log('NMEA connection lost')
+          setOutAvailable(false)
+          outAvailableRef.current = false
           setConnectionStatus((prev) => ({
             isConnected: false,
             lastUpdate: new Date().toISOString(),
@@ -486,8 +510,12 @@ const AppPanelInner = (props: any) => {
           }
 
           if (sentInfoReq.indexOf(pgn!.src!) === -1) {
-            sentInfoReq.push(pgn!.src!)
-            requestMetaData(pgn!.src!)
+            if (outAvailableRef.current) {
+              sentInfoReq.push(pgn!.src!)
+              // NMEA output is available, can request metadata immediately
+              requestMetaData(pgn!.src!)
+            }
+            // If outAvailable is false, we simply don't request metadata yet
           }
         }
       } catch (error) {
@@ -761,9 +789,10 @@ const AppPanelInner = (props: any) => {
   )
 }
 
-function requestMetaData(src: number) {
+function requestMetaData(dst: number) {
+  console.log(`Requesting metadata for source ${dst}`)
   infoPGNS.forEach((num) => {
-    const pgn = new PGN_59904({ pgn: num })
+    const pgn = new PGN_59904({ pgn: num }, dst)
 
     const body = { value: JSON.stringify(pgn), sendToN2K: true }
     fetch(`/skServer/inputTest`, {

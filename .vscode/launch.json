@@ -14,7 +14,11 @@
         "/usr/local/src/canboatjs/dist/*.(m|c|)js"
         //"${fileWorkspaceFolder}/dist/*.(m|c|)js"
       ],
-      "type": "node"
+      "type": "node",
+      "env": {
+        "DEBUG": "canboatjs:yddevice"
+      }
+      //"outputCapture": "std"
     }
   ]
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env node --enable-source-maps
 
 /**
  * Visual Analyzer Server - NMEA 2000 Data Visualization Tool
@@ -90,7 +90,7 @@ For more information, visit: https://github.com/canboat/visual-analyzer
       console.error('Error: --port requires a valid port number')
       process.exit(1)
     }
-    process.env.PORT = port
+    process.env.VISUAL_ANALYZER_PORT = port
   }
   
   if (arg === '--config') {
