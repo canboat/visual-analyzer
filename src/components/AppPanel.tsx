@@ -738,7 +738,7 @@ const AppPanelInner = (props: any) => {
           <div className="d-flex align-items-center">
             <i className="fas fa-exclamation-triangle me-2"></i>
             <div className="flex-grow-1">
-              <strong>Connection Error:</strong> No WebSocket connection to NMEA 2000 data source.
+              <strong>Connection Error</strong>
               {connectionStatus.error && (
                 <div className="mt-1 small">
                   <strong>Details:</strong> {connectionStatus.error}
@@ -810,7 +810,6 @@ const AppPanelInner = (props: any) => {
 
         {/* Small connection status indicator */}
         <div className="d-flex align-items-center">
-          <small className="text-muted me-2">Connection:</small>
           <span
             className={`badge ${connectionStatus.isConnected ? 'bg-success' : 'bg-danger'}`}
             title={connectionStatus.error || 'Connection status'}
