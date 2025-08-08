@@ -26,6 +26,7 @@ import { ConnectionManagerPanel } from './ConnectionManagerPanel'
 import { SendTab } from './SendTab'
 import TransformTab from './TransformTab'
 import RecordingTab from './RecordingTab'
+import PgnBrowser from './PgnBrowser'
 import { RecordingProvider, useRecording } from '../contexts/RecordingContext'
 import { FromPgn } from '@canboat/canboatjs'
 import { PGN, PGN_59904 } from '@canboat/ts-pgns'
@@ -144,6 +145,7 @@ const ANALYZER_TAB_ID = 'analyzer'
 const TRANSFORM_TAB_ID = 'transform'
 const RECORDING_TAB_ID = 'recording'
 const CONNECTIONS_TAB_ID = 'connections'
+const PGN_BROWSER_TAB_ID = 'pgn-browser'
 
 const AppPanelInner = (props: any) => {
   const { dispatch } = useRecording()
@@ -784,6 +786,15 @@ const AppPanelInner = (props: any) => {
               Transform
             </NavLink>
           </NavItem>
+          <NavItem>
+            <NavLink
+              className={activeTab === PGN_BROWSER_TAB_ID ? 'active' : ''}
+              onClick={() => handleTabChange(PGN_BROWSER_TAB_ID)}
+              style={{ cursor: 'pointer' }}
+            >
+              PGN Browser
+            </NavLink>
+          </NavItem>
           {!isEmbedded && (
             <NavItem>
               <NavLink
@@ -859,6 +870,9 @@ const AppPanelInner = (props: any) => {
         </TabPane>
         <TabPane tabId={TRANSFORM_TAB_ID}>
           <TransformTab isEmbedded={isEmbedded} />
+        </TabPane>
+        <TabPane tabId={PGN_BROWSER_TAB_ID}>
+          <PgnBrowser />
         </TabPane>
         {!isEmbedded && (
           <TabPane tabId={RECORDING_TAB_ID}>
