@@ -74,7 +74,7 @@ TcpStream.prototype.pipe = function (pipeTo) {
   let firstConnect = true
   this.re = require('reconnect-core')(function () {
     return net.connect.apply(null, arguments)
-  })({ maxDelay: 5 * 1000 }, (tcpStream) => {
+  })({ initialDelay: 1000, maxDelay: 5 * 1000 }, (tcpStream) => {
     if (!isNaN(this.noDataReceivedTimeout)) {
       tcpStream.setTimeout(this.noDataReceivedTimeout)
       that.debug(`Setting socket idle timeout ${this.options.host}:${this.options.port} ${this.noDataReceivedTimeout}`)
@@ -110,8 +110,14 @@ TcpStream.prototype.pipe = function (pipeTo) {
       that.debug(`Disconnected ${this.options.host} ${this.options.port}`)
     })
     .on('error', (err) => {
-      this.options.app.setProviderError(this.options.providerId, err.message)
-      console.error('TcpProvider:' + err.message)
+      let msg = err
+      if (err.message && err.message.length > 0) {
+        msg = err.message
+      } else if (err.errors) {
+        msg = err.errors
+      }
+      this.options.app.setProviderError(this.options.providerId, msg)
+      console.error('TcpProvider:' + msg)
     })
     .connect(this.options)
 
