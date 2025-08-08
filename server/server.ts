@@ -51,6 +51,7 @@ class VisualAnalyzerServer {
   private n2kMapper: N2kMapper
   private connectionState: ConnectionState
   private recordingService: RecordingService
+  private outAvailable: boolean = false
 
   constructor(options: Partial<Config> = {}) {
     this.port = options.port || 8080
@@ -238,6 +239,7 @@ class VisualAnalyzerServer {
         res.json({ success: true, message: 'Connection profile activated successfully' })
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.error('Error activating connection profile:', error)
         res.status(400).json({ success: false, error: errorMessage })
       }
     })
@@ -247,6 +249,7 @@ class VisualAnalyzerServer {
         this.restartNMEAConnection()
         res.json({ success: true, message: 'Connection restart initiated' })
       } catch (error) {
+        console.error('Error restarting connection:', error)
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         res.status(500).json({ success: false, error: errorMessage })
       }
@@ -676,6 +679,14 @@ class VisualAnalyzerServer {
               }),
             )
           }
+          if ( this.outAvailable) {
+            ws.send(
+              JSON.stringify({
+                event: 'nmea:out-available',
+                timestamp: new Date().toISOString(),
+              }),
+            )
+          }
         }
 
         // Start sending data for the requested subscription
@@ -824,6 +835,14 @@ class VisualAnalyzerServer {
       this.broadcast(connectionData)
     })
 
+    this.nmeaProvider.on('nmea2000OutAvailable', () => {
+      this.outAvailable = true
+      this.broadcast({
+        event: 'nmea:out-available',
+        timestamp: new Date().toISOString(),
+      })
+    })
+
     this.nmeaProvider.on('disconnected', () => {
       console.log('NMEA data source disconnected')
 
@@ -833,7 +852,7 @@ class VisualAnalyzerServer {
         error: this.connectionState.error, // Keep existing error if any
         lastUpdate: new Date().toISOString(),
       }
-
+      this.outAvailable = false
       this.broadcast({
         event: 'nmea:disconnected',
         timestamp: new Date().toISOString(),

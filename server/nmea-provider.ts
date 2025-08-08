@@ -15,22 +15,15 @@
  */
 
 import { EventEmitter } from 'events'
-import {
-  canbus,
-  serial as ActisenseStream,
-  iKonvert as iKonvertStream,
-  pgnToYdgwRawFormat,
-  pgnToiKonvertSerialFormat,
-  pgnToActisenseN2KAsciiFormat,
-} from '@canboat/canboatjs'
+import { serial as ActisenseStream, iKonvert as iKonvertStream, pgnToActisenseN2KAsciiFormat } from '@canboat/canboatjs'
 import * as net from 'net'
 import * as dgram from 'dgram'
 import WebSocket from 'ws'
 import * as fs from 'fs'
 import * as readline from 'readline'
 import { NMEAProviderOptions, SignalKMessage, SignalKLoginMessage, SignalKLoginResponse, INMEAProvider } from './types'
-import SerialPortStream from './streams/serialport'
 import TcpStream from './streams/tcp'
+import CanDevice from './n2k-device'
 
 interface SerialPortLike {
   pipe(parser: any): any
@@ -50,13 +43,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
 
   // Connection objects
   private signalKWs: WebSocket | null = null
-  private serialStream: any = null
-  private serialPort: SerialPortLike | null = null
-  private tcpClient: net.Socket | null = null
-  private udpSocket: dgram.Socket | null = null
-  private canbusStream: any = null
-  private iKonvertStream: any | null = null
-  private tcpStream: TcpStream | null = null
+  private canDevice: CanDevice | null = null
 
   // File playback specific properties
   private fileStream: fs.ReadStream | null = null
@@ -74,14 +61,13 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     try {
       if (this.options.type === 'signalk') {
         await this.connectToSignalK()
-      } else if (this.options.type === 'serial') {
-        await this.connectToSerial()
-      } else if (this.options.type === 'network') {
-        await this.connectToNetwork()
-      } else if (this.options.type === 'socketcan') {
-        await this.connectToSocketCAN()
       } else if (this.options.type === 'file') {
         await this.connectToFile()
+      } else {
+        this.canDevice = new CanDevice(this, this.options)
+        await this.canDevice.start()
+        this.isConnected = true
+        this.emit('connected')
       }
     } catch (error) {
       console.error('Failed to connect to NMEA source:', error)
@@ -213,7 +199,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     this.authToken = null
   }
 
-  private getServerApp(): any {
+  public getServerApp(): any {
     return {
       setProviderError: (providerId: string, msg: string) => {
         console.error(`NMEADataProvider error: ${msg}`)
@@ -241,6 +227,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     }
   }
 
+<<<<<<< Updated upstream
   private async connectToSerial(): Promise<void> {
     try {
       const deviceType = this.options.deviceType || 'Actisense'
@@ -428,6 +415,8 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     }
   }
 
+=======
+>>>>>>> Stashed changes
   private async connectToFile(): Promise<void> {
     try {
       console.log(`Opening file for playback: ${this.options.filePath}`)
@@ -539,40 +528,9 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
       this.signalKWs = null
     }
 
-    if (this.serialStream) {
-      if (typeof this.serialStream.end === 'function') {
-        this.serialStream.end()
-      }
-
-      if (typeof this.serialStream.close === 'function') {
-        this.serialStream.close()
-      } else if (typeof this.serialStream.destroy === 'function') {
-        this.serialStream.destroy()
-      }
-      this.serialStream = null
-    }
-
-    if (this.serialPort && typeof (this.serialPort as any).close === 'function') {
-      ;(this.serialPort as any).close()
-      this.serialPort = null
-    }
-
-    if (this.tcpClient) {
-      this.tcpClient.destroy()
-      this.tcpClient = null
-    }
-
-    if (this.udpSocket) {
-      this.udpSocket.close()
-      this.udpSocket = null
-    }
-
-    if (this.canbusStream) {
-      // SocketCAN stream cleanup
-      if (typeof this.canbusStream.close === 'function') {
-        this.canbusStream.close()
-      }
-      this.canbusStream = null
+    if (this.canDevice) {
+      this.canDevice.end()
+      this.canDevice = null
     }
 
     // File playback cleanup
@@ -589,11 +547,6 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     if (this.fileStream) {
       this.fileStream.destroy()
       this.fileStream = null
-    }
-
-    if (this.tcpStream) {
-      this.tcpStream.end()
-      this.tcpStream = null
     }
 
     this.lineQueue = []
@@ -657,25 +610,20 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
 
     // Implement message sending based on connection type
     switch (this.options.type) {
-      case 'signalk':
-        this.sendToSignalK(data)
-        break
       case 'serial':
-        this.sendToSerial(data)
-        break
       case 'network':
-        this.sendToNetwork(data)
-        break
       case 'socketcan':
-        this.sendToSocketCAN(data)
+        this.canDevice?.send(data)
         break
       case 'file':
+      case 'signalk':
         break
       default:
         throw new Error(`Message transmission not supported for connection type: ${this.options.type}`)
     }
   }
 
+  /*
   private sendToSignalK(data: any): void {
     if (!this.signalKWs || this.signalKWs.readyState !== WebSocket.OPEN) {
       throw new Error('SignalK WebSocket not connected')
@@ -696,91 +644,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     }
 
     this.signalKWs.send(JSON.stringify(message))
-  }
-
-  private sendToSerial(data: any): void {
-    if (!this.serialStream && !this.serialPort) {
-      throw new Error('Serial connection not available')
-    }
-    this.emit('nmea2000JsonOut', data)
-  }
-
-  private sendToNetwork(data: any): void {
-    // Format data based on device type, similar to serial formatting
-    let formattedData: string
-    if (typeof data === 'string') {
-      formattedData = data
-    } else {
-      // Use canboatjs formatting functions based on device type
-      const deviceType = this.options.deviceType
-      const supportedDeviceTypes = [
-        'Actisense',
-        'Actisense ASCII',
-        'iKonvert',
-        'Yacht Devices',
-        'Yacht Devices RAW',
-        'NavLink2',
-      ]
-
-      if (deviceType && !supportedDeviceTypes.includes(deviceType)) {
-        throw new Error(
-          `Unsupported device type for network transmission: ${deviceType}. Supported types: ${supportedDeviceTypes.join(', ')}`,
-        )
-      }
-
-      switch (deviceType) {
-        case 'Actisense ASCII':
-          formattedData = pgnToActisenseN2KAsciiFormat(data) || ''
-          break
-        case 'iKonvert':
-        case 'NavLink2':
-          formattedData = pgnToiKonvertSerialFormat(data) || ''
-          break
-        case 'Yacht Devices':
-        case 'Yacht Devices RAW': {
-          const ydgwResult = pgnToYdgwRawFormat(data)
-          formattedData = Array.isArray(ydgwResult) ? ydgwResult.join('\n') : ydgwResult || ''
-          break
-        }
-        default:
-          // Default to JSON format if no device type specified
-          formattedData = JSON.stringify(data) + '\n'
-      }
-    }
-
-    // Ensure message ends with newline if not already present
-    if (!formattedData.endsWith('\n')) {
-      formattedData += '\n'
-    }
-
-    if (this.options.networkProtocol === 'tcp') {
-      if (!this.tcpClient || this.tcpClient.destroyed) {
-        throw new Error('TCP connection not available')
-      }
-      this.tcpClient.write(formattedData)
-    } else if (this.options.networkProtocol === 'udp') {
-      if (!this.udpSocket) {
-        throw new Error('UDP socket not available')
-      }
-      const buffer = Buffer.from(formattedData)
-      this.udpSocket.send(buffer, this.options.networkPort!, this.options.networkHost!, (error) => {
-        if (error) {
-          console.error('Error sending UDP message:', error)
-          throw error
-        }
-      })
-    } else {
-      throw new Error(`Unsupported network protocol: ${this.options.networkProtocol}`)
-    }
-  }
-
-  private sendToSocketCAN(data: any): void {
-    if (!this.canbusStream) {
-      throw new Error('SocketCAN connection not available')
-    }
-
-    this.canbusStream.sendPGN(data)
-  }
+  }*/
 }
 
 export default NMEADataProvider

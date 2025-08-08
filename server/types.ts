@@ -29,7 +29,6 @@ export interface ConnectionProfile {
     | 'Actisense'
     | 'Actisense ASCII'
     | 'iKonvert'
-    | 'Yacht Devices'
     | 'Yacht Devices RAW'
     | 'NavLink2'
     | 'SocketCAN'

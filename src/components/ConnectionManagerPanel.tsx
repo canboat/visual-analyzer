@@ -45,7 +45,7 @@ interface ConnectionProfile {
   deviceType?:
     | 'Actisense'
     | 'iKonvert'
-    | 'Yacht Devices'
+    //| 'Yacht Devices'
     | 'Yacht Devices RAW'
     | 'NavLink2'
     | 'Actisense ASCII'
