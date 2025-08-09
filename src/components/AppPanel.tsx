@@ -502,10 +502,7 @@ const AppPanelInner = (props: any) => {
           if (infoPGNS.indexOf(pgn!.pgn) !== -1) {
             setCurrentInfo((prev) => {
               prev[pgn!.src!] = prev[pgn!.src!] || { src: pgn!.src!, info: {} }
-              prev[pgn!.src!].info[pgn!.pgn! as PgnNumber] = {
-                description: pgn!.description,
-                ...pgn!.fields,
-              }
+              prev[pgn!.src!].info[pgn!.pgn! as PgnNumber] = pgn
               deviceInfo.next({ ...prev })
               return prev
             })
