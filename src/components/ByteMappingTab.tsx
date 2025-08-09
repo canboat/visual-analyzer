@@ -61,11 +61,11 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
     if (hasRepeatingFields) {
       // Get the count from the count field
       const countFieldIndex = definition.RepeatingFieldSet1CountField
-      
+
       if (countFieldIndex !== undefined && countFieldIndex > 0 && countFieldIndex <= definition.Fields.length) {
         const countField = definition.Fields[countFieldIndex - 1]
         let countValue = (pgnData.fields as any)[countField.Id]
-        
+
         if (countValue === undefined || countValue === null) {
           const alternativeNames = ['numberOfParameters', 'parameterCount', 'count', 'number']
           for (const altName of alternativeNames) {
@@ -75,7 +75,7 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
             }
           }
         }
-        
+
         if (typeof countValue === 'number') {
           repetitionCount = countValue
         }
@@ -84,7 +84,7 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
 
     // Calculate bit offsets for all fields to find which one contains the byte
     let currentBitOffset = 0
-    
+
     for (let i = 0; i < definition.Fields.length; i++) {
       const field = definition.Fields[i]
       const isRepeatingField =
@@ -99,11 +99,11 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
         const bitEnd = bitStart + bitLength - 1
         const byteStart = Math.floor(bitStart / 8)
         const byteEnd = Math.floor(bitEnd / 8)
-        
+
         if (byteIndex >= byteStart && byteIndex <= byteEnd) {
           return { bitStart, bitEnd, byteStart, byteEnd }
         }
-        
+
         currentBitOffset += bitLength
       } else if (i === (definition.RepeatingFieldSet1StartField || 1) - 1) {
         // Handle repeating fields
@@ -112,40 +112,41 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
           (definition.RepeatingFieldSet1StartField || 1) - 1,
           definition.RepeatingFieldSet1Size || 0,
         )
-        
+
         const repeatSectionStartBit = currentBitOffset
-        
+
         // Check each repetition
         for (let repIndex = 0; repIndex < repetitionCount; repIndex++) {
           for (let fieldOffset = 0; fieldOffset < (definition.RepeatingFieldSet1Size || 0); fieldOffset++) {
             const currentFieldIndex = (definition.RepeatingFieldSet1StartField || 1) - 1 + fieldOffset
             const currentField = definition.Fields[currentFieldIndex]
-            
+
             if (currentField) {
               let fieldBitOffsetInRepetition = 0
               for (let j = (definition.RepeatingFieldSet1StartField || 1) - 1; j < currentFieldIndex; j++) {
                 fieldBitOffsetInRepetition += definition.Fields[j].BitLength || 0
               }
-              
-              const absoluteBitOffset = repeatSectionStartBit + repIndex * repetitionBitSize + fieldBitOffsetInRepetition
+
+              const absoluteBitOffset =
+                repeatSectionStartBit + repIndex * repetitionBitSize + fieldBitOffsetInRepetition
               const bitStart = absoluteBitOffset
               const bitLength = currentField.BitLength || 0
               const bitEnd = bitStart + bitLength - 1
               const byteStart = Math.floor(bitStart / 8)
               const byteEnd = Math.floor(bitEnd / 8)
-              
+
               if (byteIndex >= byteStart && byteIndex <= byteEnd) {
                 return { bitStart, bitEnd, byteStart, byteEnd }
               }
             }
           }
         }
-        
+
         currentBitOffset += repetitionBitSize * repetitionCount
         i = (definition.RepeatingFieldSet1StartField || 1) - 1 + (definition.RepeatingFieldSet1Size || 0) - 1
       }
     }
-    
+
     return null
   }
 
@@ -191,10 +192,11 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
       const fieldName =
         repetitionIndex !== undefined ? `${field.Name} [Group ${repetitionIndex + 1}/${repetitionCount}]` : field.Name
 
-      const isSelected = selectedField && 
-        selectedField.bitStart === bitStart && 
+      const isSelected =
+        selectedField &&
+        selectedField.bitStart === bitStart &&
         selectedField.bitEnd === bitEnd &&
-        selectedField.byteStart === byteStart && 
+        selectedField.byteStart === byteStart &&
         selectedField.byteEnd === byteEnd
 
       const handleRowClick = () => {
@@ -206,15 +208,15 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
       }
 
       return (
-        <tr 
+        <tr
           key={`${fieldIndex}-${repetitionIndex || 0}`}
           onClick={handleRowClick}
-          style={{ 
+          style={{
             cursor: 'pointer',
             backgroundColor: isSelected ? '#e3f2fd' : undefined,
           }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isSelected ? '#e3f2fd' : '#f5f5f5'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isSelected ? '#e3f2fd' : 'transparent'}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = isSelected ? '#e3f2fd' : '#f5f5f5')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = isSelected ? '#e3f2fd' : 'transparent')}
         >
           <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
             <strong>{fieldName}</strong>
@@ -324,10 +326,12 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
           )}
         </div>
 
-        <h6>Raw Bytes ({rawBytes.length} bytes total)
+        <h6>
+          Raw Bytes ({rawBytes.length} bytes total)
           {selectedField && (
             <span style={{ fontSize: '11px', color: '#666', marginLeft: '10px' }}>
-              - Highlighting bytes {selectedField.byteStart}-{selectedField.byteEnd} (bits {selectedField.bitStart}-{selectedField.bitEnd})
+              - Highlighting bytes {selectedField.byteStart}-{selectedField.byteEnd} (bits {selectedField.bitStart}-
+              {selectedField.bitEnd})
             </span>
           )}
         </h6>
@@ -336,20 +340,19 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
         </div>
         <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}>
           {rawBytes.map((byte: number, index: number) => {
-            const isHighlighted = selectedField && 
-              index >= selectedField.byteStart && 
-              index <= selectedField.byteEnd
-            
+            const isHighlighted = selectedField && index >= selectedField.byteStart && index <= selectedField.byteEnd
+
             const handleByteClick = () => {
               const fieldForByte = findFieldForByte(index)
               if (fieldForByte) {
                 // Check if this field is already selected
-                const isSameField = selectedField && 
-                  selectedField.bitStart === fieldForByte.bitStart && 
+                const isSameField =
+                  selectedField &&
+                  selectedField.bitStart === fieldForByte.bitStart &&
                   selectedField.bitEnd === fieldForByte.bitEnd &&
-                  selectedField.byteStart === fieldForByte.byteStart && 
+                  selectedField.byteStart === fieldForByte.byteStart &&
                   selectedField.byteEnd === fieldForByte.byteEnd
-                
+
                 if (isSameField) {
                   setSelectedField(null) // Deselect if already selected
                 } else {
@@ -357,22 +360,22 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
                 }
               }
             }
-            
+
             return (
               <span
                 key={index}
                 onClick={handleByteClick}
-                style={{ 
-                  marginRight: '8px', 
-                  padding: '2px 4px', 
-                  backgroundColor: isHighlighted ? '#ffeb3b' : '#e9ecef', 
+                style={{
+                  marginRight: '8px',
+                  padding: '2px 4px',
+                  backgroundColor: isHighlighted ? '#ffeb3b' : '#e9ecef',
                   fontFamily: 'monospace',
                   border: isHighlighted ? '2px solid #ff9800' : 'none',
                   fontWeight: isHighlighted ? 'bold' : 'normal',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isHighlighted ? '#ffeb3b' : '#f5f5f5'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isHighlighted ? '#ffeb3b' : '#e9ecef'}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = isHighlighted ? '#ffeb3b' : '#f5f5f5')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = isHighlighted ? '#ffeb3b' : '#e9ecef')}
               >
                 {/* {index.toString().padStart(2, '0')}:  */}
                 {byte.toString(16).padStart(2, '0').toUpperCase()}
@@ -383,7 +386,8 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
 
         <h6>Field Mapping</h6>
         <div style={{ fontSize: '11px', color: '#666', marginBottom: '10px' }}>
-          Click on any field row below to highlight the corresponding bytes above, or click on any byte to highlight its field
+          Click on any field row below to highlight the corresponding bytes above, or click on any byte to highlight its
+          field
         </div>
         <div style={{ border: '1px solid #dee2e6' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
