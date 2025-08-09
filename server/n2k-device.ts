@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'stream'
 import { ConnectionProfile } from './types'
 import TcpStream from './streams/tcp'
 import UdpStream from './streams/udp'
@@ -42,7 +41,7 @@ type Listener = {
   listener: any
 }
 
-class CanDevice  {
+class CanDevice {
   private options: ConnectionProfile
   private app: any
   private stream: any
@@ -58,7 +57,7 @@ class CanDevice  {
       on: (event: string, callback: (...args: any[]) => void) => {
         this.addListener(app, event, callback)
         app.on(event, callback)
-      }
+      },
     }
   }
 
