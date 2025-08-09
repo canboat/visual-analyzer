@@ -702,7 +702,7 @@ const AppPanelInner = (props: any) => {
   }
 
   // Show error message if authentication failed in embedded mode
-  if (isEmbedded && (!authStatus.isAuthenticated)) {
+  if (isEmbedded && !authStatus.isAuthenticated) {
     return (
       <div className="container-fluid mt-4">
         <div className="alert alert-danger" role="alert">
