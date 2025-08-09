@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useMemo, ChangeEvent, useCallback, useEffect } from 'react'
+import React, { useState, useMemo, ChangeEvent, useCallback, useEffect, useRef } from 'react'
 import {
   Card,
   CardBody,
@@ -80,7 +80,7 @@ const PgnRow = React.memo(
     showLookupPopup: (field: any) => void
   }) => (
     <React.Fragment>
-      <tr style={{ cursor: 'pointer' }} onClick={() => onToggle(pgn.Id)}>
+      <tr style={{ cursor: 'pointer' }} onClick={() => onToggle(pgn.Id)} data-pgn-id={pgn.Id}>
         <td>
           <code>{formatPgnNumber(pgn.PGN)}</code>
         </td>
@@ -341,6 +341,9 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
 
+  // Ref for the scrollable table container
+  const tableContainerRef = useRef<HTMLDivElement>(null)
+
   // Modal state for lookup values
   const [lookupModal, setLookupModal] = useState<{
     isOpen: boolean
@@ -424,7 +427,31 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
 
   const togglePgnExpansion = useCallback(
     (pgnId: string) => {
+      const wasExpanded = expandedPgn === pgnId
+      const hadPreviouslyExpanded = expandedPgn !== null && expandedPgn !== pgnId
       setExpandedPgn(expandedPgn === pgnId ? null : pgnId)
+      
+      // Only scroll when expanding a row, not when collapsing
+      if (!wasExpanded) {
+        // If there was a previously expanded row, wait longer for the collapse animation
+        const delay = hadPreviouslyExpanded ? 300 : 50
+        
+        // Scroll the clicked row to the top after a delay to allow state update
+        setTimeout(() => {
+          if (tableContainerRef.current) {
+            // Find the row element by data attribute
+            const rowElement = tableContainerRef.current.querySelector(`[data-pgn-id="${pgnId}"]`) as HTMLElement
+            if (rowElement) {
+              // Get the row's offset position within the scrollable container
+              const rowTop = rowElement.offsetTop
+              const headerHeight = 50 // Account for sticky header
+              
+              // Scroll to position the row at the top (accounting for header)
+              tableContainerRef.current.scrollTop = rowTop - headerHeight
+            }
+          }
+        }, delay)
+      }
     },
     [expandedPgn],
   )
@@ -595,7 +622,7 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
           </Col>
         </Row>
 
-        <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+        <div ref={tableContainerRef} style={{ maxHeight: '60vh', overflowY: 'auto' }}>
           <Table striped hover size="sm">
             <thead style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
               <tr>
