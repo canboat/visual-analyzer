@@ -430,12 +430,12 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
       const wasExpanded = expandedPgn === pgnId
       const hadPreviouslyExpanded = expandedPgn !== null && expandedPgn !== pgnId
       setExpandedPgn(expandedPgn === pgnId ? null : pgnId)
-      
+
       // Only scroll when expanding a row, not when collapsing
       if (!wasExpanded) {
         // If there was a previously expanded row, wait longer for the collapse animation
         const delay = hadPreviouslyExpanded ? 300 : 50
-        
+
         // Scroll the clicked row to the top after a delay to allow state update
         setTimeout(() => {
           if (tableContainerRef.current) {
@@ -445,7 +445,7 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
               // Get the row's offset position within the scrollable container
               const rowTop = rowElement.offsetTop
               const headerHeight = 50 // Account for sticky header
-              
+
               // Scroll to position the row at the top (accounting for header)
               tableContainerRef.current.scrollTop = rowTop - headerHeight
             }
