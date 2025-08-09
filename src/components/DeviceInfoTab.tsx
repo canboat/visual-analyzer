@@ -54,14 +54,15 @@ export const DeviceInfoTab = ({ pgnData, info }: DeviceInfoTabProps) => {
                     {Object.entries(pgnInfo)
                       .filter(([key]) => key !== 'description')
                       .map(([key, value]: [string, any]) => (
-                        <div key={key} className="col-md-6 mb-2">
+                        <div key={key} className="col-12 mb-2">
                           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
                             <strong
                               style={{
-                                minWidth: '150px',
+                                minWidth: '120px',
                                 marginRight: '10px',
                                 color: '#6c757d',
                                 textTransform: 'capitalize',
+                                flexShrink: 0,
                               }}
                             >
                               {key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}:
@@ -70,6 +71,7 @@ export const DeviceInfoTab = ({ pgnData, info }: DeviceInfoTabProps) => {
                               style={{
                                 wordBreak: 'break-word',
                                 color: '#212529',
+                                flex: 1,
                               }}
                             >
                               {value}
