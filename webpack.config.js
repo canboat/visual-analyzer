@@ -19,6 +19,9 @@ module.exports = {
     fallback: {
       buffer: require.resolve('buffer/'),
     },
+    alias: {
+      '@server': path.resolve(__dirname, 'server'),
+    },
   },
   module: {
     rules: [
