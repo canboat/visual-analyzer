@@ -66,6 +66,8 @@ The web interface will be available at `http://localhost:8080` where you can:
 - View real-time NMEA 2000 messages
 - Filter and search message data
 - Analyze device information
+- Browse the comprehensive PGN database
+- Send custom messages for testing
 
 #### Command Line Options
 
@@ -164,6 +166,7 @@ Example `config.json`:
 - **Interactive data exploration** - Click on messages to view detailed information
 - **Message transformation and analysis** - Convert between different NMEA 2000 formats
 - **Message sending capabilities** - Send custom NMEA 2000 messages for testing
+- **PGN Database browser** - Comprehensive searchable database of all NMEA 2000 Parameter Group Numbers
 
 ### Standalone Mode Features
 
@@ -294,6 +297,57 @@ Filter messages by device manufacturer to focus on equipment from specific vendo
 ### JavaScript Filtering
 
 Advanced users can write custom JavaScript expressions for complex filtering logic.
+
+## PGN Database Browser
+
+The Visual Analyzer includes a comprehensive PGN Database browser that provides detailed information about all NMEA 2000 Parameter Group Numbers (PGNs). This powerful reference tool helps users understand message structures and field definitions without needing external documentation.
+
+### Database Features
+
+- **Complete PGN catalog** - Browse through all known NMEA 2000 PGNs in the database
+- **Advanced search capabilities** - Search by PGN number, description, field names, or explanations
+- **Category filtering** - Filter by completion status (Complete/Incomplete), frame type (Fast/Single), or fallback PGNs
+- **Expandable details** - Click on any PGN to view detailed field information
+- **Field specifications** - View complete field definitions including data types, sizes, units, and resolutions
+- **Lookup value references** - Interactive lookup tables for enumerated field values
+- **Documentation links** - Direct links to official NMEA documentation where available
+
+### Search and Navigation
+
+- **Smart search** - Intelligent search across PGN numbers, names, descriptions, and field details
+- **Real-time filtering** - Results update instantly as you type (debounced for performance)
+- **Pagination controls** - Navigate large result sets with customizable page sizes (25, 50, 100, 200 results)
+- **Status indicators** - Visual badges showing PGN completion status and frame type
+- **Field count display** - Quick overview of how many fields each PGN contains
+
+### Field Information Display
+
+Each PGN entry provides comprehensive field information:
+
+- **Field names and types** - Complete data type specifications with user-friendly formatting
+- **Size information** - Bit lengths and byte sizes for proper message parsing
+- **Units and resolution** - Physical units and scaling factors for numeric values
+- **Field descriptions** - Detailed explanations of what each field represents
+- **Enumerated values** - Interactive popups showing all possible values for lookup fields
+
+### Lookup Value Viewer
+
+The browser includes an integrated lookup value viewer that displays:
+
+- **Enumeration values** - Standard enumerated field values with names and numeric codes
+- **Bit field values** - Bit position mappings for bitfield data types
+- **Field type enumerations** - Complex field type definitions with multiple attributes
+- **Interactive modals** - Click on field types to view detailed lookup tables
+
+### Use Cases
+
+The PGN Database browser is invaluable for:
+
+- **Message development** - Understanding PGN structures when creating custom messages
+- **Data analysis** - Looking up field meanings and value ranges during troubleshooting
+- **Protocol learning** - Educational tool for understanding NMEA 2000 message formats
+- **Integration planning** - Researching available data fields for system integration
+- **Debugging assistance** - Verifying message structures and field interpretations
 
 ## Data Recording (Standalone Mode Only)
 
