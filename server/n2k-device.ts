@@ -36,17 +36,30 @@ import pkg from '../package.json'
 
 const outEvent = 'n2k-device-out'
 
-class CanDevice extends EventEmitter {
+type Listener = {
+  object: any
+  event: string
+  listener: any
+}
+
+class CanDevice  {
   private options: ConnectionProfile
   private app: any
   private stream: any
   private netStream: TcpStream | UdpStream | null = null
   private serialStream: any = null
+  private listeners: Listener[] = []
 
   constructor(app: any, options: ConnectionProfile) {
-    super()
+    //super()
     this.options = options
-    this.app = app
+    this.app = {
+      ...app,
+      on: (event: string, callback: (...args: any[]) => void) => {
+        this.addListener(app, event, callback)
+        app.on(event, callback)
+      }
+    }
   }
 
   public async start() {
@@ -156,16 +169,32 @@ class CanDevice extends EventEmitter {
   }
 
   end() {
+    this.removeAllListeners()
     if (this.netStream) {
       this.netStream.end()
+      this.netStream = null
     }
     if (this.serialStream) {
       this.serialStream.end()
+      this.serialStream = null
     }
     if (this.stream) {
       this.stream.end()
+      this.stream = null
     }
   }
+
+  private addListener(object: any, event: string, listener: (data: any) => void) {
+    this.listeners.push({ object, event, listener })
+  }
+
+  private removeAllListeners() {
+    this.listeners.forEach(({ object, event, listener }) => {
+      object.removeListener(event, listener)
+    })
+    this.listeners = []
+  }
+
   private getN2kDeviceOptions(app: any) {
     return {
       app,
