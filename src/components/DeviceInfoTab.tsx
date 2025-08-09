@@ -41,7 +41,7 @@ export const DeviceInfoTab = ({ pgnData, info }: DeviceInfoTabProps) => {
       // If anything fails, fall back to formatting the field ID
       console.error('Error getting field display name:', error)
     }
-    
+
     // Fallback: format the field ID nicely
     return 'unknon' /*fieldId
       .replace(/([A-Z])/g, ' $1')

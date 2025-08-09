@@ -199,7 +199,10 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
         <h6>Raw Bytes ({rawBytes.length} bytes total)</h6>
         <div style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}>
           {rawBytes.map((byte: number, index: number) => (
-            <span key={index} style={{ marginRight: '8px', padding: '2px 4px', backgroundColor: '#e9ecef', fontFamily: 'monospace' }}>
+            <span
+              key={index}
+              style={{ marginRight: '8px', padding: '2px 4px', backgroundColor: '#e9ecef', fontFamily: 'monospace' }}
+            >
               {/* {index.toString().padStart(2, '0')}:  */}
               {byte.toString(16).padStart(2, '0').toUpperCase()}
             </span>
