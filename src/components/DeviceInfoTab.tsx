@@ -15,7 +15,7 @@
  */
 
 import React from 'react'
-import { PGN } from '@canboat/ts-pgns'
+import { PGN, Definition } from '@canboat/ts-pgns'
 import { DeviceMap } from '../types'
 import { Card, CardHeader, CardBody } from 'reactstrap'
 
@@ -25,6 +25,30 @@ interface DeviceInfoTabProps {
 }
 
 export const DeviceInfoTab = ({ pgnData, info }: DeviceInfoTabProps) => {
+  // Helper function to get field name from PGN definition
+  const getFieldDisplayName = (pgnInfo: PGN, fieldId: string) => {
+    try {
+      // Get the definition from the current pgnData
+      const definition = pgnInfo.getDefinition()
+      if (definition && definition.Fields) {
+        // Look for a field with matching ID or Name
+        const fieldDef = definition.Fields.find((f) => f.Id === fieldId || f.Name === fieldId)
+        if (fieldDef && fieldDef.Name) {
+          return fieldDef.Name
+        }
+      }
+    } catch (error) {
+      // If anything fails, fall back to formatting the field ID
+      console.error('Error getting field display name:', error)
+    }
+    
+    // Fallback: format the field ID nicely
+    return 'unknon' /*fieldId
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase())
+      .trim()*/
+  }
+
   const tabHeader = () => {
     return (
       <small>
@@ -51,21 +75,21 @@ export const DeviceInfoTab = ({ pgnData, info }: DeviceInfoTabProps) => {
                 </CardHeader>
                 <CardBody style={{ padding: '15px' }}>
                   <div className="row">
-                    {Object.entries(pgnInfo)
+                    {Object.entries(pgnInfo.fields)
                       .filter(([key]) => key !== 'description')
                       .map(([key, value]: [string, any]) => (
                         <div key={key} className="col-12 mb-2">
                           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
                             <strong
                               style={{
-                                minWidth: '120px',
-                                marginRight: '10px',
+                                minWidth: '200px',
+                                marginRight: '15px',
                                 color: '#6c757d',
                                 textTransform: 'capitalize',
                                 flexShrink: 0,
                               }}
                             >
-                              {key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}:
+                              {getFieldDisplayName(pgnInfo, key)}:
                             </strong>
                             <span
                               style={{
