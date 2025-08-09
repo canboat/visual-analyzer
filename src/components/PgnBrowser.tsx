@@ -30,9 +30,12 @@ import {
   Modal,
   ModalHeader,
   ModalBody,
+  ModalFooter,
   Button,
   ListGroup,
   ListGroupItem,
+  InputGroup,
+  InputGroupText,
 } from 'reactstrap'
 import { getAllPGNs, Definition, getEnumeration, getBitEnumeration, getFieldTypeEnumeration } from '@canboat/ts-pgns'
 
@@ -141,6 +144,38 @@ const PgnRow = React.memo(
                         <dd className="col-sm-8">{pgn.TransmissionInterval}ms</dd>
                       </>
                     )}
+                    {pgn.RepeatingFieldSet1Size && (
+                      <>
+                        <dt className="col-sm-4">Repeating Set 1:</dt>
+                        <dd className="col-sm-8">
+                          <Badge color="info" className="me-2">
+                            {pgn.RepeatingFieldSet1Size} field{pgn.RepeatingFieldSet1Size > 1 ? 's' : ''}
+                          </Badge>
+                          <small className="text-muted">
+                            Starting at field {pgn.RepeatingFieldSet1StartField || 'unknown'}
+                            {pgn.RepeatingFieldSet1CountField && (
+                              <span>, count from field {pgn.RepeatingFieldSet1CountField}</span>
+                            )}
+                          </small>
+                        </dd>
+                      </>
+                    )}
+                    {pgn.RepeatingFieldSet2Size && (
+                      <>
+                        <dt className="col-sm-4">Repeating Set 2:</dt>
+                        <dd className="col-sm-8">
+                          <Badge color="info" className="me-2">
+                            {pgn.RepeatingFieldSet2Size} field{pgn.RepeatingFieldSet2Size > 1 ? 's' : ''}
+                          </Badge>
+                          <small className="text-muted">
+                            Starting at field {pgn.RepeatingFieldSet2StartField || 'unknown'}
+                            {pgn.RepeatingFieldSet2CountField && (
+                              <span>, count from field {pgn.RepeatingFieldSet2CountField}</span>
+                            )}
+                          </small>
+                        </dd>
+                      </>
+                    )}
                     {pgn.URL && (
                       <>
                         <dt className="col-sm-4">Reference:</dt>
@@ -166,6 +201,37 @@ const PgnRow = React.memo(
               {pgn.Fields.length > 0 && (
                 <div className="mt-3">
                   <h6>Fields ({pgn.Fields.length})</h6>
+                  {(pgn.RepeatingFieldSet1Size || pgn.RepeatingFieldSet2Size) && (
+                    <div className="mb-2">
+                      <small className="text-muted">
+                        <strong>Legend:</strong>{' '}
+                        {pgn.RepeatingFieldSet1Size && (
+                          <>
+                            <Badge color="info" size="sm" className="me-1">
+                              R1
+                            </Badge>
+                            Repeating Set 1{' '}
+                          </>
+                        )}
+                        {pgn.RepeatingFieldSet2Size && (
+                          <>
+                            <Badge color="warning" size="sm" className="me-1">
+                              R2
+                            </Badge>
+                            Repeating Set 2{' '}
+                          </>
+                        )}
+                        {(pgn.RepeatingFieldSet1CountField || pgn.RepeatingFieldSet2CountField) && (
+                          <>
+                            <Badge color="secondary" size="sm" className="me-1">
+                              COUNT
+                            </Badge>
+                            Count field
+                          </>
+                        )}
+                      </small>
+                    </div>
+                  )}
                   <Table size="sm" bordered>
                     <thead>
                       <tr>
@@ -178,40 +244,82 @@ const PgnRow = React.memo(
                       </tr>
                     </thead>
                     <tbody>
-                      {pgn.Fields.map((field, index) => (
-                        <tr key={index}>
-                          <td>
-                            <code>{field.Name}</code>
-                          </td>
-                          <td>
-                            <Badge
-                              color={hasLookupValues(field) ? 'primary' : 'light'}
-                              className={hasLookupValues(field) ? 'text-white' : 'text-dark'}
-                              style={{
-                                fontSize: '0.7em',
-                                cursor: hasLookupValues(field) ? 'pointer' : 'default',
-                              }}
-                              onClick={hasLookupValues(field) ? () => showLookupPopup(field) : undefined}
-                              title={hasLookupValues(field) ? 'Click to view lookup values' : undefined}
-                            >
-                              {formatFieldType(field.FieldType)}
-                              {hasLookupValues(field) && (
-                                <i className="fas fa-external-link-alt ms-1" style={{ fontSize: '0.6em' }} />
+                      {pgn.Fields.map((field, index) => {
+                        const fieldIndex = index + 1
+                        const isInRepeatingSet1 =
+                          pgn.RepeatingFieldSet1Size &&
+                          pgn.RepeatingFieldSet1StartField &&
+                          fieldIndex >= pgn.RepeatingFieldSet1StartField &&
+                          fieldIndex < pgn.RepeatingFieldSet1StartField + pgn.RepeatingFieldSet1Size
+                        const isInRepeatingSet2 =
+                          pgn.RepeatingFieldSet2Size &&
+                          pgn.RepeatingFieldSet2StartField &&
+                          fieldIndex >= pgn.RepeatingFieldSet2StartField &&
+                          fieldIndex < pgn.RepeatingFieldSet2StartField + pgn.RepeatingFieldSet2Size
+                        const isCountField =
+                          pgn.RepeatingFieldSet1CountField === fieldIndex ||
+                          pgn.RepeatingFieldSet2CountField === fieldIndex
+
+                        return (
+                          <tr
+                            key={index}
+                            className={isInRepeatingSet1 ? 'table-info' : isInRepeatingSet2 ? 'table-warning' : ''}
+                          >
+                            <td>
+                              <div className="d-flex align-items-center">
+                                <code>{field.Name}</code>
+                                {isInRepeatingSet1 && (
+                                  <Badge color="info" size="sm" className="ms-2" title="Part of Repeating Set 1">
+                                    R1
+                                  </Badge>
+                                )}
+                                {isInRepeatingSet2 && (
+                                  <Badge color="warning" size="sm" className="ms-2" title="Part of Repeating Set 2">
+                                    R2
+                                  </Badge>
+                                )}
+                                {isCountField && (
+                                  <Badge
+                                    color="secondary"
+                                    size="sm"
+                                    className="ms-2"
+                                    title="Count field for repeating set"
+                                  >
+                                    COUNT
+                                  </Badge>
+                                )}
+                              </div>
+                            </td>
+                            <td>
+                              <Badge
+                                color={hasLookupValues(field) ? 'primary' : 'light'}
+                                className={hasLookupValues(field) ? 'text-white' : 'text-dark'}
+                                style={{
+                                  fontSize: '0.7em',
+                                  cursor: hasLookupValues(field) ? 'pointer' : 'default',
+                                }}
+                                onClick={hasLookupValues(field) ? () => showLookupPopup(field) : undefined}
+                                title={hasLookupValues(field) ? 'Click to view lookup values' : undefined}
+                              >
+                                {formatFieldType(field.FieldType)}
+                                {hasLookupValues(field) && (
+                                  <i className="fas fa-external-link-alt ms-1" style={{ fontSize: '0.6em' }} />
+                                )}
+                              </Badge>
+                            </td>
+                            <td>{getFieldSize(field)}</td>
+                            <td>{field.Unit && <code className="small">{field.Unit}</code>}</td>
+                            <td>
+                              {field.Resolution && field.Resolution !== 1 && (
+                                <code className="small">{field.Resolution}</code>
                               )}
-                            </Badge>
-                          </td>
-                          <td>{getFieldSize(field)}</td>
-                          <td>{field.Unit && <code className="small">{field.Unit}</code>}</td>
-                          <td>
-                            {field.Resolution && field.Resolution !== 1 && (
-                              <code className="small">{field.Resolution}</code>
-                            )}
-                          </td>
-                          <td>
-                            <small>{field.Description}</small>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td>
+                              <small>{field.Description}</small>
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </Table>
                 </div>
@@ -245,6 +353,9 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
     enumValues: null,
     title: '',
   })
+
+  // Search state for modal
+  const [modalSearchTerm, setModalSearchTerm] = useState('')
 
   // Debounce search term to improve performance
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -407,7 +518,23 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
       enumValues: null,
       title: '',
     })
+    setModalSearchTerm('') // Reset search when closing
   }, [])
+
+  // Filter enum values based on search term
+  const filteredEnumValues = useMemo(() => {
+    if (!lookupModal.enumValues || !modalSearchTerm) {
+      return lookupModal.enumValues || []
+    }
+
+    const searchLower = modalSearchTerm.toLowerCase()
+    return lookupModal.enumValues.filter(
+      (enumValue) =>
+        enumValue.name.toLowerCase().includes(searchLower) ||
+        enumValue.value.toString().toLowerCase().includes(searchLower) ||
+        (enumValue.description && enumValue.description.toLowerCase().includes(searchLower)),
+    )
+  }, [lookupModal.enumValues, modalSearchTerm])
 
   // Function to check if field has lookup values
   const hasLookupValues = useCallback((field: any) => {
@@ -534,33 +661,154 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
         )}
       </CardBody>
 
-      {/* Lookup Values Modal */}
-      <Modal isOpen={lookupModal.isOpen} toggle={closeLookupPopup} size="lg">
-        <ModalHeader toggle={closeLookupPopup}>
-          {lookupModal.title}
-          <div className="text-muted small">
-            Field: <code>{lookupModal.field?.Name}</code>
+      {/* Lookup Values Modal - Modern Design */}
+      <Modal isOpen={lookupModal.isOpen} toggle={closeLookupPopup} size="lg" className="modern-modal">
+        <ModalHeader
+          className="border-0 pb-2"
+          style={{
+            background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+            borderRadius: '0.5rem 0.5rem 0 0',
+          }}
+        >
+          <div className="d-flex flex-column w-100">
+            <h5 className="mb-2 text-primary">{lookupModal.title}</h5>
+            <div className="d-flex align-items-center">
+              <Badge color="light" className="text-dark me-2 px-3 py-2" style={{ fontSize: '0.85em' }}>
+                Field: {lookupModal.field?.Name}
+              </Badge>
+              {filteredEnumValues.length !== lookupModal.enumValues?.length && (
+                <Badge color="info" className="text-white" style={{ fontSize: '0.75em' }}>
+                  {filteredEnumValues.length} of {lookupModal.enumValues?.length} values
+                </Badge>
+              )}
+            </div>
           </div>
         </ModalHeader>
-        <ModalBody>
+        <ModalBody className="px-4 py-3">
           {lookupModal.enumValues && lookupModal.enumValues.length > 0 ? (
-            <ListGroup>
-              {lookupModal.enumValues.map((enumValue, index) => (
-                <ListGroupItem key={index} className="d-flex justify-content-between align-items-start">
-                  <div className="ms-2 me-auto">
-                    <div className="fw-bold">{enumValue.name}</div>
-                    {enumValue.description && <small className="text-muted">{enumValue.description}</small>}
+            <>
+              {/* Search Bar */}
+              {lookupModal.enumValues.length > 5 && (
+                <div className="mb-3">
+                  <InputGroup size="sm">
+                    <InputGroupText className="bg-light border-end-0">
+                      <i className="fas fa-search text-muted" style={{ fontSize: '0.8em' }} />
+                    </InputGroupText>
+                    <Input
+                      type="text"
+                      placeholder="Search values..."
+                      value={modalSearchTerm}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setModalSearchTerm(e.target.value)}
+                      className="border-start-0"
+                      style={{ fontSize: '0.9em' }}
+                    />
+                  </InputGroup>
+                </div>
+              )}
+
+              {/* Values List */}
+              <div
+                style={{
+                  maxHeight: '400px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#c1c1c1 #f1f1f1',
+                }}
+              >
+                {filteredEnumValues.length > 0 ? (
+                  <div className="d-flex flex-column gap-1">
+                    {filteredEnumValues.map((enumValue, index) => (
+                      <div
+                        key={index}
+                        className="d-flex justify-content-between align-items-center px-3 py-2 border rounded"
+                        style={{
+                          transition: 'all 0.15s ease-in-out',
+                          backgroundColor: '#f8f9fa',
+                          borderColor: '#e9ecef !important',
+                          cursor: 'default',
+                          minHeight: '40px',
+                        }}
+                        onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+                          const item = e.currentTarget
+                          item.style.backgroundColor = '#e3f2fd'
+                          item.style.borderColor = '#2196f3'
+                          item.style.transform = 'translateX(2px)'
+                        }}
+                        onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+                          const item = e.currentTarget
+                          item.style.backgroundColor = '#f8f9fa'
+                          item.style.borderColor = '#e9ecef'
+                          item.style.transform = 'translateX(0)'
+                        }}
+                      >
+                        <div className="flex-grow-1 me-3 min-width-0">
+                          <div className="d-flex align-items-center">
+                            <span className="fw-medium text-dark me-2" style={{ fontSize: '0.9em' }}>
+                              {enumValue.name}
+                            </span>
+                            {enumValue.description && (
+                              <small className="text-muted text-truncate" style={{ fontSize: '0.75em' }}>
+                                - {enumValue.description}
+                              </small>
+                            )}
+                          </div>
+                        </div>
+                        <Badge
+                          color="primary"
+                          className="text-white fw-medium px-2 py-1 flex-shrink-0"
+                          style={{ fontSize: '0.75em', minWidth: '50px' }}
+                        >
+                          {enumValue.value}
+                        </Badge>
+                      </div>
+                    ))}
                   </div>
-                  <Badge color="primary" pill>
-                    {enumValue.value}
-                  </Badge>
-                </ListGroupItem>
-              ))}
-            </ListGroup>
+                ) : (
+                  <div className="text-center py-5">
+                    <div className="mb-3">
+                      <i className="fas fa-search text-muted" style={{ fontSize: '3em', opacity: 0.3 }} />
+                    </div>
+                    <h6 className="text-muted mb-2">No values found</h6>
+                    <p className="text-muted small mb-0">Try adjusting your search term or clearing the filter</p>
+                    {modalSearchTerm && (
+                      <Button
+                        color="link"
+                        size="sm"
+                        className="mt-2 text-primary"
+                        onClick={() => setModalSearchTerm('')}
+                      >
+                        Clear search
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
-            <p>No lookup values found for this field.</p>
+            <div className="text-center py-5">
+              <div className="mb-3">
+                <i className="fas fa-info-circle text-muted" style={{ fontSize: '3em', opacity: 0.3 }} />
+              </div>
+              <h6 className="text-muted mb-2">No lookup values available</h6>
+              <p className="text-muted small mb-0">This field doesn't have any predefined lookup values.</p>
+            </div>
           )}
         </ModalBody>
+        <ModalFooter className="border-0 pt-2">
+          <div className="d-flex justify-content-between w-100 align-items-center">
+            <small className="text-muted">
+              {lookupModal.enumValues && lookupModal.enumValues.length > 0 && (
+                <>
+                  <i className="fas fa-list me-1" />
+                  {lookupModal.enumValues.length} total value{lookupModal.enumValues.length !== 1 ? 's' : ''}
+                </>
+              )}
+            </small>
+            <Button color="primary" onClick={closeLookupPopup} className="px-4">
+              Close
+            </Button>
+          </div>
+        </ModalFooter>
       </Modal>
     </Card>
   )
