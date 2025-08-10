@@ -211,8 +211,6 @@ export const DataList = (props: DataListProps) => {
                               </thead>
                               <tbody>
                                 {entry.history
-                                  .slice() // Create a copy to avoid mutating original
-                                  .reverse() // Show most recent first
                                   .map((historicalRow: PGN, index: number) => (
                                     <tr
                                       key={`${rowKey}-history-${index}`}
