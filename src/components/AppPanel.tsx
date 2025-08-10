@@ -100,7 +100,7 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean; filterOpt
             useCamelCase: true,
             showUnknownProprietaryPGNsOnSeparateLines: false,
             showPgn126208OnSeparateLines: false,
-            maxHistorySize: 50,
+            maxHistorySize: 10,
             ...settings.filterOptions,
           },
         }
@@ -493,7 +493,7 @@ const AppPanelInner = (props: any) => {
           if (infoPGNS.indexOf(pgn!.pgn) === -1 || filterOptionsRef.current?.showInfoPgns) {
             setList((prev: any) => {
               const rowKey = getRowKey(pgn!, filterOptionsRef.current || undefined)
-              const maxHistorySize = filterOptionsRef.current?.maxHistorySize ?? 50
+              const maxHistorySize = filterOptionsRef.current?.maxHistorySize ?? 10
               
               if (prev[rowKey]) {
                 // Move current to history and update current
@@ -696,7 +696,7 @@ const AppPanelInner = (props: any) => {
         useCamelCase: true,
         showUnknownProprietaryPGNsOnSeparateLines: false,
         showPgn126208OnSeparateLines: false,
-        maxHistorySize: 50,
+        maxHistorySize: 10,
       })
     }
   }, [])

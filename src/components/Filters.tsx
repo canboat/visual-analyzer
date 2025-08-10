@@ -362,12 +362,12 @@ export const FilterPanel = (props: FilterPanelProps) => {
                     type="number"
                     min="0"
                     max="1000"
-                    value={filterOptions?.maxHistorySize ?? 50}
+                    value={filterOptions?.maxHistorySize ?? 10}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const value = parseInt(e.target.value, 10)
                       props.filterOptions.next({
                         ...filterOptions,
-                        maxHistorySize: isNaN(value) ? 50 : Math.max(0, Math.min(1000, value)),
+                        maxHistorySize: isNaN(value) ? 10 : Math.max(0, Math.min(1000, value)),
                       })
                     }}
                     style={{ width: '100px' }}
