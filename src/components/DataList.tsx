@@ -121,7 +121,7 @@ export const DataList = (props: DataListProps) => {
         flexDirection: 'column',
       }}
     >
-      <Table responsive bordered striped size="sm">
+      <Table responsive bordered size="sm">
         <thead>
           <tr>
             <th style={{ width: '50px' }}></th>
@@ -142,14 +142,15 @@ export const DataList = (props: DataListProps) => {
               }
               return a.current.pgn - b.current.pgn
             })
-            .map(([rowKey, entry]) => {
+            .map(([rowKey, entry], index) => {
               const row = entry.current
               const isExpanded = expandedRows.has(rowKey)
               const hasHistory = entry.history.length > 0
+              const isEvenRow = index % 2 === 0
               
               return (
                 <React.Fragment key={rowKey}>
-                  <tr>
+                  <tr style={{ backgroundColor: isEvenRow ? '#ffffff' : 'rgba(0,0,0,.05)' }}>
                     <td>
                       {hasHistory && (
                         <i 
@@ -200,8 +201,8 @@ export const DataList = (props: DataListProps) => {
                     </td>
                   </tr>
                   {hasHistory && (
-                    <tr>
-                      <td colSpan={6} style={{ padding: 0, borderTop: 'none' }}>
+                    <tr style={{ backgroundColor: 'transparent' }}>
+                      <td colSpan={6} style={{ padding: 0, borderTop: 'none', backgroundColor: 'transparent' }}>
                         <Collapse isOpen={isExpanded}>
                           <div style={{ backgroundColor: '#f8f9fa', padding: '8px' }}>
                             <div style={{ marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
