@@ -34,7 +34,7 @@ import RecordingTab from './RecordingTab'
 import { PgnBrowser } from './PgnBrowser'
 import { RecordingProvider, useRecording } from '../contexts/RecordingContext'
 import { FromPgn } from '@canboat/canboatjs'
-import { PGN, PGN_59904 } from '@canboat/ts-pgns'
+import { Field, PGN, PGN_59904 } from '@canboat/ts-pgns'
 
 interface LoginStatus {
   status: string
@@ -113,24 +113,41 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean; filterOpt
 }
 
 export const getRowKey = (pgn: PGN, options: FilterOptions | undefined): string => {
-  let key = `${pgn.getDefinition().Id}-${pgn.pgn}-${pgn.src}`
+  let key = `${pgn.getDefinition().Id}-${pgn.pgn}-${pgn.src}- ${createFieldDataHash(pgn, true)}`
   if (
     (pgn.getDefinition().Fallback === true && options?.showUnknownProprietaryPGNsOnSeparateLines) ||
     (pgn.pgn === 126208 && options?.showPgn126208OnSeparateLines)
   ) {
-    const fieldHash = createFieldDataHash(pgn.fields)
+    const fieldHash = createFieldDataHash(pgn)
     key = `${key}-${fieldHash}`
   }
   return key
 }
 
 // Simple hash function for creating consistent hashes from field data
-const createFieldDataHash = (fields: any): string => {
+const createFieldDataHash = (pgn: PGN, primaryKeys: boolean = false): string => {
   try {
     // Serialize the fields object to a stable string representation
-    const serialized = JSON.stringify(fields, (key, value) =>
-      key !== 'data' && key !== 'input' && key !== 'rawData' && key !== 'byteMapping' ? value : undefined,
-    )
+    let serialized: string
+    if (primaryKeys) {
+      const pkeys = pgn
+        .getDefinition()
+        .Fields.filter((field: Field) => field.PartOfPrimaryKey === true)
+        .map((field: Field) => field.Id)
+      if (pkeys.length === 0) {
+        return ''
+      }
+      serialized = JSON.stringify(pgn.fields, (key, value) => {
+        // Handle root object (empty key) - always include it
+        if (key === '') return value
+        // Only include properties that are primary keys
+        return pkeys.indexOf(key) !== -1 ? value : undefined
+      })
+    } else {
+      serialized = JSON.stringify(pgn.fields, (key, value) =>
+        key !== 'data' && key !== 'input' && key !== 'rawData' && key !== 'byteMapping' ? value : undefined,
+      )
+    }
 
     // Simple djb2 hash algorithm implementation
     let hash = 5381
