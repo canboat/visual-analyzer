@@ -22,8 +22,13 @@ export type Brand<K, T> = K & { __brand: T }
 
 export type PgnNumber = Brand<number, 'PgnNumber'>
 
+export type PGNDataEntry = {
+  current: PGN
+  history: PGN[]
+}
+
 export type PGNDataMap = {
-  [key: string]: PGN
+  [key: string]: PGNDataEntry
 }
 
 export type DeviceInformation = {

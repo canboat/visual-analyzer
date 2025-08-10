@@ -19,6 +19,11 @@ import { Card, CardBody, Col, Row, Nav, NavItem, NavLink, TabContent, TabPane } 
 import { ReplaySubject, combineLatest } from 'rxjs'
 // import * as pkg from '../../package.json'
 import { PGNDataMap, PgnNumber, DeviceMap } from '../types'
+
+type PGNDataEntry = {
+  current: PGN
+  history: PGN[]
+}
 import { DataList } from './DataList'
 import { FilterPanel, Filter, FilterOptions } from './Filters'
 import { SentencePanel } from './SentencePanel'
@@ -91,10 +96,12 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean; filterOpt
         return {
           filter: settings.filter || {},
           doFiltering: settings.doFiltering || false,
-          filterOptions: settings.filterOptions || {
+          filterOptions: {
             useCamelCase: true,
             showUnknownProprietaryPGNsOnSeparateLines: false,
             showPgn126208OnSeparateLines: false,
+            maxHistorySize: 10,
+            ...settings.filterOptions,
           },
         }
       }
@@ -165,7 +172,7 @@ const AppPanelInner = (props: any) => {
     return ANALYZER_TAB_ID
   })
   const [ws, setWs] = useState(null)
-  const [data] = useState(new ReplaySubject<PGNDataMap>())
+  const [data] = useState(new ReplaySubject<{ [key: string]: PGNDataEntry }>())
   const [list, setList] = useState<any>({})
   const [selectedPgn] = useState(new ReplaySubject<PGN>())
   const [doFiltering] = useState(new ReplaySubject<boolean>())
@@ -485,7 +492,32 @@ const AppPanelInner = (props: any) => {
           //console.log('pgn', pgn)
           if (infoPGNS.indexOf(pgn!.pgn) === -1 || filterOptionsRef.current?.showInfoPgns) {
             setList((prev: any) => {
-              prev[getRowKey(pgn!, filterOptionsRef.current || undefined)] = pgn
+              const rowKey = getRowKey(pgn!, filterOptionsRef.current || undefined)
+              const maxHistorySize = filterOptionsRef.current?.maxHistorySize ?? 10
+
+              if (prev[rowKey]) {
+                // Move current to history and update current
+                let newHistory = [prev[rowKey].current, ...prev[rowKey].history]
+
+                // Limit history size if maxHistorySize > 0, otherwise disable history
+                if (maxHistorySize === 0) {
+                  newHistory = []
+                } else if (newHistory.length > maxHistorySize) {
+                  newHistory = newHistory.slice(0, maxHistorySize)
+                }
+
+                prev[rowKey] = {
+                  current: pgn,
+                  history: newHistory,
+                }
+              } else {
+                // New entry
+                prev[rowKey] = {
+                  current: pgn,
+                  history: [],
+                }
+              }
+
               data.next({ ...prev })
               return prev
             })
@@ -664,6 +696,7 @@ const AppPanelInner = (props: any) => {
         useCamelCase: true,
         showUnknownProprietaryPGNsOnSeparateLines: false,
         showPgn126208OnSeparateLines: false,
+        maxHistorySize: 10,
       })
     }
   }, [])
