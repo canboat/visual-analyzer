@@ -36,6 +36,7 @@ export type FilterOptions = {
   showUnknownProprietaryPGNsOnSeparateLines?: boolean
   showPgn126208OnSeparateLines?: boolean
   showInfoPgns?: boolean
+  maxHistorySize?: number
 }
 
 export const getFilterConfig = (filter?: Filter): FilterConfig => {
@@ -352,6 +353,28 @@ export const FilterPanel = (props: FilterPanelProps) => {
                     }}
                   />
                   <span>Show PGN 126208 On Separate Lines</span>
+                </Label>
+              </Col>
+              <Col xs="12" md="6" className="mb-2">
+                <Label className="d-block" style={{ cursor: 'default' }}>
+                  <span className="mb-2 d-block">Max History Size per PGN</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="1000"
+                    value={filterOptions?.maxHistorySize ?? 50}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const value = parseInt(e.target.value, 10)
+                      props.filterOptions.next({
+                        ...filterOptions,
+                        maxHistorySize: isNaN(value) ? 50 : Math.max(0, Math.min(1000, value)),
+                      })
+                    }}
+                    style={{ width: '100px' }}
+                  />
+                  <small className="text-muted d-block mt-1">
+                    Set to 0 to disable history tracking. History stores previous values of each PGN allowing you to see changes over time by expanding rows with the chevron icon.
+                  </small>
                 </Label>
               </Col>
             </Row>

@@ -96,10 +96,12 @@ const loadFilterSettings = (): { filter: Filter; doFiltering: boolean; filterOpt
         return {
           filter: settings.filter || {},
           doFiltering: settings.doFiltering || false,
-          filterOptions: settings.filterOptions || {
+          filterOptions: {
             useCamelCase: true,
             showUnknownProprietaryPGNsOnSeparateLines: false,
             showPgn126208OnSeparateLines: false,
+            maxHistorySize: 50,
+            ...settings.filterOptions,
           },
         }
       }
@@ -491,12 +493,22 @@ const AppPanelInner = (props: any) => {
           if (infoPGNS.indexOf(pgn!.pgn) === -1 || filterOptionsRef.current?.showInfoPgns) {
             setList((prev: any) => {
               const rowKey = getRowKey(pgn!, filterOptionsRef.current || undefined)
+              const maxHistorySize = filterOptionsRef.current?.maxHistorySize ?? 50
               
               if (prev[rowKey]) {
                 // Move current to history and update current
+                let newHistory = [prev[rowKey].current, ...prev[rowKey].history]
+                
+                // Limit history size if maxHistorySize > 0, otherwise disable history
+                if (maxHistorySize === 0) {
+                  newHistory = []
+                } else if (newHistory.length > maxHistorySize) {
+                  newHistory = newHistory.slice(0, maxHistorySize)
+                }
+                
                 prev[rowKey] = {
                   current: pgn,
-                  history: [prev[rowKey].current, ...prev[rowKey].history]
+                  history: newHistory
                 }
               } else {
                 // New entry
@@ -684,6 +696,7 @@ const AppPanelInner = (props: any) => {
         useCamelCase: true,
         showUnknownProprietaryPGNsOnSeparateLines: false,
         showPgn126208OnSeparateLines: false,
+        maxHistorySize: 50,
       })
     }
   }, [])

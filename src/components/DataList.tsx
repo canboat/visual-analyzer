@@ -170,8 +170,8 @@ export const DataList = (props: DataListProps) => {
                       )}
                     </td>
                     <td 
-                      style={{ fontFamily: 'monospace', cursor: hasHistory ? 'default' : 'pointer' }}
-                      onClick={hasHistory ? undefined : () => handleRowClick(row)}
+                      style={{ fontFamily: 'monospace', cursor: 'pointer' }}
+                      onClick={() => handleRowClick(row)}
                     >
                       {new Date(row.timestamp!).toLocaleTimeString([], { hour12: false })}
                     </td>
@@ -193,8 +193,8 @@ export const DataList = (props: DataListProps) => {
                     </td>
                     <td>{row.dst}</td>
                     <td 
-                      onMouseDown={hasHistory ? undefined : (e) => handleDescriptionClick(e, row)} 
-                      style={{ cursor: hasHistory ? 'default' : 'pointer' }}
+                      onMouseDown={(e) => handleDescriptionClick(e, row)} 
+                      style={{ cursor: 'pointer' }}
                     >
                       <span style={{ fontFamily: 'monospace' }}>{row.getDefinition().Description}</span>
                     </td>
