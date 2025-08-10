@@ -210,26 +210,25 @@ export const DataList = (props: DataListProps) => {
                                 </tr>
                               </thead>
                               <tbody>
-                                {entry.history
-                                  .map((historicalRow: PGN, index: number) => (
-                                    <tr
-                                      key={`${rowKey}-history-${index}`}
-                                      style={{ cursor: 'pointer' }}
-                                      onClick={() => handleRowClick(historicalRow)}
-                                    >
-                                      <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                                        {new Date(historicalRow.timestamp!).toLocaleTimeString([], { hour12: false })}
-                                      </td>
-                                      <td style={{ fontSize: '0.8rem' }}>{historicalRow.pgn}</td>
-                                      <td style={{ fontSize: '0.8rem' }}>{historicalRow.src}</td>
-                                      <td style={{ fontSize: '0.8rem' }}>{historicalRow.dst}</td>
-                                      <td style={{ fontSize: '0.8rem' }}>
-                                        <span style={{ fontFamily: 'monospace' }}>
-                                          {historicalRow.getDefinition().Description}
-                                        </span>
-                                      </td>
-                                    </tr>
-                                  ))}
+                                {entry.history.map((historicalRow: PGN, index: number) => (
+                                  <tr
+                                    key={`${rowKey}-history-${index}`}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => handleRowClick(historicalRow)}
+                                  >
+                                    <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                                      {new Date(historicalRow.timestamp!).toLocaleTimeString([], { hour12: false })}
+                                    </td>
+                                    <td style={{ fontSize: '0.8rem' }}>{historicalRow.pgn}</td>
+                                    <td style={{ fontSize: '0.8rem' }}>{historicalRow.src}</td>
+                                    <td style={{ fontSize: '0.8rem' }}>{historicalRow.dst}</td>
+                                    <td style={{ fontSize: '0.8rem' }}>
+                                      <span style={{ fontFamily: 'monospace' }}>
+                                        {historicalRow.getDefinition().Description}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
                               </tbody>
                             </Table>
                           </div>
