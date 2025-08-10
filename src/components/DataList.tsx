@@ -124,7 +124,7 @@ export const DataList = (props: DataListProps) => {
       <Table responsive bordered size="sm">
         <thead>
           <tr>
-            <th style={{ width: '50px' }}></th>
+            <th style={{ width: '55px' }}></th>
             <th>Timestamp</th>
             <th>pgn</th>
             <th>src</th>
