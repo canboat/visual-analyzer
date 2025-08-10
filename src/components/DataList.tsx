@@ -15,8 +15,8 @@
  */
 
 import { useObservableState } from 'observable-hooks'
-import React, { useCallback } from 'react'
-import { Table } from 'reactstrap'
+import React, { useCallback, useState } from 'react'
+import { Table, Collapse, Badge } from 'reactstrap'
 import { PGN } from '@canboat/ts-pgns'
 
 import { Subject } from 'rxjs'
@@ -24,8 +24,13 @@ import { PgnNumber, PGNDataMap } from '../types'
 import { Filter, filterFor, getFilterConfig, FilterOptions } from './Filters'
 import { getRowKey } from './AppPanel'
 
+type PGNDataEntry = {
+  current: PGN
+  history: PGN[]
+}
+
 interface DataListProps {
-  data: Subject<PGNDataMap>
+  data: Subject<{ [key: string]: PGNDataEntry }>
   onRowClicked: (row: PGN) => void
   filter: Subject<Filter>
   doFiltering: Subject<boolean>
@@ -33,10 +38,11 @@ interface DataListProps {
 }
 
 export const DataList = (props: DataListProps) => {
-  const data = useObservableState<PGNDataMap>(props.data)
+  const data = useObservableState<{ [key: string]: PGNDataEntry }>(props.data)
   const filter = useObservableState(props.filter)
   const doFiltering = useObservableState(props.doFiltering)
   const filterOptions = useObservableState(props.filterOptions)
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
   const filterConfig = getFilterConfig(filter)
 
@@ -59,6 +65,18 @@ export const DataList = (props: DataListProps) => {
     },
     [filter, props.filter],
   )
+
+  const toggleRowExpansion = useCallback((rowKey: string) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(rowKey)) {
+        newSet.delete(rowKey)
+      } else {
+        newSet.add(rowKey)
+      }
+      return newSet
+    })
+  }, [])
 
   const handleRowClick = useCallback(
     (row: PGN) => {
@@ -106,6 +124,7 @@ export const DataList = (props: DataListProps) => {
       <Table responsive bordered striped size="sm">
         <thead>
           <tr>
+            <th style={{ width: '20px' }}></th>
             <th>Timestamp</th>
             <th>pgn</th>
             <th>src</th>
@@ -114,35 +133,121 @@ export const DataList = (props: DataListProps) => {
           </tr>
         </thead>
         <tbody>
-          {(data != undefined ? Object.values(data) : [])
-            .filter(filterFor(doFiltering, filterConfig))
-            .sort((a, b) => {
+          {(data != undefined ? Object.entries(data) : [])
+            .filter(([, entry]) => filterFor(doFiltering, filterConfig)(entry.current))
+            .sort(([, a], [, b]) => {
               // Sort by PGN first, then by src
-              if (a.src !== b.src) {
-                return a.src! - b.src!
+              if (a.current.src !== b.current.src) {
+                return a.current.src! - b.current.src!
               }
-              return a.pgn - b.pgn
+              return a.current.pgn - b.current.pgn
             })
-            .map((row: PGN, i: number) => {
+            .map(([rowKey, entry]) => {
+              const row = entry.current
+              const isExpanded = expandedRows.has(rowKey)
+              const hasHistory = entry.history.length > 0
+              
               return (
-                <tr key={getRowKey(row, filterOptions)} onClick={() => handleRowClick(row)}>
-                  <td style={{ fontFamily: 'monospace' }}>
-                    {new Date(row.timestamp!).toLocaleTimeString([], { hour12: false })}
-                  </td>
-                  <td
-                    style={{ color: 'red', cursor: 'pointer' }}
-                    onMouseDown={(e) => handlePgnClick(e, row.pgn.toString())}
-                  >
-                    {row.pgn}
-                  </td>
-                  <td style={{ color: 'red', cursor: 'pointer' }} onMouseDown={(e) => handleSrcClick(e, row.src!)}>
-                    {row.src}
-                  </td>
-                  <td>{row.dst}</td>
-                  <td onMouseDown={(e) => handleDescriptionClick(e, row)} style={{ cursor: 'pointer' }}>
-                    <span style={{ fontFamily: 'monospace' }}>{row.getDefinition().Description}</span>
-                  </td>
-                </tr>
+                <React.Fragment key={rowKey}>
+                  <tr>
+                    <td>
+                      {hasHistory && (
+                        <i 
+                          className={`fas fa-chevron-${isExpanded ? 'down' : 'right'}`}
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => toggleRowExpansion(rowKey)}
+                        />
+                      )}
+                      {hasHistory && (
+                        <Badge 
+                          color="info" 
+                          size="sm" 
+                          className="ms-1"
+                          title={`${entry.history.length} previous entries`}
+                        >
+                          {entry.history.length}
+                        </Badge>
+                      )}
+                    </td>
+                    <td 
+                      style={{ fontFamily: 'monospace', cursor: hasHistory ? 'default' : 'pointer' }}
+                      onClick={hasHistory ? undefined : () => handleRowClick(row)}
+                    >
+                      {new Date(row.timestamp!).toLocaleTimeString([], { hour12: false })}
+                    </td>
+                    <td
+                      style={{ 
+                        color: 'red', 
+                        cursor: 'pointer',
+                        fontWeight: hasHistory ? 'bold' : 'normal'
+                      }}
+                      onMouseDown={(e) => handlePgnClick(e, row.pgn.toString())}
+                    >
+                      {row.pgn}
+                    </td>
+                    <td 
+                      style={{ color: 'red', cursor: 'pointer' }} 
+                      onMouseDown={(e) => handleSrcClick(e, row.src!)}
+                    >
+                      {row.src}
+                    </td>
+                    <td>{row.dst}</td>
+                    <td 
+                      onMouseDown={hasHistory ? undefined : (e) => handleDescriptionClick(e, row)} 
+                      style={{ cursor: hasHistory ? 'default' : 'pointer' }}
+                    >
+                      <span style={{ fontFamily: 'monospace' }}>{row.getDefinition().Description}</span>
+                    </td>
+                  </tr>
+                  {hasHistory && (
+                    <tr>
+                      <td colSpan={6} style={{ padding: 0, borderTop: 'none' }}>
+                        <Collapse isOpen={isExpanded}>
+                          <div style={{ backgroundColor: '#f8f9fa', padding: '8px' }}>
+                            <div style={{ marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                              History ({entry.history.length} previous entries):
+                            </div>
+                            <Table size="sm" bordered style={{ marginBottom: 0 }}>
+                              <thead>
+                                <tr style={{ backgroundColor: '#e9ecef' }}>
+                                  <th>Timestamp</th>
+                                  <th>pgn</th>
+                                  <th>src</th>
+                                  <th>dst</th>
+                                  <th>Description</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {entry.history
+                                  .slice() // Create a copy to avoid mutating original
+                                  .reverse() // Show most recent first
+                                  .map((historicalRow: PGN, index: number) => (
+                                    <tr 
+                                      key={`${rowKey}-history-${index}`}
+                                      style={{ cursor: 'pointer' }}
+                                      onClick={() => handleRowClick(historicalRow)}
+                                    >
+                                      <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                                        {new Date(historicalRow.timestamp!).toLocaleTimeString([], { hour12: false })}
+                                      </td>
+                                      <td style={{ fontSize: '0.8rem' }}>{historicalRow.pgn}</td>
+                                      <td style={{ fontSize: '0.8rem' }}>{historicalRow.src}</td>
+                                      <td style={{ fontSize: '0.8rem' }}>{historicalRow.dst}</td>
+                                      <td style={{ fontSize: '0.8rem' }}>
+                                        <span style={{ fontFamily: 'monospace' }}>
+                                          {historicalRow.getDefinition().Description}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </Table>
+                          </div>
+                        </Collapse>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               )
             })}
         </tbody>

@@ -19,6 +19,11 @@ import { Card, CardBody, Col, Row, Nav, NavItem, NavLink, TabContent, TabPane } 
 import { ReplaySubject, combineLatest } from 'rxjs'
 // import * as pkg from '../../package.json'
 import { PGNDataMap, PgnNumber, DeviceMap } from '../types'
+
+type PGNDataEntry = {
+  current: PGN
+  history: PGN[]
+}
 import { DataList } from './DataList'
 import { FilterPanel, Filter, FilterOptions } from './Filters'
 import { SentencePanel } from './SentencePanel'
@@ -165,7 +170,7 @@ const AppPanelInner = (props: any) => {
     return ANALYZER_TAB_ID
   })
   const [ws, setWs] = useState(null)
-  const [data] = useState(new ReplaySubject<PGNDataMap>())
+  const [data] = useState(new ReplaySubject<{ [key: string]: PGNDataEntry }>())
   const [list, setList] = useState<any>({})
   const [selectedPgn] = useState(new ReplaySubject<PGN>())
   const [doFiltering] = useState(new ReplaySubject<boolean>())
@@ -485,7 +490,22 @@ const AppPanelInner = (props: any) => {
           //console.log('pgn', pgn)
           if (infoPGNS.indexOf(pgn!.pgn) === -1 || filterOptionsRef.current?.showInfoPgns) {
             setList((prev: any) => {
-              prev[getRowKey(pgn!, filterOptionsRef.current || undefined)] = pgn
+              const rowKey = getRowKey(pgn!, filterOptionsRef.current || undefined)
+              
+              if (prev[rowKey]) {
+                // Move current to history and update current
+                prev[rowKey] = {
+                  current: pgn,
+                  history: [prev[rowKey].current, ...prev[rowKey].history]
+                }
+              } else {
+                // New entry
+                prev[rowKey] = {
+                  current: pgn,
+                  history: []
+                }
+              }
+              
               data.next({ ...prev })
               return prev
             })
