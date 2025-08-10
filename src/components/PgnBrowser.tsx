@@ -240,6 +240,7 @@ const PgnRow = React.memo(
                         <th>Size</th>
                         <th>Unit</th>
                         <th>Resolution</th>
+                        <th>Primary Key</th>
                         <th>Description</th>
                       </tr>
                     </thead>
@@ -312,6 +313,13 @@ const PgnRow = React.memo(
                             <td>
                               {field.Resolution && field.Resolution !== 1 && (
                                 <code className="small">{field.Resolution}</code>
+                              )}
+                            </td>
+                            <td>
+                              {field.PartOfPrimaryKey && (
+                                <Badge color="success" size="sm" title="This field is part of the primary key">
+                                  <i className="fas fa-key" />
+                                </Badge>
                               )}
                             </td>
                             <td>
