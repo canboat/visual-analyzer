@@ -67,7 +67,7 @@ export const DataList = (props: DataListProps) => {
   )
 
   const toggleRowExpansion = useCallback((rowKey: string) => {
-    setExpandedRows(prev => {
+    setExpandedRows((prev) => {
       const newSet = new Set(prev)
       if (newSet.has(rowKey)) {
         newSet.delete(rowKey)
@@ -147,22 +147,22 @@ export const DataList = (props: DataListProps) => {
               const isExpanded = expandedRows.has(rowKey)
               const hasHistory = entry.history.length > 0
               const isEvenRow = index % 2 === 0
-              
+
               return (
                 <React.Fragment key={rowKey}>
                   <tr style={{ backgroundColor: isEvenRow ? '#ffffff' : 'rgba(0,0,0,.05)' }}>
                     <td>
                       {hasHistory && (
-                        <i 
+                        <i
                           className={`fas fa-chevron-${isExpanded ? 'down' : 'right'}`}
                           style={{ cursor: 'pointer' }}
                           onClick={() => toggleRowExpansion(rowKey)}
                         />
                       )}
                       {hasHistory && (
-                        <Badge 
-                          color="info" 
-                          size="sm" 
+                        <Badge
+                          color="info"
+                          size="sm"
                           className="ms-1"
                           title={`${entry.history.length} previous entries`}
                         >
@@ -170,33 +170,24 @@ export const DataList = (props: DataListProps) => {
                         </Badge>
                       )}
                     </td>
-                    <td 
-                      style={{ fontFamily: 'monospace', cursor: 'pointer' }}
-                      onClick={() => handleRowClick(row)}
-                    >
+                    <td style={{ fontFamily: 'monospace', cursor: 'pointer' }} onClick={() => handleRowClick(row)}>
                       {new Date(row.timestamp!).toLocaleTimeString([], { hour12: false })}
                     </td>
                     <td
-                      style={{ 
-                        color: 'red', 
+                      style={{
+                        color: 'red',
                         cursor: 'pointer',
-                        fontWeight: hasHistory ? 'bold' : 'normal'
+                        fontWeight: hasHistory ? 'bold' : 'normal',
                       }}
                       onMouseDown={(e) => handlePgnClick(e, row.pgn.toString())}
                     >
                       {row.pgn}
                     </td>
-                    <td 
-                      style={{ color: 'red', cursor: 'pointer' }} 
-                      onMouseDown={(e) => handleSrcClick(e, row.src!)}
-                    >
+                    <td style={{ color: 'red', cursor: 'pointer' }} onMouseDown={(e) => handleSrcClick(e, row.src!)}>
                       {row.src}
                     </td>
                     <td>{row.dst}</td>
-                    <td 
-                      onMouseDown={(e) => handleDescriptionClick(e, row)} 
-                      style={{ cursor: 'pointer' }}
-                    >
+                    <td onMouseDown={(e) => handleDescriptionClick(e, row)} style={{ cursor: 'pointer' }}>
                       <span style={{ fontFamily: 'monospace' }}>{row.getDefinition().Description}</span>
                     </td>
                   </tr>
@@ -223,7 +214,7 @@ export const DataList = (props: DataListProps) => {
                                   .slice() // Create a copy to avoid mutating original
                                   .reverse() // Show most recent first
                                   .map((historicalRow: PGN, index: number) => (
-                                    <tr 
+                                    <tr
                                       key={`${rowKey}-history-${index}`}
                                       style={{ cursor: 'pointer' }}
                                       onClick={() => handleRowClick(historicalRow)}

@@ -494,30 +494,30 @@ const AppPanelInner = (props: any) => {
             setList((prev: any) => {
               const rowKey = getRowKey(pgn!, filterOptionsRef.current || undefined)
               const maxHistorySize = filterOptionsRef.current?.maxHistorySize ?? 10
-              
+
               if (prev[rowKey]) {
                 // Move current to history and update current
                 let newHistory = [prev[rowKey].current, ...prev[rowKey].history]
-                
+
                 // Limit history size if maxHistorySize > 0, otherwise disable history
                 if (maxHistorySize === 0) {
                   newHistory = []
                 } else if (newHistory.length > maxHistorySize) {
                   newHistory = newHistory.slice(0, maxHistorySize)
                 }
-                
+
                 prev[rowKey] = {
                   current: pgn,
-                  history: newHistory
+                  history: newHistory,
                 }
               } else {
                 // New entry
                 prev[rowKey] = {
                   current: pgn,
-                  history: []
+                  history: [],
                 }
               }
-              
+
               data.next({ ...prev })
               return prev
             })

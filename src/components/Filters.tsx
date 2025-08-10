@@ -373,7 +373,8 @@ export const FilterPanel = (props: FilterPanelProps) => {
                     style={{ width: '100px' }}
                   />
                   <small className="text-muted d-block mt-1">
-                    Set to 0 to disable history tracking. History stores previous values of each PGN allowing you to see changes over time by expanding rows with the chevron icon.
+                    Set to 0 to disable history tracking. History stores previous values of each PGN allowing you to see
+                    changes over time by expanding rows with the chevron icon.
                   </small>
                 </Label>
               </Col>
