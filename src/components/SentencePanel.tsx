@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 
 import { PGN, Definition, Enumeration, BitEnumeration, updatePGN, updateLookup, updateBitLookup } from '@canboat/ts-pgns'
 import { Subject } from 'rxjs'
@@ -39,7 +39,70 @@ interface SentencePanelProps {
   selectedPgn: Subject<PGN>
   selectedPgnWithHistory?: Subject<PGNDataEntry | null>
   info: Subject<DeviceMap>
+  onDefinitionsChanged?: (changedDefinitions: Set<number>) => void
 }
+
+// Global tracking for changed definitions across component instances
+const changedDefinitionsTracker = {
+  definitions: new Set<number>(),
+  lookups: new Set<string>(),
+  bitLookups: new Set<string>(),
+  
+  addDefinition(pgnNumber: number) {
+    this.definitions.add(pgnNumber)
+    console.log(`Tracked definition change for PGN ${pgnNumber}. Total tracked: ${this.definitions.size}`)
+  },
+  
+  addLookup(enumName: string, type: 'lookup' | 'bitlookup') {
+    if (type === 'lookup') {
+      this.lookups.add(enumName)
+    } else {
+      this.bitLookups.add(enumName)
+    }
+    console.log(`Tracked ${type} change for ${enumName}`)
+  },
+  
+  getChangedDefinitions(): Set<number> {
+    return new Set(this.definitions)
+  },
+  
+  getChangedLookups(): { lookups: Set<string>; bitLookups: Set<string> } {
+    return {
+      lookups: new Set(this.lookups),
+      bitLookups: new Set(this.bitLookups)
+    }
+  },
+  
+  getAllChanges() {
+    return {
+      definitions: this.getChangedDefinitions(),
+      ...this.getChangedLookups()
+    }
+  },
+  
+  clearDefinition(pgnNumber: number) {
+    this.definitions.delete(pgnNumber)
+    console.log(`Cleared tracking for PGN ${pgnNumber}. Remaining: ${this.definitions.size}`)
+  },
+  
+  clearLookup(enumName: string, type: 'lookup' | 'bitlookup') {
+    if (type === 'lookup') {
+      this.lookups.delete(enumName)
+    } else {
+      this.bitLookups.delete(enumName)
+    }
+  },
+  
+  clearAll() {
+    this.definitions.clear()
+    this.lookups.clear()
+    this.bitLookups.clear()
+    console.log('Cleared all tracked changes')
+  }
+}
+
+// Export the tracker for external access
+export const definitionTracker = changedDefinitionsTracker
 
 const DATA_TAB_ID = 'data'
 const PGNDEF_TAB_ID = 'pgndef'
@@ -53,6 +116,13 @@ export const SentencePanel = (props: SentencePanelProps) => {
   const pgnData = useObservableState<PGN>(props.selectedPgn)
   const pgnWithHistory = useObservableState<PGNDataEntry | null>(props.selectedPgnWithHistory || new Subject())
   const info = useObservableState<DeviceMap>(props.info, {})
+  
+  // Track when definitions change
+  const notifyDefinitionsChanged = useCallback(() => {
+    if (props.onDefinitionsChanged) {
+      props.onDefinitionsChanged(changedDefinitionsTracker.getChangedDefinitions())
+    }
+  }, [props.onDefinitionsChanged])
 
   const copyPgnData = async () => {
     if (pgnData) {
@@ -84,6 +154,10 @@ export const SentencePanel = (props: SentencePanelProps) => {
 
   const handleDefinitionSave = async (updatedDefinition: Definition) => {
     try {
+      // Track this definition as changed
+      changedDefinitionsTracker.addDefinition(updatedDefinition.PGN)
+      notifyDefinitionsChanged()
+      
       // Here you would typically save the updated definition to a backend or local storage
       // For now, we'll just copy it to clipboard as JSON
       const definitionJson = JSON.stringify(updatedDefinition, null, 2)
@@ -115,6 +189,9 @@ export const SentencePanel = (props: SentencePanelProps) => {
     }
     
     try {
+      // Track this lookup as changed
+      changedDefinitionsTracker.addLookup(enumName, lookupType)
+      
       if (lookupType === 'lookup') {
         // Create regular enumeration from lookup values
         const enumeration: Enumeration = {
