@@ -192,6 +192,7 @@ const AppPanelInner = (props: any) => {
   const [data] = useState(new ReplaySubject<{ [key: string]: PGNDataEntry }>())
   const [list, setList] = useState<any>({})
   const [selectedPgn] = useState(new ReplaySubject<PGN>())
+  const [selectedPgnWithHistory] = useState(new ReplaySubject<PGNDataEntry | null>())
   const [selectedPgnKey, setSelectedPgnKey] = useState<string | null>(null)
   const selectedPgnKeyRef = useRef<string | null>(null)
   const [doFiltering] = useState(new ReplaySubject<boolean>())
@@ -552,6 +553,10 @@ const AppPanelInner = (props: any) => {
               // Check if this update corresponds to the currently selected PGN
               if (selectedPgnKeyRef.current === rowKey) {
                 selectedPgn.next(pgn!)
+                selectedPgnWithHistory.next({
+                  current: pgn!,
+                  history: prev[rowKey].history,
+                })
               }
 
               data.next({ ...prev })
@@ -923,11 +928,28 @@ const AppPanelInner = (props: any) => {
                         const rowKey = getRowKey(row, filterOptionsRef.current || undefined)
                         setSelectedPgnKey(rowKey)
                         selectedPgn.next(row)
+                        // Find the entry in the current list to get the history
+                        const entry = list[rowKey]
+                        if (entry) {
+                          selectedPgnWithHistory.next({
+                            current: row,
+                            history: entry.history,
+                          })
+                        } else {
+                          selectedPgnWithHistory.next({
+                            current: row,
+                            history: [],
+                          })
+                        }
                       }}
                     />
                   </Col>
                   <Col xs="12" md="6">
-                    <SentencePanel selectedPgn={selectedPgn} info={deviceInfo}></SentencePanel>
+                    <SentencePanel
+                      selectedPgn={selectedPgn}
+                      selectedPgnWithHistory={selectedPgnWithHistory}
+                      info={deviceInfo}
+                    ></SentencePanel>
                   </Col>
                 </Row>
               </div>

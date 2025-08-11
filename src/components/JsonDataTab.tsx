@@ -20,10 +20,11 @@ import { Button, CardHeader } from 'reactstrap'
 
 interface JsonDataTabProps {
   pgnData: PGN
+  pgnHistory?: PGN[]
   onCopyData: () => Promise<void>
 }
 
-export const JsonDataTab = ({ pgnData, onCopyData }: JsonDataTabProps) => {
+export const JsonDataTab = ({ pgnData, pgnHistory = [], onCopyData }: JsonDataTabProps) => {
   const pgnToJson = (pgn: PGN): string => {
     return JSON.stringify(
       pgn,
