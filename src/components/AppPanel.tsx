@@ -334,7 +334,7 @@ const AppPanelInner = (props: any) => {
     const subscription = filterOptions.subscribe((options) => {
       if (parserRef.current) {
         // Update parser options instead of recreating the parser
-        parserRef.current.options.useCamel = options?.useCamelCase ?? true
+        //parserRef.current.options.useCamel = options?.useCamelCase ?? true
         filterOptionsRef.current = options
       }
     })
@@ -710,9 +710,10 @@ const AppPanelInner = (props: any) => {
       filter.next({})
       doFiltering.next(false)
       filterOptions.next({
-        useCamelCase: true,
+        //useCamelCase: true,
         showUnknownProprietaryPGNsOnSeparateLines: false,
         showPgn126208OnSeparateLines: false,
+        showInfoPgns: false,
         maxHistorySize: 10,
       })
     }
