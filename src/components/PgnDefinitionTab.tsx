@@ -585,7 +585,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
                       </div>
                     </div>
                     
-                    <div className="col-md-2">
+                    <div className="col-md-1">
                       <label className="form-label small fw-bold">Resolution</label>
                       <div>
                         {isEditing ? (
@@ -607,7 +607,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
                       </div>
                     </div>
                     
-                    <div className="col-md-3">
+                    <div className="col-md-2">
                       <label className="form-label small fw-bold">ID</label>
                       <div>
                         {isEditing ? (
@@ -620,6 +620,31 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
                           />
                         ) : (
                           <code style={{ fontSize: '0.8em' }}>{field.Id}</code>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-2">
+                      <label className="form-label small fw-bold">Primary Key</label>
+                      <div>
+                        {isEditing ? (
+                          <div className="form-check">
+                            <Input
+                              className="form-check-input"
+                              type="checkbox"
+                              checked={field.PartOfPrimaryKey || false}
+                              onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { PartOfPrimaryKey: e.target.checked })}
+                            />
+                            <label className="form-check-label small">
+                              Part of key
+                            </label>
+                          </div>
+                        ) : field.PartOfPrimaryKey ? (
+                          <Badge color="primary" className="small">
+                            Key Field
+                          </Badge>
+                        ) : (
+                          <span className="text-muted small">—</span>
                         )}
                       </div>
                     </div>
