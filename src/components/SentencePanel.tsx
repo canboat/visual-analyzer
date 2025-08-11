@@ -39,18 +39,18 @@ interface SentencePanelProps {
   selectedPgn: Subject<PGN>
   selectedPgnWithHistory?: Subject<PGNDataEntry | null>
   info: Subject<DeviceMap>
-  onDefinitionsChanged?: (changedDefinitions: Set<number>) => void
+  onDefinitionsChanged?: (changedDefinitions: Set<string>) => void
 }
 
 // Global tracking for changed definitions across component instances
 const changedDefinitionsTracker = {
-  definitions: new Set<number>(),
+  definitions: new Set<string>(),
   lookups: new Set<string>(),
   bitLookups: new Set<string>(),
   
-  addDefinition(pgnNumber: number) {
-    this.definitions.add(pgnNumber)
-    console.log(`Tracked definition change for PGN ${pgnNumber}. Total tracked: ${this.definitions.size}`)
+  addDefinition(pgnId: string) {
+    this.definitions.add(pgnId)
+    console.log(`Tracked definition change for PGN ID ${pgnId}. Total tracked: ${this.definitions.size}`)
   },
   
   addLookup(enumName: string, type: 'lookup' | 'bitlookup') {
@@ -62,7 +62,7 @@ const changedDefinitionsTracker = {
     console.log(`Tracked ${type} change for ${enumName}`)
   },
   
-  getChangedDefinitions(): Set<number> {
+  getChangedDefinitions(): Set<string> {
     return new Set(this.definitions)
   },
   
@@ -80,9 +80,9 @@ const changedDefinitionsTracker = {
     }
   },
   
-  clearDefinition(pgnNumber: number) {
-    this.definitions.delete(pgnNumber)
-    console.log(`Cleared tracking for PGN ${pgnNumber}. Remaining: ${this.definitions.size}`)
+  clearDefinition(pgnId: string) {
+    this.definitions.delete(pgnId)
+    console.log(`Cleared tracking for PGN ID ${pgnId}. Remaining: ${this.definitions.size}`)
   },
   
   clearLookup(enumName: string, type: 'lookup' | 'bitlookup') {
@@ -154,8 +154,8 @@ export const SentencePanel = (props: SentencePanelProps) => {
 
   const handleDefinitionSave = async (updatedDefinition: Definition) => {
     try {
-      // Track this definition as changed
-      changedDefinitionsTracker.addDefinition(updatedDefinition.PGN)
+      // Track this definition as changed using the PGN Id
+      changedDefinitionsTracker.addDefinition(updatedDefinition.Id)
       notifyDefinitionsChanged()
       
       // Here you would typically save the updated definition to a backend or local storage
