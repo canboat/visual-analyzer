@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useCallback, useEffect, ChangeEvent } from 'react'
-import { Definition, Field, getBitEnumeration, getEnumeration, updateBitLookup, updateLookup } from '@canboat/ts-pgns'
+import { Definition, Field, Enumeration, BitEnumeration, getBitEnumeration, getEnumeration, updateBitLookup, updateLookup } from '@canboat/ts-pgns'
 import { Table, Badge, Row, Col, Button, Input, FormGroup, Label, FormText, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
 
 interface PgnDefinitionTabProps {
@@ -206,12 +206,47 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
   const saveLookupValues = useCallback(() => {
     if (!editingLookup) return
     
-    // Here we would typically save the lookup enumeration to a global lookup store
-    // For now, we'll just close the editor
-    // In a real implementation, you'd want to integrate with the lookup management system
+    const field = editedDefinition.Fields[editingLookup.fieldIndex]
+    const enumName = editingLookup.type === 'lookup' ? field.LookupEnumeration : field.LookupBitEnumeration
+    
+    if (!enumName) {
+      console.warn('No enumeration name found for field')
+      closeLookupEditor()
+      return
+    }
+    
+    try {
+      if (editingLookup.type === 'lookup') {
+        // Create regular enumeration from lookup values
+        const enumeration: Enumeration = {
+          Name: enumName,
+          MaxValue: Math.max(...lookupValues.map(lv => parseInt(lv.key, 10))),
+          EnumValues: lookupValues.map(lv => ({
+            Name: lv.value,
+            Value: parseInt(lv.key, 10)
+          }))
+        }
+        updateLookup(enumeration)
+      } else {
+        // Create bit enumeration from lookup values
+        const bitEnumeration: BitEnumeration = {
+          Name: enumName,
+          MaxValue: Math.max(...lookupValues.map(lv => parseInt(lv.key, 10))),
+          EnumBitValues: lookupValues.map(lv => ({
+            Name: lv.value,
+            Bit: parseInt(lv.key, 10)
+          }))
+        }
+        updateBitLookup(bitEnumeration)
+      }
+      
+      console.log(`Successfully updated ${editingLookup.type} enumeration: ${enumName}`)
+    } catch (error) {
+      console.error(`Failed to save ${editingLookup.type} enumeration:`, error)
+    }
     
     closeLookupEditor()
-  }, [editingLookup, lookupValues, closeLookupEditor])
+  }, [editingLookup, lookupValues, closeLookupEditor, editedDefinition.Fields])
 
   // Drag and drop handlers
   const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
