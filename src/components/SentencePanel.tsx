@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react'
 
-import { PGN, Definition } from '@canboat/ts-pgns'
+import { PGN, Definition, updatePGN } from '@canboat/ts-pgns'
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
 import { DeviceMap } from '../types'
@@ -79,6 +79,28 @@ export const SentencePanel = (props: SentencePanelProps) => {
       } catch (err) {
         console.error('Failed to copy input data:', err)
       }
+    }
+  }
+
+  const handleDefinitionSave = async (updatedDefinition: Definition) => {
+    try {
+      // Here you would typically save the updated definition to a backend or local storage
+      // For now, we'll just copy it to clipboard as JSON
+      const definitionJson = JSON.stringify(updatedDefinition, null, 2)
+      await navigator.clipboard.writeText(definitionJson)
+      
+      // You could also show a toast notification
+      console.log('Definition saved to clipboard:', updatedDefinition)
+
+      updatePGN(updatedDefinition)
+
+      // In a real application, you might want to:
+      // 1. Send to a REST API endpoint
+      // 2. Save to local storage
+      // 3. Update a global state management store
+      // 4. Emit an event to parent components
+    } catch (err) {
+      console.error('Failed to save definition:', err)
     }
   }
 
@@ -171,7 +193,12 @@ export const SentencePanel = (props: SentencePanelProps) => {
           <TabPane tabId={PGNDEF_TAB_ID}>
             <Card>
               <CardBody style={{ padding: 0 }}>
-                <PgnDefinitionTab definition={definition} />
+                <PgnDefinitionTab 
+                  key={pgnData.pgn} 
+                  definition={definition} 
+                  pgnNumber={pgnData.pgn}
+                  onSave={handleDefinitionSave} 
+                />
               </CardBody>
             </Card>
           </TabPane>
