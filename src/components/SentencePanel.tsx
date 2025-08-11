@@ -30,8 +30,14 @@ import { DeviceInfoTab } from './DeviceInfoTab'
 import { PgnDefinitionTab } from './PgnDefinitionTab'
 import { ByteMappingTab } from './ByteMappingTab'
 
+interface PGNWithHistory {
+  current: PGN
+  history: PGN[]
+}
+
 interface SentencePanelProps {
   selectedPgn: Subject<PGN>
+  selectedPgnWithHistory?: Subject<PGNWithHistory | null>
   info: Subject<DeviceMap>
 }
 
@@ -45,6 +51,7 @@ const READABLE_TAB_ID = 'readable'
 export const SentencePanel = (props: SentencePanelProps) => {
   const [activeTab, setActiveTab] = useState(READABLE_TAB_ID)
   const pgnData = useObservableState<PGN>(props.selectedPgn)
+  const pgnWithHistory = useObservableState<PGNWithHistory | null>(props.selectedPgnWithHistory || new Subject())
   const info = useObservableState<DeviceMap>(props.info, {})
 
   const copyPgnData = async () => {
@@ -147,7 +154,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
         <TabPane tabId={DATA_TAB_ID}>
           <Card>
             <CardBody style={{ padding: 0 }}>
-              <JsonDataTab pgnData={pgnData} onCopyData={copyPgnData} />
+              <JsonDataTab pgnData={pgnData} pgnHistory={pgnWithHistory?.history || []} onCopyData={copyPgnData} />
             </CardBody>
           </Card>
         </TabPane>
