@@ -24,34 +24,7 @@ interface JsonDataTabProps {
   onCopyData: () => Promise<void>
 }
 
-// Calculate PGN rate per second from history
-const calculatePgnRate = (current: PGN, history: PGN[]): number | null => {
-  if (!history || history.length === 0) {
-    return null
-  }
-
-  // Get the timestamps from current and most recent history entry
-  const currentTime = new Date(current.timestamp!).getTime()
-  const oldestTime = new Date(history[history.length - 1].timestamp!).getTime()
-  
-  // Calculate time difference in seconds
-  const timeDiffSeconds = (currentTime - oldestTime) / 1000
-  
-  if (timeDiffSeconds <= 0) {
-    return null
-  }
-  
-  // Rate = number of entries / time difference
-  // We have (history.length + 1) total entries (including current)
-  const totalEntries = history.length + 1
-  const rate = totalEntries / timeDiffSeconds
-  
-  return parseFloat(rate.toFixed(2))
-}
-
 export const JsonDataTab = ({ pgnData, pgnHistory = [], onCopyData }: JsonDataTabProps) => {
-  const rate = calculatePgnRate(pgnData, pgnHistory)
-  
   const pgnToJson = (pgn: PGN): string => {
     return JSON.stringify(
       pgn,
@@ -67,12 +40,6 @@ export const JsonDataTab = ({ pgnData, pgnHistory = [], onCopyData }: JsonDataTa
         {pgnData.dst}
         <br />
         <strong>Description:</strong> {pgnData.description || 'N/A'}
-        {rate !== null && (
-          <>
-            <br />
-            <strong>Rate:</strong> {rate} PGNs/sec <span className="text-muted">({pgnHistory.length + 1} samples)</span>
-          </>
-        )}
       </small>
     )
   }

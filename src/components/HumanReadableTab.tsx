@@ -20,9 +20,53 @@ import { PGN, Definition } from '@canboat/ts-pgns'
 interface HumanReadableTabProps {
   pgnData: PGN
   definition: Definition | undefined
+  pgnHistory?: PGN[]
 }
 
-export const HumanReadableTab = ({ pgnData, definition }: HumanReadableTabProps) => {
+// Calculate PGN rate per second using moving average from history
+const calculatePgnRate = (current: PGN, history: PGN[]): number | null => {
+  if (!history || history.length < 2) {
+    return null
+  }
+
+  // Build array of all messages including current, sorted by timestamp (newest first)
+  const allMessages = [current, ...history].sort(
+    (a, b) => new Date(b.timestamp!).getTime() - new Date(a.timestamp!).getTime(),
+  )
+
+  // Calculate intervals between consecutive messages (in seconds)
+  const intervals: number[] = []
+  for (let i = 0; i < allMessages.length - 1; i++) {
+    const currentTime = new Date(allMessages[i].timestamp!).getTime()
+    const nextTime = new Date(allMessages[i + 1].timestamp!).getTime()
+    const intervalSeconds = (currentTime - nextTime) / 1000
+
+    if (intervalSeconds > 0) {
+      intervals.push(intervalSeconds)
+    }
+  }
+
+  if (intervals.length === 0) {
+    return null
+  }
+
+  // Calculate moving average of the intervals
+  // Use exponential moving average for smoother results
+  const alpha = 0.3 // Smoothing factor (0.1 = more smoothing, 0.9 = less smoothing)
+  let movingAvgInterval = intervals[0]
+
+  for (let i = 1; i < intervals.length; i++) {
+    movingAvgInterval = alpha * intervals[i] + (1 - alpha) * movingAvgInterval
+  }
+
+  // Rate = 1 / average interval (messages per second)
+  const rate = 1 / movingAvgInterval
+
+  return parseFloat(rate.toFixed(2))
+}
+
+export const HumanReadableTab = ({ pgnData, definition, pgnHistory = [] }: HumanReadableTabProps) => {
+  const rate = calculatePgnRate(pgnData, pgnHistory)
   if (!pgnData.fields) {
     return <div>No field data available</div>
   }
@@ -246,6 +290,12 @@ export const HumanReadableTab = ({ pgnData, definition }: HumanReadableTabProps)
             <span>
               {' '}
               | <strong>Timestamp:</strong> {new Date((pgnData.fields as any).timestamp).toLocaleString()}
+            </span>
+          )}
+          {rate !== null && (
+            <span>
+              {' '}
+              | <strong>Rate:</strong> {rate} PGNs/sec{' '}
             </span>
           )}
         </div>

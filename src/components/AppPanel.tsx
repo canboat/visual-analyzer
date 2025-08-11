@@ -24,11 +24,6 @@ type PGNDataEntry = {
   current: PGN
   history: PGN[]
 }
-
-interface PGNWithHistory {
-  current: PGN
-  history: PGN[]
-}
 import { DataList } from './DataList'
 import { FilterPanel, Filter, FilterOptions } from './Filters'
 import { SentencePanel } from './SentencePanel'
@@ -197,7 +192,7 @@ const AppPanelInner = (props: any) => {
   const [data] = useState(new ReplaySubject<{ [key: string]: PGNDataEntry }>())
   const [list, setList] = useState<any>({})
   const [selectedPgn] = useState(new ReplaySubject<PGN>())
-  const [selectedPgnWithHistory] = useState(new ReplaySubject<PGNWithHistory | null>())
+  const [selectedPgnWithHistory] = useState(new ReplaySubject<PGNDataEntry | null>())
   const [selectedPgnKey, setSelectedPgnKey] = useState<string | null>(null)
   const selectedPgnKeyRef = useRef<string | null>(null)
   const [doFiltering] = useState(new ReplaySubject<boolean>())
@@ -950,7 +945,11 @@ const AppPanelInner = (props: any) => {
                     />
                   </Col>
                   <Col xs="12" md="6">
-                    <SentencePanel selectedPgn={selectedPgn} selectedPgnWithHistory={selectedPgnWithHistory} info={deviceInfo}></SentencePanel>
+                    <SentencePanel
+                      selectedPgn={selectedPgn}
+                      selectedPgnWithHistory={selectedPgnWithHistory}
+                      info={deviceInfo}
+                    ></SentencePanel>
                   </Col>
                 </Row>
               </div>
