@@ -176,7 +176,7 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
       <Collapse isOpen={isOpen}>
         <CardBody>
           <Row>
-{/*
+            {/*
             <Col xs="12" md="6" className="mb-2">
               <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
                 <Input
@@ -242,8 +242,8 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
                 <span>Show PGN 126208 On Separate Lines</span>
               </Label>
             </Col>
-            </Row>
-            <Row>
+          </Row>
+          <Row>
             <Col xs="12" md="6" className="mb-2">
               <Label className="d-block" style={{ cursor: 'default' }}>
                 <span className="mb-2 d-block">Max History Size per PGN</span>
