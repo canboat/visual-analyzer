@@ -534,8 +534,81 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave }
               )}
             </div>
           </div>
-          <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-            {editedDefinition.Fields.map((field, index) => (
+          {!isEditing ? (
+            // Table view for read-only mode  
+            <div className="table-responsive">
+              <table className="table table-sm table-hover">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Unit</th>
+                    <th>Resolution</th>
+                    <th>ID</th>
+                    <th>Key</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {editedDefinition.Fields.map((field, index) => (
+                    <tr key={index}>
+                      <td>
+                        <span className="fw-bold">{field.Name}</span>
+                        {field.Description && (
+                          <div className="small text-muted">{field.Description}</div>
+                        )}
+                      </td>
+                      <td>
+                        {field.FieldType && (
+                          <Badge bg="secondary" className="me-1">
+                            {field.FieldType}
+                          </Badge>
+                        )}
+                      </td>
+                      <td>
+                        {field.BitLength && (
+                          <Badge bg="info" className="me-1">
+                            {field.BitLength}
+                          </Badge>
+                        )}
+                      </td>
+                      <td>
+                        {field.Unit && (
+                          <Badge bg="success" className="me-1">
+                            {field.Unit}
+                          </Badge>
+                        )}
+                      </td>
+                      <td>
+                        {field.Resolution && (
+                          <Badge bg="warning" text="dark" className="me-1">
+                            {field.Resolution}
+                          </Badge>
+                        )}
+                      </td>
+                      <td>
+                        {field.Id && (
+                          <Badge bg="primary" className="me-1">
+                            {field.Id}
+                          </Badge>
+                        )}
+                      </td>
+                      <td>
+                        {field.PartOfPrimaryKey && (
+                          <Badge bg="dark" className="me-1">
+                            Primary Key
+                          </Badge>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            // Card view for editing mode
+            <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+              {editedDefinition.Fields.map((field, index) => (
               <div 
                 key={index}
                 draggable={isEditing}
@@ -829,7 +902,8 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave }
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
