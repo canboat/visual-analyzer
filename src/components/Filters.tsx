@@ -121,7 +121,154 @@ interface FilterPanelProps {
   doFiltering: Subject<boolean>
   filterOptions: Subject<FilterOptions>
 }
-const FILTER_PANEL_STATE_KEY = 'visual_analyzer_filter_panel_open'
+const FILTER_PANEL_STATE_KEY = 'visual_analyzer_filter_panel_state'
+const OPTIONS_PANEL_STATE_KEY = 'visual_analyzer_options_panel_state'
+
+interface OptionsPanelProps {
+  filterOptions?: FilterOptions
+  onFilterOptionsChange: Subject<FilterOptions>
+}
+
+const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOptionsChange }) => {
+  const [isOpen, setIsOpen] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const saved = window.localStorage.getItem(OPTIONS_PANEL_STATE_KEY)
+        return saved !== null ? JSON.parse(saved) : false // Default to collapsed
+      }
+    } catch (e) {
+      console.warn('Failed to load options panel state from localStorage:', e)
+    }
+    return false // Default to collapsed
+  })
+
+  // Save panel state to localStorage when it changes
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(OPTIONS_PANEL_STATE_KEY, JSON.stringify(isOpen))
+      }
+    } catch (e) {
+      console.warn('Failed to save options panel state to localStorage:', e)
+    }
+  }, [isOpen])
+
+  return (
+    <Card>
+      <CardHeader className="d-flex justify-content-between align-items-center py-2" style={{ cursor: 'pointer' }}>
+        <div className="d-flex align-items-center flex-grow-1" onClick={() => setIsOpen(!isOpen)}>
+          <h6 className="mb-0" style={{ fontWeight: 'bold' }}>
+            Options
+          </h6>
+        </div>
+        <Button
+          color="outline-primary"
+          size="sm"
+          style={{ border: 'none', fontSize: '16px', padding: '2px 6px' }}
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+            e.stopPropagation()
+            setIsOpen(!isOpen)
+          }}
+        >
+          {isOpen ? '−' : '+'}
+        </Button>
+      </CardHeader>
+      <Collapse isOpen={isOpen}>
+        <CardBody>
+          <Row>
+            <Col xs="12" md="6" className="mb-2">
+              <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                <Input
+                  type="checkbox"
+                  className="me-2"
+                  checked={filterOptions?.useCamelCase ?? true}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    onFilterOptionsChange.next({
+                      ...filterOptions,
+                      useCamelCase: e.target.checked,
+                    })
+                  }}
+                />
+                <span>Use CamelCase Field Names</span>
+              </Label>
+            </Col>
+            <Col xs="12" md="6" className="mb-2">
+              <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                <Input
+                  type="checkbox"
+                  className="me-2"
+                  checked={filterOptions?.showInfoPgns ?? false}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    onFilterOptionsChange.next({
+                      ...filterOptions,
+                      showInfoPgns: e.target.checked,
+                    })
+                  }}
+                />
+                <span>Show Info PGNs</span>
+              </Label>
+            </Col>
+            <Col xs="12" md="6" className="mb-2">
+              <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                <Input
+                  type="checkbox"
+                  className="me-2"
+                  checked={filterOptions?.showUnknownProprietaryPGNsOnSeparateLines ?? false}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    onFilterOptionsChange.next({
+                      ...filterOptions,
+                      showUnknownProprietaryPGNsOnSeparateLines: e.target.checked,
+                    })
+                  }}
+                />
+                <span>Show Unknown Proprietary PGNs On Separate Lines</span>
+              </Label>
+            </Col>
+            <Col xs="12" md="6" className="mb-2">
+              <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                <Input
+                  type="checkbox"
+                  className="me-2"
+                  checked={filterOptions?.showPgn126208OnSeparateLines ?? false}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    onFilterOptionsChange.next({
+                      ...filterOptions,
+                      showPgn126208OnSeparateLines: e.target.checked,
+                    })
+                  }}
+                />
+                <span>Show PGN 126208 On Separate Lines</span>
+              </Label>
+            </Col>
+            <Col xs="12" md="6" className="mb-2">
+              <Label className="d-block" style={{ cursor: 'default' }}>
+                <span className="mb-2 d-block">Max History Size per PGN</span>
+                <Input
+                  type="number"
+                  min="0"
+                  max="1000"
+                  value={filterOptions?.maxHistorySize ?? 10}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const value = parseInt(e.target.value, 10)
+                    onFilterOptionsChange.next({
+                      ...filterOptions,
+                      maxHistorySize: isNaN(value) ? 10 : Math.max(0, Math.min(1000, value)),
+                    })
+                  }}
+                  style={{ width: '100px' }}
+                />
+                <small className="text-muted d-block mt-1">
+                  Set to 0 to disable history tracking. History stores previous values of each PGN allowing you to see
+                  changes over time by expanding rows with the chevron icon.
+                </small>
+              </Label>
+            </Col>
+          </Row>
+        </CardBody>
+      </Collapse>
+    </Card>
+  )
+}
 
 export const FilterPanel = (props: FilterPanelProps) => {
   // Load initial collapse state from localStorage
@@ -155,233 +302,141 @@ export const FilterPanel = (props: FilterPanelProps) => {
   }, [isOpen])
 
   return (
-    <Card>
-      <CardHeader className="d-flex justify-content-between align-items-center py-2" style={{ cursor: 'pointer' }}>
-        <div className="d-flex align-items-center flex-grow-1" onClick={() => setIsOpen(!isOpen)}>
-          <h6 className="mb-0" style={{ fontWeight: 'bold' }}>
-            Filters and Options
-          </h6>
-        </div>
-        <div className="d-flex align-items-center">
-          <span style={{ fontSize: '14px', fontWeight: '500', marginRight: '8px' }}>Enable Filtering</span>
-          <Label className="switch switch-text switch-primary mb-0 me-3">
-            <Input
-              type="checkbox"
-              id="enableFiltering"
-              name="enableFiltering"
-              className="switch-input"
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                e.stopPropagation()
-                props.doFiltering.next(!doFiltering)
-              }}
-              checked={doFiltering}
-              onClick={(e: React.MouseEvent<HTMLInputElement>) => e.stopPropagation()}
-            />
-            <span className="switch-label" data-on="On" data-off="Off" />
-            <span className="switch-handle" />
-          </Label>
-          <Button
-            color="outline-primary"
-            size="sm"
-            style={{ border: 'none', fontSize: '16px', padding: '2px 6px' }}
-            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-              e.stopPropagation()
-              setIsOpen(!isOpen)
-            }}
-          >
-            {isOpen ? '−' : '+'}
-          </Button>
-        </div>
-      </CardHeader>
-      <Collapse isOpen={isOpen}>
-        <CardBody>
-          <Row className="mb-4">
-            <Col xs="12" md="4" className="mb-3">
-              <Label htmlFor="pgns" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                PGNs
-              </Label>
-              <Creatable
-                value={filter?.pgn?.map(toPgnOption)}
-                isMulti
-                name="pgns"
-                options={pgnOptions}
-                className="basic-multi-select"
-                classNamePrefix="select"
-                onChange={(values) => {
-                  props.filter.next({ ...filter, pgn: values.map((v) => v.value) })
-                  props.doFiltering.next(true)
-                }}
-              />
-            </Col>
-            <Col xs="12" md="4" className="mb-3">
-              <Label htmlFor="srcs" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                Sources
-              </Label>
-              <Creatable
-                value={filter?.src?.map((src) => toSrcOption(src, deviceInfo))}
-                isMulti
-                name="srcs"
-                options={availableSrcs?.map((s) => toSrcOption(s, deviceInfo))}
-                className="basic-multi-select"
-                classNamePrefix="select"
-                onChange={(values) => {
-                  props.filter.next({ ...filter, src: values.map((v) => v.value) })
-                  props.doFiltering.next(true)
-                }}
-              />
-            </Col>
-            <Col xs="12" md="4" className="mb-3">
-              <Label htmlFor="dsts" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                Destinations
-              </Label>
-              <Creatable
-                value={filter?.dst?.map((src) => toDstOption(src, deviceInfo))}
-                isMulti
-                name="dsts"
-                options={availableSrcs?.map((s) => toDstOption(s, deviceInfo))}
-                className="basic-multi-select"
-                classNamePrefix="select"
-                onChange={(values) => {
-                  props.filter.next({ ...filter, dst: values.map((v) => v.value) })
-                  props.doFiltering.next(true)
-                }}
-              />
-            </Col>
-          </Row>
-          <Row className="mb-4">
-            <Col xs="12" md="6" className="mb-3">
-              <Label htmlFor="manufacturers" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                Manufacturers
-              </Label>
-              <Creatable
-                value={filter?.manufacturer?.map(toManufacturerOption)}
-                isMulti
-                name="manufacturers"
-                options={manufacturerCodeOptions}
-                className="basic-multi-select"
-                classNamePrefix="select"
-                onChange={(values) => {
-                  props.filter.next({ ...filter, manufacturer: values.map((v) => v.value) })
-                  props.doFiltering.next(true)
-                }}
-              />
-            </Col>
-            <Col xs="12" md="6" className="mb-3">
-              <Label htmlFor="javascriptFilter" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                JavaScript Filter
-              </Label>
-              <Input
-                type="textarea"
-                id="javascriptFilter"
-                name="javascriptFilter"
-                placeholder="Enter JavaScript code to filter PGNs (e.g., pgn.src === 1 && pgn.pgn === 127251 && pgn.fields.sog > 5)"
-                value={filter?.javaScript || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  props.filter.next({ ...filter, javaScript: e.target.value })
-                  props.doFiltering.next(true)
-                }}
-                style={{ fontFamily: 'monospace', fontSize: '12px', resize: 'vertical' }}
-                rows={3}
-              />
-            </Col>
-          </Row>
-          <hr className="my-4" />
-          <div className="mb-3">
-            <h6 className="mb-2" style={{ fontWeight: 'bold', color: '#6c757d' }}>
-              Options
+    <>
+      <Card className="mb-3">
+        <CardHeader className="d-flex justify-content-between align-items-center py-2" style={{ cursor: 'pointer' }}>
+          <div className="d-flex align-items-center flex-grow-1" onClick={() => setIsOpen(!isOpen)}>
+            <h6 className="mb-0" style={{ fontWeight: 'bold' }}>
+              Filters
             </h6>
-            <Row>
-              <Col xs="12" md="6" className="mb-2">
-                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
-                  <Input
-                    type="checkbox"
-                    className="me-2"
-                    checked={filterOptions?.useCamelCase ?? true}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      props.filterOptions.next({
-                        ...filterOptions,
-                        useCamelCase: e.target.checked,
-                      })
-                    }}
-                  />
-                  <span>Use CamelCase Field Names</span>
+          </div>
+          <div className="d-flex align-items-center">
+            <span style={{ fontSize: '14px', fontWeight: '500', marginRight: '8px' }}>Enable Filtering</span>
+            <Label className="switch switch-text switch-primary mb-0 me-3">
+              <Input
+                type="checkbox"
+                id="enableFiltering"
+                name="enableFiltering"
+                className="switch-input"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  e.stopPropagation()
+                  props.doFiltering.next(!doFiltering)
+                }}
+                checked={doFiltering}
+                onClick={(e: React.MouseEvent<HTMLInputElement>) => e.stopPropagation()}
+              />
+              <span className="switch-label" data-on="On" data-off="Off" />
+              <span className="switch-handle" />
+            </Label>
+            <Button
+              color="outline-primary"
+              size="sm"
+              style={{ border: 'none', fontSize: '16px', padding: '2px 6px' }}
+              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                e.stopPropagation()
+                setIsOpen(!isOpen)
+              }}
+            >
+              {isOpen ? '−' : '+'}
+            </Button>
+          </div>
+        </CardHeader>
+        <Collapse isOpen={isOpen}>
+          <CardBody>
+            <Row className="mb-4">
+              <Col xs="12" md="4" className="mb-3">
+                <Label htmlFor="pgns" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+                  PGNs
                 </Label>
+                <Creatable
+                  value={filter?.pgn?.map(toPgnOption)}
+                  isMulti
+                  name="pgns"
+                  options={pgnOptions}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  onChange={(values) => {
+                    props.filter.next({ ...filter, pgn: values.map((v) => v.value) })
+                    props.doFiltering.next(true)
+                  }}
+                />
               </Col>
-              <Col xs="12" md="6" className="mb-2">
-                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
-                  <Input
-                    type="checkbox"
-                    className="me-2"
-                    checked={filterOptions?.showInfoPgns ?? false}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      props.filterOptions.next({
-                        ...filterOptions,
-                        showInfoPgns: e.target.checked,
-                      })
-                    }}
-                  />
-                  <span>Show Info PGNs</span>
+              <Col xs="12" md="4" className="mb-3">
+                <Label htmlFor="srcs" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+                  Sources
                 </Label>
+                <Creatable
+                  value={filter?.src?.map((src) => toSrcOption(src, deviceInfo))}
+                  isMulti
+                  name="srcs"
+                  options={availableSrcs?.map((s) => toSrcOption(s, deviceInfo))}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  onChange={(values) => {
+                    props.filter.next({ ...filter, src: values.map((v) => v.value) })
+                    props.doFiltering.next(true)
+                  }}
+                />
               </Col>
-              <Col xs="12" md="6" className="mb-2">
-                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
-                  <Input
-                    type="checkbox"
-                    className="me-2"
-                    checked={filterOptions?.showUnknownProprietaryPGNsOnSeparateLines ?? false}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      props.filterOptions.next({
-                        ...filterOptions,
-                        showUnknownProprietaryPGNsOnSeparateLines: e.target.checked,
-                      })
-                    }}
-                  />
-                  <span>Show Unknown Proprietary PGNs On Separate Lines</span>
+              <Col xs="12" md="4" className="mb-3">
+                <Label htmlFor="dsts" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+                  Destinations
                 </Label>
-              </Col>
-              <Col xs="12" md="6" className="mb-2">
-                <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
-                  <Input
-                    type="checkbox"
-                    className="me-2"
-                    checked={filterOptions?.showPgn126208OnSeparateLines ?? false}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      props.filterOptions.next({
-                        ...filterOptions,
-                        showPgn126208OnSeparateLines: e.target.checked,
-                      })
-                    }}
-                  />
-                  <span>Show PGN 126208 On Separate Lines</span>
-                </Label>
-              </Col>
-              <Col xs="12" md="6" className="mb-2">
-                <Label className="d-block" style={{ cursor: 'default' }}>
-                  <span className="mb-2 d-block">Max History Size per PGN</span>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="1000"
-                    value={filterOptions?.maxHistorySize ?? 10}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const value = parseInt(e.target.value, 10)
-                      props.filterOptions.next({
-                        ...filterOptions,
-                        maxHistorySize: isNaN(value) ? 10 : Math.max(0, Math.min(1000, value)),
-                      })
-                    }}
-                    style={{ width: '100px' }}
-                  />
-                  <small className="text-muted d-block mt-1">
-                    Set to 0 to disable history tracking. History stores previous values of each PGN allowing you to see
-                    changes over time by expanding rows with the chevron icon.
-                  </small>
-                </Label>
+                <Creatable
+                  value={filter?.dst?.map((src) => toDstOption(src, deviceInfo))}
+                  isMulti
+                  name="dsts"
+                  options={availableSrcs?.map((s) => toDstOption(s, deviceInfo))}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  onChange={(values) => {
+                    props.filter.next({ ...filter, dst: values.map((v) => v.value) })
+                    props.doFiltering.next(true)
+                  }}
+                />
               </Col>
             </Row>
-          </div>
-        </CardBody>
-      </Collapse>
-    </Card>
+            <Row className="mb-4">
+              <Col xs="12" md="6" className="mb-3">
+                <Label htmlFor="manufacturers" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+                  Manufacturers
+                </Label>
+                <Creatable
+                  value={filter?.manufacturer?.map(toManufacturerOption)}
+                  isMulti
+                  name="manufacturers"
+                  options={manufacturerCodeOptions}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  onChange={(values) => {
+                    props.filter.next({ ...filter, manufacturer: values.map((v) => v.value) })
+                    props.doFiltering.next(true)
+                  }}
+                />
+              </Col>
+              <Col xs="12" md="6" className="mb-3">
+                <Label htmlFor="javascriptFilter" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+                  JavaScript Filter
+                </Label>
+                <Input
+                  type="textarea"
+                  id="javascriptFilter"
+                  name="javascriptFilter"
+                  placeholder="Enter JavaScript code to filter PGNs (e.g., pgn.src === 1 && pgn.pgn === 127251 && pgn.fields.sog > 5)"
+                  value={filter?.javaScript || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    props.filter.next({ ...filter, javaScript: e.target.value })
+                    props.doFiltering.next(true)
+                  }}
+                  style={{ fontFamily: 'monospace', fontSize: '12px', resize: 'vertical' }}
+                  rows={3}
+                />
+              </Col>
+            </Row>
+          </CardBody>
+        </Collapse>
+      </Card>
+      <OptionsPanel filterOptions={filterOptions} onFilterOptionsChange={props.filterOptions} />
+    </>
   )
 }
