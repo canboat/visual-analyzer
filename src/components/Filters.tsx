@@ -19,7 +19,7 @@ import { Col, Input, Label, Row, Table, Button, Collapse, Card, CardBody, CardHe
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
 import Creatable from 'react-select/creatable'
-import { PGN, getAllPGNs, ManufacturerCode } from '@canboat/ts-pgns'
+import { PGN, getAllPGNs, ManufacturerCode, PGN_60928, PGN_126996 } from '@canboat/ts-pgns'
 import { setupFilters, filterPGN, FilterConfig } from '@canboat/canboatjs'
 import { DeviceMap, PgnNumber } from '../types'
 
@@ -92,8 +92,8 @@ const toPgnOption = (i: string) =>
   }
 
 const toSrcOption = (i: number, devices?: DeviceMap) => {
-  const model = devices?.[i]?.info[126996 as PgnNumber]?.modelId
-  const man = devices?.[i]?.info[60928 as PgnNumber]?.manufacturerCode
+  const model = (devices?.[i]?.info[126996 as PgnNumber] as PGN_126996)?.fields.modelId
+  const man = (devices?.[i]?.info[60928 as PgnNumber] as PGN_60928)?.fields.manufacturerCode
   return {
     value: i,
     label: `${i} ${model ? '(' + model + ')' : ''} ${man ? '[' + man + ']' : ''}`,
@@ -101,8 +101,8 @@ const toSrcOption = (i: number, devices?: DeviceMap) => {
 }
 
 const toDstOption = (i: number, devices?: DeviceMap) => {
-  const model = devices?.[i]?.info[126996 as PgnNumber]?.modelId
-  const man = devices?.[i]?.info[60928 as PgnNumber]?.manufacturerCode
+  const model = (devices?.[i]?.info[126996 as PgnNumber] as PGN_126996)?.fields.modelId
+  const man = (devices?.[i]?.info[60928 as PgnNumber] as PGN_60928)?.fields.manufacturerCode
   return {
     value: i,
     label: `${i} ${model ? '(' + model + ')' : ''} ${man ? '[' + man + ']' : ''}`,

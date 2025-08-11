@@ -16,7 +16,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { PGN } from '@canboat/ts-pgns'
+import { PGN, PGN_60928, PGN_126998, PGN_126996 } from '@canboat/ts-pgns'
 
 export type Brand<K, T> = K & { __brand: T }
 
@@ -33,7 +33,7 @@ export type PGNDataMap = {
 
 export type DeviceInformation = {
   src: number
-  info: { [key: PgnNumber]: any }
+  info: { [key: PgnNumber]: PGN_60928 | PGN_126998 | PGN_126996 }
 }
 
 export type DeviceMap = {
