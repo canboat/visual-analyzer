@@ -650,6 +650,58 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
                     </div>
                   </div>
                   
+                  {/* Second row for lookup enumeration when type is LOOKUP or BITLOOKUP */}
+                  {isEditing && field.FieldType === 'LOOKUP' && (
+                    <div className="row g-3 mt-2">
+                      <div className="col-md-6">
+                        <label className="form-label small fw-bold">Lookup Enumeration</label>
+                        <Input
+                          type="text"
+                          size="sm"
+                          value={field.LookupEnumeration || ''}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { LookupEnumeration: e.target.value || undefined })}
+                          placeholder="e.g. ENGINE_INSTANCE, OFF_ON"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {isEditing && field.FieldType === 'BITLOOKUP' && (
+                    <div className="row g-3 mt-2">
+                      <div className="col-md-6">
+                        <label className="form-label small fw-bold">Bit Lookup Enumeration</label>
+                        <Input
+                          type="text"
+                          size="sm"
+                          value={field.LookupBitEnumeration || ''}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { LookupBitEnumeration: e.target.value || undefined })}
+                          placeholder="e.g. ENGINE_STATUS_1"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Show lookup info in read-only mode */}
+                  {!isEditing && (field.LookupEnumeration || field.LookupBitEnumeration) && (
+                    <div className="row g-3 mt-2">
+                      <div className="col-12">
+                        <small className="text-muted">
+                          <strong>Lookup:</strong> 
+                          {field.LookupEnumeration && (
+                            <code className="ms-1" style={{ fontSize: '0.8em' }}>
+                              {field.LookupEnumeration}
+                            </code>
+                          )}
+                          {field.LookupBitEnumeration && (
+                            <code className="ms-1" style={{ fontSize: '0.8em' }}>
+                              {field.LookupBitEnumeration}
+                            </code>
+                          )}
+                        </small>
+                      </div>
+                    </div>
+                  )}
+                  
                   {isEditing && (
                     <div className="row g-3 mt-2">
                       <div className="col-12">
