@@ -383,8 +383,6 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
   const handleCopyExport = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(exportedJson)
-      console.log('Generated headers exported to clipboard:', editedDefinition.Id)
-      alert('Generated headers copied to clipboard!')
     } catch (err) {
       console.error('Failed to copy to clipboard:', err)
       alert('Failed to copy to clipboard. Please try again.')
@@ -1267,18 +1265,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
             return (
               <div className="mt-3 text-muted small">
                 <i className="fa fa-info-circle me-1" />
-                This export contains the generated header text ready for integration into canboat.json
-                {hasLookupSections && lookupCount > 0 && (
-                  <span>, plus {lookupCount} modified lookup header{lookupCount !== 1 ? 's' : ''}</span>
-                )}.
-                <div className="mt-1">
-                  <strong>Format:</strong> Plain text headers ready for copy-paste integration
-                </div>
-                {hasLookupSections && (
-                  <div className="mt-1">
-                    <strong>Includes:</strong> PGN header and all referenced lookup headers
-                  </div>
-                )}
+                This export contains the generated header text ready for integration into pgn.h and lookup.h
               </div>
             )
           })()}</ModalBody>
