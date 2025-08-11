@@ -23,15 +23,20 @@ interface PgnDefinitionTabProps {
   pgnNumber: number
   onSave?: (updatedDefinition: Definition) => void
   onLookupSave?: (enumName: string, lookupType: 'lookup' | 'bitlookup', lookupValues: { key: string; value: string }[]) => void
+  hasBeenChanged?: boolean
+  onExport?: (definition: Definition) => void
+  changedLookups?: { lookups: Set<string>; bitLookups: Set<string> }
 }
 
-export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave }: PgnDefinitionTabProps) => {
+export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, hasBeenChanged, onExport, changedLookups }: PgnDefinitionTabProps) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editedDefinition, setEditedDefinition] = useState<Definition>({ ...definition })
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const [editingLookup, setEditingLookup] = useState<{ fieldIndex: number; type: 'lookup' | 'bitlookup' } | null>(null)
   const [lookupValues, setLookupValues] = useState<{ key: string; value: string }[]>([])
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [exportedJson, setExportedJson] = useState('')
 
   // Update editedDefinition when the definition prop changes (when user selects different PGN)
   useEffect(() => {
@@ -300,6 +305,96 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave }
     setIsEditing(false)
   }, [definition])
 
+  // Handle export
+  const handleExport = useCallback(() => {
+    try {
+      // Collect all lookup enumerations referenced by fields
+      const referencedLookups = new Set<string>()
+      const referencedBitLookups = new Set<string>()
+      
+      editedDefinition.Fields?.forEach(field => {
+        if (field.LookupEnumeration) {
+          referencedLookups.add(field.LookupEnumeration)
+        }
+        if (field.LookupBitEnumeration) {
+          referencedBitLookups.add(field.LookupBitEnumeration)
+        }
+      })
+      
+      // Create export object with definition and modified lookups
+      const exportData: any = {
+        definition: editedDefinition
+      }
+      
+      // Include modified lookups that are referenced by this definition
+      const modifiedLookups: any = {}
+      const modifiedBitLookups: any = {}
+      
+      if (changedLookups) {
+        // Check for modified regular lookups
+        referencedLookups.forEach(lookupName => {
+          if (changedLookups.lookups.has(lookupName)) {
+            try {
+              const enumeration = getEnumeration(lookupName)
+              if (enumeration) {
+                modifiedLookups[lookupName] = enumeration
+              }
+            } catch (error) {
+              console.warn(`Failed to get enumeration "${lookupName}":`, error)
+            }
+          }
+        })
+        
+        // Check for modified bit lookups
+        referencedBitLookups.forEach(bitLookupName => {
+          if (changedLookups.bitLookups.has(bitLookupName)) {
+            try {
+              const bitEnumeration = getBitEnumeration(bitLookupName)
+              if (bitEnumeration) {
+                modifiedBitLookups[bitLookupName] = bitEnumeration
+              }
+            } catch (error) {
+              console.warn(`Failed to get bit enumeration "${bitLookupName}":`, error)
+            }
+          }
+        })
+      }
+      
+      // Add lookups to export if any were found
+      if (Object.keys(modifiedLookups).length > 0) {
+        exportData.lookups = modifiedLookups
+      }
+      if (Object.keys(modifiedBitLookups).length > 0) {
+        exportData.bitLookups = modifiedBitLookups
+      }
+      
+      const exportJson = JSON.stringify(exportData, null, 2)
+      setExportedJson(exportJson)
+      setShowExportModal(true)
+    } catch (err) {
+      console.error('Failed to prepare export:', err)
+      alert('Failed to prepare export. Please try again.')
+    }
+  }, [editedDefinition, changedLookups])
+
+  // Handle copy to clipboard from export modal
+  const handleCopyExport = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(exportedJson)
+      console.log('Definition exported to clipboard:', editedDefinition.Id)
+      alert('PGN definition copied to clipboard!')
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err)
+      alert('Failed to copy to clipboard. Please try again.')
+    }
+  }, [exportedJson, editedDefinition.Id])
+
+  // Close export modal
+  const closeExportModal = useCallback(() => {
+    setShowExportModal(false)
+    setExportedJson('')
+  }, [])
+
   return (
     <div className="p-3">
       <style>
@@ -337,14 +432,28 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave }
           }
         `}
       </style>
-      {/* Edit/Save/Cancel buttons */}
+      {/* Edit/Save/Cancel/Export buttons */}
       <Row className="mb-3">
         <Col className="d-flex justify-content-end">
           {!isEditing ? (
-            <Button color="primary" size="sm" onClick={() => setIsEditing(true)}>
-              <i className="fa fa-edit me-2" />
-              Edit Definition
-            </Button>
+            <div className="d-flex gap-2 align-items-center">
+              {hasBeenChanged && (
+                <div className="d-flex align-items-center me-3">
+                  <Badge color="info" className="me-2">
+                    <i className="fa fa-edit me-1" />
+                    Modified
+                  </Badge>
+                  <Button color="outline-primary" size="sm" onClick={handleExport}>
+                    <i className="fa fa-download me-2" />
+                    Export Definition
+                  </Button>
+                </div>
+              )}
+              <Button color="primary" size="sm" onClick={() => setIsEditing(true)}>
+                <i className="fa fa-edit me-2" />
+                Edit Definition
+              </Button>
+            </div>
           ) : (
             <div className="d-flex gap-2">
               <Button color="success" size="sm" onClick={handleSave}>
@@ -1118,6 +1227,75 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave }
           </Button>
           <Button color="secondary" onClick={closeLookupEditor}>
             Cancel
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Export Modal */}
+      <Modal isOpen={showExportModal} toggle={closeExportModal} size="lg">
+        <ModalHeader>
+          Export PGN Definition
+          <div className="small text-muted">
+            PGN {editedDefinition.PGN} - {editedDefinition.Id}
+          </div>
+        </ModalHeader>
+        <ModalBody>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h6>JSON Export</h6>
+          </div>
+          
+          <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+            <pre className="bg-light p-3 rounded" style={{ 
+              fontSize: '0.85em', 
+              lineHeight: '1.4',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+              margin: 0 
+            }}>
+              <code>{exportedJson}</code>
+            </pre>
+          </div>
+          
+          {exportedJson && (() => {
+            let exportData
+            try {
+              exportData = JSON.parse(exportedJson)
+            } catch {
+              exportData = null
+            }
+            
+            const hasLookups = exportData?.lookups && Object.keys(exportData.lookups).length > 0
+            const hasBitLookups = exportData?.bitLookups && Object.keys(exportData.bitLookups).length > 0
+            const lookupCount = (hasLookups ? Object.keys(exportData.lookups).length : 0) + 
+                             (hasBitLookups ? Object.keys(exportData.bitLookups).length : 0)
+            
+            return (
+              <div className="mt-3 text-muted small">
+                <i className="fa fa-info-circle me-1" />
+                This export contains the PGN definition with all fields and configuration
+                {lookupCount > 0 && (
+                  <span>, plus {lookupCount} modified lookup enumeration{lookupCount !== 1 ? 's' : ''} referenced by this definition</span>
+                )}.
+                {hasLookups && (
+                  <div className="mt-1">
+                    <strong>Modified Lookups:</strong> {Object.keys(exportData.lookups).join(', ')}
+                  </div>
+                )}
+                {hasBitLookups && (
+                  <div className="mt-1">
+                    <strong>Modified Bit Lookups:</strong> {Object.keys(exportData.bitLookups).join(', ')}
+                  </div>
+                )}
+              </div>
+            )
+          })()}</ModalBody>
+        <ModalFooter>
+          <Button color="primary" onClick={handleCopyExport}>
+            <i className="fa fa-copy me-2" />
+            Copy to Clipboard
+          </Button>
+          <Button color="secondary" onClick={closeExportModal}>
+            Close
           </Button>
         </ModalFooter>
       </Modal>

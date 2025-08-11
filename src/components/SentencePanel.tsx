@@ -178,6 +178,48 @@ export const SentencePanel = (props: SentencePanelProps) => {
     }
   }
 
+  const handleDefinitionExport = async (definition: Definition) => {
+    try {
+      const definitionJson = JSON.stringify(definition, null, 2)
+      
+      // Try to save as a file if possible, otherwise copy to clipboard
+      if ('showSaveFilePicker' in window) {
+        try {
+          const fileHandle = await (window as any).showSaveFilePicker({
+            suggestedName: `pgn_${definition.PGN}_${definition.Id}.json`,
+            types: [{
+              description: 'JSON files',
+              accept: { 'application/json': ['.json'] }
+            }]
+          })
+          
+          const writable = await fileHandle.createWritable()
+          await writable.write(definitionJson)
+          await writable.close()
+          
+          console.log('Definition exported to file:', definition.Id)
+          return
+        } catch (exportErr: any) {
+          // User cancelled file picker or other error, fall back to clipboard
+          if (exportErr.name !== 'AbortError') {
+            console.warn('File picker failed, falling back to clipboard:', exportErr)
+          }
+        }
+      }
+      
+      // Fallback to clipboard
+      await navigator.clipboard.writeText(definitionJson)
+      console.log('Definition exported to clipboard:', definition.Id)
+      
+      // You could show a toast notification here if you have a toast system
+      alert('PGN definition exported to clipboard!')
+      
+    } catch (err) {
+      console.error('Failed to export definition:', err)
+      alert('Failed to export definition. Please try again.')
+    }
+  }
+
   const handleLookupSave = useCallback((
     enumName: string,
     lookupType: 'lookup' | 'bitlookup',
@@ -317,6 +359,9 @@ export const SentencePanel = (props: SentencePanelProps) => {
                   pgnNumber={pgnData.pgn}
                   onSave={handleDefinitionSave}
                   onLookupSave={handleLookupSave}
+                  hasBeenChanged={changedDefinitionsTracker.definitions.has(definition.Id)}
+                  onExport={handleDefinitionExport}
+                  changedLookups={changedDefinitionsTracker.getChangedLookups()}
                 />
               </CardBody>
             </Card>
