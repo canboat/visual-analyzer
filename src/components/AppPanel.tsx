@@ -511,6 +511,10 @@ const AppPanelInner = (props: any) => {
           return
         }
 
+        if (filterOptionsRef.current?.pauseUpdates) {
+          return
+        }
+
         let pgn: PGN | undefined = undefined
         if (parserRef.current) {
           pgn = parserRef.current.parse(parsed.data)

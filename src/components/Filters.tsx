@@ -37,6 +37,7 @@ export type FilterOptions = {
   showPgn126208OnSeparateLines?: boolean
   showInfoPgns?: boolean
   maxHistorySize?: number
+  pauseUpdates?: boolean
 }
 
 export const getFilterConfig = (filter?: Filter): FilterConfig => {
@@ -161,17 +162,39 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
             Options
           </h6>
         </div>
-        <Button
-          color="outline-primary"
-          size="sm"
-          style={{ border: 'none', fontSize: '16px', padding: '2px 6px' }}
-          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-            e.stopPropagation()
-            setIsOpen(!isOpen)
-          }}
-        >
-          {isOpen ? '−' : '+'}
-        </Button>
+        <div className="d-flex align-items-center">
+          <span style={{ fontSize: '14px', fontWeight: '500', marginRight: '8px' }}>Pause Updates</span>
+          <Label className="switch switch-text switch-primary mb-0 me-3">
+            <Input
+              type="checkbox"
+              id="pauseUpdates"
+              name="pauseUpdates"
+              className="switch-input"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                e.stopPropagation()
+                onFilterOptionsChange.next({
+                  ...filterOptions,
+                  pauseUpdates: e.target.checked,
+                })
+              }}
+              checked={filterOptions?.pauseUpdates ?? false}
+              onClick={(e: React.MouseEvent<HTMLInputElement>) => e.stopPropagation()}
+            />
+            <span className="switch-label" data-on="On" data-off="Off" />
+            <span className="switch-handle" />
+          </Label>
+          <Button
+            color="outline-primary"
+            size="sm"
+            style={{ border: 'none', fontSize: '16px', padding: '2px 6px' }}
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+              e.stopPropagation()
+              setIsOpen(!isOpen)
+            }}
+          >
+            {isOpen ? '−' : '+'}
+          </Button>
+        </div>
       </CardHeader>
       <Collapse isOpen={isOpen}>
         <CardBody>
