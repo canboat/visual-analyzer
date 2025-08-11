@@ -44,6 +44,22 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
       .replace(/\b\w/g, (l) => l.toUpperCase())
   }
 
+  // Helper function to convert text to camelCase
+  const toCamelCase = (text: string) => {
+    return text
+      .trim()
+      .replace(/[^\w\s]/g, '') // Remove non-word characters except spaces
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .split(' ')
+      .map((word, index) => {
+        if (index === 0) {
+          return word.toLowerCase()
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      })
+      .join('')
+  }
+
   // Helper function to get field size
   const getFieldSize = (field: any) => {
     if (field.BitLength) {
@@ -57,6 +73,16 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
   // Update the definition state
   const updateDefinition = useCallback((updates: Partial<Definition>) => {
     setEditedDefinition(prev => ({ ...prev, ...updates }))
+  }, [])
+
+  // Special handler for description changes that also updates the ID
+  const handleDescriptionChange = useCallback((description: string) => {
+    const camelCaseId = toCamelCase(description)
+    setEditedDefinition(prev => ({ 
+      ...prev, 
+      Description: description,
+      Id: camelCaseId
+    }))
   }, [])
 
   // Update a specific field
@@ -175,7 +201,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
                   size="sm"
                   rows="2"
                   value={editedDefinition.Description}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => updateDefinition({ Description: e.target.value })}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => handleDescriptionChange(e.target.value)}
                 />
               ) : (
                 editedDefinition.Description
