@@ -76,6 +76,39 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave }
     return ''
   }
 
+  // Helper function to check if a field is part of a repeating set
+  const isRepeatingField = (fieldIndex: number): { isRepeating: boolean; setNumber: number; fieldInSet: number } => {
+    // Check first repeating set
+    if (editedDefinition.RepeatingFieldSet1Size && 
+        editedDefinition.RepeatingFieldSet1StartField) {
+      const startIndex = editedDefinition.RepeatingFieldSet1StartField - 1 // Convert to 0-based
+      const endIndex = startIndex + editedDefinition.RepeatingFieldSet1Size
+      if (fieldIndex >= startIndex && fieldIndex < endIndex) {
+        return { 
+          isRepeating: true, 
+          setNumber: 1, 
+          fieldInSet: fieldIndex - startIndex + 1 
+        }
+      }
+    }
+
+    // Check second repeating set
+    if (editedDefinition.RepeatingFieldSet2Size && 
+        editedDefinition.RepeatingFieldSet2StartField) {
+      const startIndex = editedDefinition.RepeatingFieldSet2StartField - 1 // Convert to 0-based
+      const endIndex = startIndex + editedDefinition.RepeatingFieldSet2Size
+      if (fieldIndex >= startIndex && fieldIndex < endIndex) {
+        return { 
+          isRepeating: true, 
+          setNumber: 2, 
+          fieldInSet: fieldIndex - startIndex + 1 
+        }
+      }
+    }
+
+    return { isRepeating: false, setNumber: 0, fieldInSet: 0 }
+  }
+
   // Update the definition state
   const updateDefinition = useCallback((updates: Partial<Definition>) => {
     setEditedDefinition(prev => ({ ...prev, ...updates }))
@@ -536,46 +569,113 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave }
           </div>
           {!isEditing ? (
             // Table view for read-only mode  
-            <div className="table-responsive">
-              <table className="table table-sm table-hover">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Size</th>
-                    <th>Unit</th>
-                    <th>Resolution</th>
-                    <th>Key</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {editedDefinition.Fields.map((field, index) => (
-                    <tr key={index}>
-                      <td>
-                        <span className="fw-bold">{field.Name}</span>
-                        {field.Description && (
-                          <div className="small text-muted">{field.Description}</div>
-                        )}
-                      </td>
-                      <td>
-                        {field.FieldType || ''}
-                      </td>
-                      <td>
-                        {field.BitLength || ''}
-                      </td>
-                      <td>
-                        {field.Unit || ''}
-                      </td>
-                      <td>
-                        {field.Resolution || ''}
-                      </td>
-                      <td>
-                        {field.PartOfPrimaryKey ? 'Primary Key' : ''}
-                      </td>
+            <div>
+              {/* Legend for repeating fields */}
+              {(editedDefinition.RepeatingFieldSet1Size || editedDefinition.RepeatingFieldSet2Size) && (
+                <div className="mb-3 p-2 bg-light rounded">
+                  <div className="small fw-semibold mb-1">Repeating Fields:</div>
+                  <div className="d-flex gap-3 align-items-center small">
+                    {editedDefinition.RepeatingFieldSet1Size && (
+                      <div className="d-flex align-items-center gap-1">
+                        <div 
+                          style={{ 
+                            width: '16px', 
+                            height: '16px', 
+                            backgroundColor: '#e3f2fd', 
+                            border: '1px solid #1976d2',
+                            borderRadius: '2px' 
+                          }}
+                        />
+                        <Badge bg="primary" style={{ fontSize: '0.65em' }}>R1</Badge>
+                        <span>Set 1 ({editedDefinition.RepeatingFieldSet1Size} fields)</span>
+                      </div>
+                    )}
+                    {editedDefinition.RepeatingFieldSet2Size && (
+                      <div className="d-flex align-items-center gap-1">
+                        <div 
+                          style={{ 
+                            width: '16px', 
+                            height: '16px', 
+                            backgroundColor: '#f3e5f5', 
+                            border: '1px solid #7b1fa2',
+                            borderRadius: '2px' 
+                          }}
+                        />
+                        <Badge bg="secondary" style={{ fontSize: '0.65em' }}>R2</Badge>
+                        <span>Set 2 ({editedDefinition.RepeatingFieldSet2Size} fields)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              <div className="table-responsive">
+                <table className="table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Type</th>
+                      <th>Size</th>
+                      <th>Unit</th>
+                      <th>Resolution</th>
+                      <th>Key</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {editedDefinition.Fields.map((field, index) => {
+                      const repeatingInfo = isRepeatingField(index)
+                      const isRepeating = repeatingInfo.isRepeating
+                      const setNumber = repeatingInfo.setNumber
+                      const fieldInSet = repeatingInfo.fieldInSet
+                      
+                      return (
+                        <tr 
+                          key={index}
+                          className={isRepeating ? `table-info` : ''}
+                          style={{
+                            backgroundColor: isRepeating ? 
+                              (setNumber === 1 ? '#e3f2fd' : '#f3e5f5') : 
+                              undefined
+                          }}
+                        >
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <span className="fw-bold">{field.Name}</span>
+                              {isRepeating && (
+                                <Badge 
+                                  bg={setNumber === 1 ? "primary" : "secondary"} 
+                                  className="ms-2"
+                                  style={{ fontSize: '0.7em' }}
+                                >
+                                  R{setNumber}.{fieldInSet}
+                                </Badge>
+                              )}
+                            </div>
+                            {field.Description && (
+                              <div className="small text-muted">{field.Description}</div>
+                            )}
+                          </td>
+                          <td>
+                            {field.FieldType || ''}
+                          </td>
+                          <td>
+                            {field.BitLength || ''}
+                          </td>
+                          <td>
+                            {field.Unit || ''}
+                          </td>
+                          <td>
+                            {field.Resolution || ''}
+                          </td>
+                          <td>
+                            {field.PartOfPrimaryKey ? 'Primary Key' : ''}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : (
             // Card view for editing mode
