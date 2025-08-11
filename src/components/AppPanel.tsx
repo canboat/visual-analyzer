@@ -192,6 +192,8 @@ const AppPanelInner = (props: any) => {
   const [data] = useState(new ReplaySubject<{ [key: string]: PGNDataEntry }>())
   const [list, setList] = useState<any>({})
   const [selectedPgn] = useState(new ReplaySubject<PGN>())
+  const [selectedPgnKey, setSelectedPgnKey] = useState<string | null>(null)
+  const selectedPgnKeyRef = useRef<string | null>(null)
   const [doFiltering] = useState(new ReplaySubject<boolean>())
   const [filter] = useState(new ReplaySubject<Filter>())
   const [filterOptions] = useState(new ReplaySubject<FilterOptions>())
@@ -342,6 +344,11 @@ const AppPanelInner = (props: any) => {
     return () => subscription.unsubscribe()
   }, [filterOptions])
 
+  // Keep selectedPgnKeyRef in sync with selectedPgnKey state
+  useEffect(() => {
+    selectedPgnKeyRef.current = selectedPgnKey
+  }, [selectedPgnKey])
+
   const deleteAllKeys = (obj: any) => {
     Object.keys(obj).forEach((key) => {
       delete obj[key]
@@ -416,6 +423,9 @@ const AppPanelInner = (props: any) => {
             deleteAllKeys(prev)
             return prev
           })
+
+          // Clear selected PGN when connection resets
+          setSelectedPgnKey(null)
 
           sentInfoReq.length = 0
           // Reset out available when reconnecting
@@ -533,6 +543,11 @@ const AppPanelInner = (props: any) => {
                   current: pgn,
                   history: [],
                 }
+              }
+
+              // Check if this update corresponds to the currently selected PGN
+              if (selectedPgnKeyRef.current === rowKey) {
+                selectedPgn.next(pgn!)
               }
 
               data.next({ ...prev })
@@ -901,6 +916,8 @@ const AppPanelInner = (props: any) => {
                       doFiltering={doFiltering}
                       filterOptions={filterOptions}
                       onRowClicked={(row: PGN) => {
+                        const rowKey = getRowKey(row, filterOptionsRef.current || undefined)
+                        setSelectedPgnKey(rowKey)
                         selectedPgn.next(row)
                       }}
                     />
