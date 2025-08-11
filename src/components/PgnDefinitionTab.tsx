@@ -182,24 +182,36 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
     <div className="p-3">
       <style>
         {`
-          .field-row-dragging {
+          .field-card.field-row-dragging {
             opacity: 0.5;
-            transform: rotate(2deg);
+            transform: rotate(1deg);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
           }
-          .field-row-drag-over {
+          .field-card.field-row-drag-over {
             background-color: #e3f2fd !important;
-            border-top: 3px solid #2196f3;
+            border: 2px solid #2196f3;
+            transform: scale(1.02);
           }
           .drag-handle {
             cursor: move;
             color: #9e9e9e;
             transition: color 0.2s ease;
+            font-size: 1.1em;
           }
           .drag-handle:hover {
             color: #424242;
           }
-          tr[draggable="true"]:hover {
-            background-color: #f5f5f5;
+          .field-card[draggable="true"]:hover {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border-color: #dee2e6;
+          }
+          .field-card {
+            border: 1px solid #dee2e6;
+            transition: all 0.2s ease;
+          }
+          .form-label.small.fw-bold {
+            color: #495057;
+            margin-bottom: 0.25rem;
           }
         `}
       </style>
@@ -422,7 +434,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
               {isEditing && (
                 <small className="text-muted">
                   <i className="fa fa-info-circle me-1" />
-                  Drag rows by the grip icon to reorder fields
+                  Drag cards by the grip icon to reorder fields
                 </small>
               )}
               {isEditing && (
@@ -433,166 +445,204 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
               )}
             </div>
           </div>
-          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            <Table size="sm" bordered>
-              <thead>
-                <tr>
-                  {isEditing && <th style={{ width: '40px' }}>Order</th>}
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Size</th>
-                  <th>Unit</th>
-                  <th>Resolution</th>
-                  <th>Description</th>
-                  {isEditing && <th style={{ width: '80px' }}>Actions</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {editedDefinition.Fields.map((field, index) => (
-                  <tr 
-                    key={index}
-                    draggable={isEditing}
-                    onDragStart={(e) => handleDragStart(e, index)}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, index)}
-                    onDragEnd={handleDragEnd}
-                    className={`
-                      ${draggedIndex === index ? 'field-row-dragging' : ''}
-                      ${dragOverIndex === index ? 'field-row-drag-over' : ''}
-                    `}
-                    style={{
-                      cursor: isEditing ? 'move' : 'default',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    {isEditing && (
-                      <td className="text-center">
+          <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+            {editedDefinition.Fields.map((field, index) => (
+              <div 
+                key={index}
+                draggable={isEditing}
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`
+                  card mb-3 field-card
+                  ${draggedIndex === index ? 'field-row-dragging' : ''}
+                  ${dragOverIndex === index ? 'field-row-drag-over' : ''}
+                `}
+                style={{
+                  cursor: isEditing ? 'move' : 'default',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <div className="card-body p-3">
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <div className="d-flex align-items-center gap-2">
+                      {isEditing && (
                         <i 
                           className="fa fa-grip-vertical drag-handle" 
                           title="Drag to reorder"
                         />
-                      </td>
+                      )}
+                      <div>
+                        <h6 className="card-title mb-1">
+                          {isEditing ? (
+                            <Input
+                              type="text"
+                              size="sm"
+                              value={field.Name}
+                              onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Name: e.target.value })}
+                              style={{ display: 'inline-block', width: 'auto', minWidth: '200px' }}
+                            />
+                          ) : (
+                            <code style={{ fontSize: '1em' }}>{field.Name}</code>
+                          )}
+                        </h6>
+                        {!isEditing && field.Description && (
+                          <p className="text-muted mb-0" style={{ fontSize: '0.85em' }}>
+                            {field.Description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {isEditing && (
+                      <Button
+                        color="danger"
+                        size="sm"
+                        onClick={() => removeField(index)}
+                        title="Remove field"
+                        style={{ minWidth: '32px' }}
+                      >
+                        <i className="fa fa-trash" />
+                      </Button>
                     )}
-                    <td>
-                      {isEditing ? (
-                        <Input
-                          type="text"
-                          size="sm"
-                          value={field.Name}
-                          onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Name: e.target.value })}
-                        />
-                      ) : (
-                        <code style={{ fontSize: '0.8em' }}>{field.Name}</code>
-                      )}
-                    </td>
-                    <td>
-                      {isEditing ? (
-                        <Input
-                          type="select"
-                          size="sm"
-                          value={field.FieldType}
-                          onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { FieldType: e.target.value as any })}
-                        >
-                          <option value="NUMBER">Number</option>
-                          <option value="DECIMAL">Decimal</option>
-                          <option value="BINARY">Binary</option>
-                          <option value="LOOKUP">Lookup</option>
-                          <option value="BITLOOKUP">Bit Lookup</option>
-                          <option value="STRING_FIX">String Fix</option>
-                          <option value="STRING_LZ">String LZ</option>
-                          <option value="STRING_LAU">String LAU</option>
-                          <option value="TIME">Time</option>
-                          <option value="DATE">Date</option>
-                          <option value="DURATION">Duration</option>
-                          <option value="PGN">PGN</option>
-                          <option value="ISO_NAME">ISO Name</option>
-                          <option value="RESERVED">Reserved</option>
-                          <option value="SPARE">Spare</option>
-                        </Input>
-                      ) : (
-                        <Badge
-                          color="light"
-                          className="text-dark"
-                          style={{
-                            fontSize: '0.7em',
-                          }}
-                        >
-                          {formatFieldType(field.FieldType)}
-                        </Badge>
-                      )}
-                    </td>
-                    <td>
-                      {isEditing ? (
-                        <Input
-                          type="number"
-                          size="sm"
-                          value={field.BitLength || ''}
-                          onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { BitLength: e.target.value ? parseInt(e.target.value) : undefined })}
-                        />
-                      ) : (
-                        <span style={{ fontSize: '0.8em' }}>{getFieldSize(field)}</span>
-                      )}
-                    </td>
-                    <td>
-                      {isEditing ? (
-                        <Input
-                          type="text"
-                          size="sm"
-                          value={field.Unit || ''}
-                          onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Unit: e.target.value || undefined })}
-                        />
-                      ) : field.Unit ? (
-                        <code className="small" style={{ fontSize: '0.7em' }}>
-                          {field.Unit}
-                        </code>
-                      ) : null}
-                    </td>
-                    <td>
-                      {isEditing ? (
-                        <Input
-                          type="number"
-                          size="sm"
-                          step="any"
-                          value={field.Resolution || ''}
-                          onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Resolution: e.target.value ? parseFloat(e.target.value) : undefined })}
-                        />
-                      ) : field.Resolution && field.Resolution !== 1 ? (
-                        <code className="small" style={{ fontSize: '0.7em' }}>
-                          {field.Resolution}
-                        </code>
-                      ) : null}
-                    </td>
-                    <td>
-                      {isEditing ? (
+                  </div>
+                  
+                  <div className="row g-3">
+                    <div className="col-md-3">
+                      <label className="form-label small fw-bold">Type</label>
+                      <div>
+                        {isEditing ? (
+                          <Input
+                            type="select"
+                            size="sm"
+                            value={field.FieldType}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { FieldType: e.target.value as any })}
+                          >
+                            <option value="NUMBER">Number</option>
+                            <option value="DECIMAL">Decimal</option>
+                            <option value="BINARY">Binary</option>
+                            <option value="LOOKUP">Lookup</option>
+                            <option value="BITLOOKUP">Bit Lookup</option>
+                            <option value="STRING_FIX">String Fix</option>
+                            <option value="STRING_LZ">String LZ</option>
+                            <option value="STRING_LAU">String LAU</option>
+                            <option value="TIME">Time</option>
+                            <option value="DATE">Date</option>
+                            <option value="DURATION">Duration</option>
+                            <option value="PGN">PGN</option>
+                            <option value="ISO_NAME">ISO Name</option>
+                            <option value="RESERVED">Reserved</option>
+                            <option value="SPARE">Spare</option>
+                          </Input>
+                        ) : (
+                          <Badge
+                            color="light"
+                            className="text-dark"
+                            style={{ fontSize: '0.8em' }}
+                          >
+                            {formatFieldType(field.FieldType)}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-2">
+                      <label className="form-label small fw-bold">Size</label>
+                      <div>
+                        {isEditing ? (
+                          <Input
+                            type="number"
+                            size="sm"
+                            value={field.BitLength || ''}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { BitLength: e.target.value ? parseInt(e.target.value) : undefined })}
+                            placeholder="bits"
+                          />
+                        ) : (
+                          <span style={{ fontSize: '0.9em' }}>{getFieldSize(field)}</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-2">
+                      <label className="form-label small fw-bold">Unit</label>
+                      <div>
+                        {isEditing ? (
+                          <Input
+                            type="text"
+                            size="sm"
+                            value={field.Unit || ''}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Unit: e.target.value || undefined })}
+                            placeholder="e.g. m/s"
+                          />
+                        ) : field.Unit ? (
+                          <code className="small" style={{ fontSize: '0.8em' }}>
+                            {field.Unit}
+                          </code>
+                        ) : (
+                          <span className="text-muted small">—</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-2">
+                      <label className="form-label small fw-bold">Resolution</label>
+                      <div>
+                        {isEditing ? (
+                          <Input
+                            type="number"
+                            size="sm"
+                            step="any"
+                            value={field.Resolution || ''}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Resolution: e.target.value ? parseFloat(e.target.value) : undefined })}
+                            placeholder="1.0"
+                          />
+                        ) : field.Resolution && field.Resolution !== 1 ? (
+                          <code className="small" style={{ fontSize: '0.8em' }}>
+                            {field.Resolution}
+                          </code>
+                        ) : (
+                          <span className="text-muted small">1</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="col-md-3">
+                      <label className="form-label small fw-bold">ID</label>
+                      <div>
+                        {isEditing ? (
+                          <Input
+                            type="text"
+                            size="sm"
+                            value={field.Id || ''}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Id: e.target.value })}
+                            placeholder="fieldId"
+                          />
+                        ) : (
+                          <code style={{ fontSize: '0.8em' }}>{field.Id}</code>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {isEditing && (
+                    <div className="row g-3 mt-2">
+                      <div className="col-12">
+                        <label className="form-label small fw-bold">Description</label>
                         <Input
                           type="textarea"
                           size="sm"
                           rows="2"
                           value={field.Description || ''}
                           onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Description: e.target.value })}
+                          placeholder="Field description..."
                         />
-                      ) : (
-                        <small style={{ fontSize: '0.75em', lineHeight: '1.3' }}>{field.Description}</small>
-                      )}
-                    </td>
-                    {isEditing && (
-                      <td className="text-center">
-                        <Button
-                          color="danger"
-                          size="sm"
-                          onClick={() => removeField(index)}
-                          title="Remove field"
-                          style={{ minWidth: '32px' }}
-                        >
-                          <i className="fa fa-trash" />
-                        </Button>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
