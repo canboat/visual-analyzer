@@ -545,7 +545,6 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave }
                     <th>Size</th>
                     <th>Unit</th>
                     <th>Resolution</th>
-                    <th>ID</th>
                     <th>Key</th>
                   </tr>
                 </thead>
@@ -559,46 +558,19 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave }
                         )}
                       </td>
                       <td>
-                        {field.FieldType && (
-                          <Badge bg="secondary" className="me-1">
-                            {field.FieldType}
-                          </Badge>
-                        )}
+                        {field.FieldType || ''}
                       </td>
                       <td>
-                        {field.BitLength && (
-                          <Badge bg="info" className="me-1">
-                            {field.BitLength}
-                          </Badge>
-                        )}
+                        {field.BitLength || ''}
                       </td>
                       <td>
-                        {field.Unit && (
-                          <Badge bg="success" className="me-1">
-                            {field.Unit}
-                          </Badge>
-                        )}
+                        {field.Unit || ''}
                       </td>
                       <td>
-                        {field.Resolution && (
-                          <Badge bg="warning" text="dark" className="me-1">
-                            {field.Resolution}
-                          </Badge>
-                        )}
+                        {field.Resolution || ''}
                       </td>
                       <td>
-                        {field.Id && (
-                          <Badge bg="primary" className="me-1">
-                            {field.Id}
-                          </Badge>
-                        )}
-                      </td>
-                      <td>
-                        {field.PartOfPrimaryKey && (
-                          <Badge bg="dark" className="me-1">
-                            Primary Key
-                          </Badge>
-                        )}
+                        {field.PartOfPrimaryKey ? 'Primary Key' : ''}
                       </td>
                     </tr>
                   ))}
