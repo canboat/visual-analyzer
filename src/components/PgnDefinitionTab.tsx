@@ -15,8 +15,8 @@
  */
 
 import React, { useState, useCallback, useEffect, ChangeEvent } from 'react'
-import { Definition, Field, getBitEnumeration, getEnumeration } from '@canboat/ts-pgns'
-import { Table, Badge, Row, Col, Button, Input, FormGroup, Label, FormText, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
+import { Definition, Field, getBitEnumeration, getEnumeration, generatePgnHeaderEntry, generateBitLookupHeaderEntry, generateLookupHeaderEntry } from '@canboat/ts-pgns'
+import { Table, Badge, Row, Col, Button, Input, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
 
 interface PgnDefinitionTabProps {
   definition: Definition
@@ -321,23 +321,25 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
         }
       })
       
-      // Create export object with definition and modified lookups
-      const exportData: any = {
-        definition: editedDefinition
-      }
+      // Generate PGN header entry using the new function
+      const pgnHeaderEntry = generatePgnHeaderEntry(editedDefinition)
+      
+      // Build export text starting with PGN header
+      let exportText = `// PGN ${editedDefinition.PGN} - ${editedDefinition.Id}\n${pgnHeaderEntry}`
       
       // Include modified lookups that are referenced by this definition
-      const modifiedLookups: any = {}
-      const modifiedBitLookups: any = {}
+      const modifiedLookupHeaders: string[] = []
+      const modifiedBitLookupHeaders: string[] = []
       
       if (changedLookups) {
-        // Check for modified regular lookups
+        // Check for modified regular lookups and generate their headers
         referencedLookups.forEach(lookupName => {
           if (changedLookups.lookups.has(lookupName)) {
             try {
               const enumeration = getEnumeration(lookupName)
               if (enumeration) {
-                modifiedLookups[lookupName] = enumeration
+                const headerEntry = generateLookupHeaderEntry(enumeration)
+                modifiedLookupHeaders.push(`// Lookup: ${lookupName}\n${headerEntry}`)
               }
             } catch (error) {
               console.warn(`Failed to get enumeration "${lookupName}":`, error)
@@ -345,13 +347,14 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
           }
         })
         
-        // Check for modified bit lookups
+        // Check for modified bit lookups and generate their headers
         referencedBitLookups.forEach(bitLookupName => {
           if (changedLookups.bitLookups.has(bitLookupName)) {
             try {
               const bitEnumeration = getBitEnumeration(bitLookupName)
               if (bitEnumeration) {
-                modifiedBitLookups[bitLookupName] = bitEnumeration
+                const headerEntry = generateBitLookupHeaderEntry(bitEnumeration)
+                modifiedBitLookupHeaders.push(`// Bit Lookup: ${bitLookupName}\n${headerEntry}`)
               }
             } catch (error) {
               console.warn(`Failed to get bit enumeration "${bitLookupName}":`, error)
@@ -360,16 +363,15 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
         })
       }
       
-      // Add lookups to export if any were found
-      if (Object.keys(modifiedLookups).length > 0) {
-        exportData.lookups = modifiedLookups
+      // Add lookup headers to export text if any were found
+      if (modifiedLookupHeaders.length > 0) {
+        exportText += '\n\n' + modifiedLookupHeaders.join('\n\n')
       }
-      if (Object.keys(modifiedBitLookups).length > 0) {
-        exportData.bitLookups = modifiedBitLookups
+      if (modifiedBitLookupHeaders.length > 0) {
+        exportText += '\n\n' + modifiedBitLookupHeaders.join('\n\n')
       }
       
-      const exportJson = JSON.stringify(exportData, null, 2)
-      setExportedJson(exportJson)
+      setExportedJson(exportText)
       setShowExportModal(true)
     } catch (err) {
       console.error('Failed to prepare export:', err)
@@ -381,8 +383,8 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
   const handleCopyExport = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(exportedJson)
-      console.log('Definition exported to clipboard:', editedDefinition.Id)
-      alert('PGN definition copied to clipboard!')
+      console.log('Generated headers exported to clipboard:', editedDefinition.Id)
+      alert('Generated headers copied to clipboard!')
     } catch (err) {
       console.error('Failed to copy to clipboard:', err)
       alert('Failed to copy to clipboard. Please try again.')
@@ -1234,14 +1236,14 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
       {/* Export Modal */}
       <Modal isOpen={showExportModal} toggle={closeExportModal} size="lg">
         <ModalHeader>
-          Export PGN Definition
+          Export Generated Headers
           <div className="small text-muted">
             PGN {editedDefinition.PGN} - {editedDefinition.Id}
           </div>
         </ModalHeader>
         <ModalBody>
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h6>JSON Export</h6>
+            <h6>Generated Header Text</h6>
           </div>
           
           <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
@@ -1257,33 +1259,24 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
           </div>
           
           {exportedJson && (() => {
-            let exportData
-            try {
-              exportData = JSON.parse(exportedJson)
-            } catch {
-              exportData = null
-            }
-            
-            const hasLookups = exportData?.lookups && Object.keys(exportData.lookups).length > 0
-            const hasBitLookups = exportData?.bitLookups && Object.keys(exportData.bitLookups).length > 0
-            const lookupCount = (hasLookups ? Object.keys(exportData.lookups).length : 0) + 
-                             (hasBitLookups ? Object.keys(exportData.bitLookups).length : 0)
+            // Parse the text to count sections
+            const sections = exportedJson.split('\n\n')
+            const hasLookupSections = sections.length > 1
+            const lookupCount = sections.length - 1 // Subtract 1 for the PGN header section
             
             return (
               <div className="mt-3 text-muted small">
                 <i className="fa fa-info-circle me-1" />
-                This export contains the PGN definition with all fields and configuration
-                {lookupCount > 0 && (
-                  <span>, plus {lookupCount} modified lookup enumeration{lookupCount !== 1 ? 's' : ''} referenced by this definition</span>
+                This export contains the generated header text ready for integration into canboat.json
+                {hasLookupSections && lookupCount > 0 && (
+                  <span>, plus {lookupCount} modified lookup header{lookupCount !== 1 ? 's' : ''}</span>
                 )}.
-                {hasLookups && (
+                <div className="mt-1">
+                  <strong>Format:</strong> Plain text headers ready for copy-paste integration
+                </div>
+                {hasLookupSections && (
                   <div className="mt-1">
-                    <strong>Modified Lookups:</strong> {Object.keys(exportData.lookups).join(', ')}
-                  </div>
-                )}
-                {hasBitLookups && (
-                  <div className="mt-1">
-                    <strong>Modified Bit Lookups:</strong> {Object.keys(exportData.bitLookups).join(', ')}
+                    <strong>Includes:</strong> PGN header and all referenced lookup headers
                   </div>
                 )}
               </div>
