@@ -27,6 +27,8 @@ interface PgnDefinitionTabProps {
 export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitionTabProps) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editedDefinition, setEditedDefinition] = useState<Definition>({ ...definition })
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   // Update editedDefinition when the definition prop changes (when user selects different PGN)
   useEffect(() => {
@@ -118,6 +120,50 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
     }))
   }, [])
 
+  // Move field to new position
+  const moveField = useCallback((fromIndex: number, toIndex: number) => {
+    setEditedDefinition(prev => {
+      const newFields = [...prev.Fields]
+      const [movedField] = newFields.splice(fromIndex, 1)
+      newFields.splice(toIndex, 0, movedField)
+      return {
+        ...prev,
+        Fields: newFields
+      }
+    })
+  }, [])
+
+  // Drag and drop handlers
+  const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/html', '') // Required for Firefox
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverIndex(index)
+  }, [])
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverIndex(null)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    if (draggedIndex !== null && draggedIndex !== dropIndex) {
+      moveField(draggedIndex, dropIndex)
+    }
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }, [draggedIndex, moveField])
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }, [])
+
   // Handle save
   const handleSave = useCallback(() => {
     if (onSave) {
@@ -134,6 +180,29 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
 
   return (
     <div className="p-3">
+      <style>
+        {`
+          .field-row-dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+          }
+          .field-row-drag-over {
+            background-color: #e3f2fd !important;
+            border-top: 3px solid #2196f3;
+          }
+          .drag-handle {
+            cursor: move;
+            color: #9e9e9e;
+            transition: color 0.2s ease;
+          }
+          .drag-handle:hover {
+            color: #424242;
+          }
+          tr[draggable="true"]:hover {
+            background-color: #f5f5f5;
+          }
+        `}
+      </style>
       {/* Edit/Save/Cancel buttons */}
       <Row className="mb-3">
         <Col className="d-flex justify-content-end">
@@ -349,29 +418,62 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
         <div className="mt-3">
           <div className="d-flex justify-content-between align-items-center mb-2">
             <h6>Fields ({editedDefinition.Fields.length})</h6>
-            {isEditing && (
-              <Button color="success" size="sm" onClick={addField}>
-                <i className="fa fa-plus me-2" />
-                Add Field
-              </Button>
-            )}
+            <div className="d-flex align-items-center gap-2">
+              {isEditing && (
+                <small className="text-muted">
+                  <i className="fa fa-info-circle me-1" />
+                  Drag rows by the grip icon to reorder fields
+                </small>
+              )}
+              {isEditing && (
+                <Button color="success" size="sm" onClick={addField}>
+                  <i className="fa fa-plus me-2" />
+                  Add Field
+                </Button>
+              )}
+            </div>
           </div>
           <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
             <Table size="sm" bordered>
               <thead>
                 <tr>
+                  {isEditing && <th style={{ width: '40px' }}>Order</th>}
                   <th>Name</th>
                   <th>Type</th>
                   <th>Size</th>
                   <th>Unit</th>
                   <th>Resolution</th>
                   <th>Description</th>
-                  {isEditing && <th>Actions</th>}
+                  {isEditing && <th style={{ width: '80px' }}>Actions</th>}
                 </tr>
               </thead>
               <tbody>
                 {editedDefinition.Fields.map((field, index) => (
-                  <tr key={index}>
+                  <tr 
+                    key={index}
+                    draggable={isEditing}
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, index)}
+                    onDragEnd={handleDragEnd}
+                    className={`
+                      ${draggedIndex === index ? 'field-row-dragging' : ''}
+                      ${dragOverIndex === index ? 'field-row-drag-over' : ''}
+                    `}
+                    style={{
+                      cursor: isEditing ? 'move' : 'default',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {isEditing && (
+                      <td className="text-center">
+                        <i 
+                          className="fa fa-grip-vertical drag-handle" 
+                          title="Drag to reorder"
+                        />
+                      </td>
+                    )}
                     <td>
                       {isEditing ? (
                         <Input
@@ -475,12 +577,13 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave }: PgnDefinitio
                       )}
                     </td>
                     {isEditing && (
-                      <td>
+                      <td className="text-center">
                         <Button
                           color="danger"
                           size="sm"
                           onClick={() => removeField(index)}
                           title="Remove field"
+                          style={{ minWidth: '32px' }}
                         >
                           <i className="fa fa-trash" />
                         </Button>
