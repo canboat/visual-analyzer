@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 
-import { PGN, Definition, updatePGN } from '@canboat/ts-pgns'
+import { PGN, Definition, Enumeration, BitEnumeration, updatePGN, updateLookup, updateBitLookup } from '@canboat/ts-pgns'
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
 import { DeviceMap } from '../types'
@@ -103,6 +103,47 @@ export const SentencePanel = (props: SentencePanelProps) => {
       console.error('Failed to save definition:', err)
     }
   }
+
+  const handleLookupSave = useCallback((
+    enumName: string,
+    lookupType: 'lookup' | 'bitlookup',
+    lookupValues: { key: string; value: string }[]
+  ) => {
+    if (!enumName) {
+      console.warn('No enumeration name provided for lookup save')
+      return
+    }
+    
+    try {
+      if (lookupType === 'lookup') {
+        // Create regular enumeration from lookup values
+        const enumeration: Enumeration = {
+          Name: enumName,
+          MaxValue: Math.max(...lookupValues.map(lv => parseInt(lv.key, 10))),
+          EnumValues: lookupValues.map(lv => ({
+            Name: lv.value,
+            Value: parseInt(lv.key, 10)
+          }))
+        }
+        updateLookup(enumeration)
+      } else {
+        // Create bit enumeration from lookup values
+        const bitEnumeration: BitEnumeration = {
+          Name: enumName,
+          MaxValue: Math.max(...lookupValues.map(lv => parseInt(lv.key, 10))),
+          EnumBitValues: lookupValues.map(lv => ({
+            Name: lv.value,
+            Bit: parseInt(lv.key, 10)
+          }))
+        }
+        updateBitLookup(bitEnumeration)
+      }
+      
+      console.log(`Successfully updated ${lookupType} enumeration: ${enumName}`)
+    } catch (error) {
+      console.error(`Failed to save ${lookupType} enumeration:`, error)
+    }
+  }, [])
 
   if (pgnData === undefined || pgnData === null) {
     return <div>Select a PGN to view its data</div>
@@ -197,7 +238,8 @@ export const SentencePanel = (props: SentencePanelProps) => {
                   key={pgnData.pgn} 
                   definition={definition} 
                   pgnNumber={pgnData.pgn}
-                  onSave={handleDefinitionSave} 
+                  onSave={handleDefinitionSave}
+                  onLookupSave={handleLookupSave}
                 />
               </CardBody>
             </Card>
