@@ -120,9 +120,11 @@ export const SentencePanel = (props: SentencePanelProps) => {
         changedDefinitionsTracker.addDefinition(updatedDefinition)
       }
 
-      notifyDefinitionsChanged
+      notifyDefinitionsChanged()
 
       updatePGN(updatedDefinition)
+
+      ;(updatedDefinition as any).sampleData = pgnData
     } catch (err) {
       console.error('Failed to save definition:', err)
     }
