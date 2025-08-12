@@ -40,7 +40,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
 
   // Update editedDefinition when the definition prop changes (when user selects different PGN)
   useEffect(() => {
-    setEditedDefinition({ ...definition })
+    setEditedDefinition({ ...definition, PGN: pgnNumber })
     // Reset editing mode when definition changes
     setIsEditing(false)
     setEditingLookup(null)
