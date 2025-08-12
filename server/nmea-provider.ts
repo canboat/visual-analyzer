@@ -39,6 +39,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
   private readline: readline.Interface | null = null
   private lineQueue: string[] = []
   private isProcessingQueue: boolean = false
+  private currentFilePath: string | null = null
 
   constructor(options: ConnectionProfile, configPath: string) {
     super()
@@ -226,6 +227,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
       }
 
       this.setupFileStream(this.options.filePath!)
+      this.currentFilePath = this.options.filePath!
       this.isConnected = true
       this.emit('connected')
     } catch (error) {
@@ -292,15 +294,46 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
         this.processQueue()
       }, delay)
     } else {
-      console.log('File playback completed')
-      this.isProcessingQueue = false
-      this.emit('disconnected')
+      // Queue is empty - check if we should loop
+      if (this.options.loopPlayback && this.currentFilePath) {
+        console.log('File playback completed, restarting loop...')
+        this.isProcessingQueue = false
+        // Restart reading the file after a brief delay
+        this.playbackTimer = setTimeout(() => {
+          this.restartFilePlayback()
+        }, delay)
+      } else {
+        console.log('File playback completed')
+        this.isProcessingQueue = false
+        this.emit('disconnected')
+      }
     }
   }
 
   private startFilePlayback(): void {
     console.log('Starting file playback...')
     this.processQueue()
+  }
+
+  private restartFilePlayback(): void {
+    // Clean up current stream
+    if (this.readline) {
+      this.readline.close()
+      this.readline = null
+    }
+
+    if (this.fileStream) {
+      this.fileStream.destroy()
+      this.fileStream = null
+    }
+
+    // Clear the queue and restart
+    this.lineQueue = []
+
+    // Setup file stream again
+    if (this.currentFilePath) {
+      this.setupFileStream(this.currentFilePath)
+    }
   }
 
   private processSignalKUpdate(update: any): void {
@@ -350,6 +383,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
     }
 
     this.lineQueue = []
+    this.currentFilePath = null
     this.isProcessingQueue = false
     this.isConnected = false
 
