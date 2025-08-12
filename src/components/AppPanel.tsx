@@ -324,7 +324,7 @@ const AppPanelInner = (props: any) => {
 
       initialParser.on('error', (pgn: any, error: any) => {
         console.error(`Error parsing ${pgn.pgn} ${error}`)
-        console.error(error.stack)
+        //console.error(error.stack)
       })
 
       setParser(initialParser)

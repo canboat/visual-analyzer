@@ -133,14 +133,15 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
   const updateField = useCallback((index: number, updates: Partial<Field>) => {
     setEditedDefinition(prev => ({
       ...prev,
-      Fields: prev.Fields.map((field, i) => (i === index ? { ...field, ...updates } : field))
+      Fields: (prev.Fields || []).map((field, i) => (i === index ? { ...field, ...updates } : field))
     }))
   }, [])
 
   // Add a new field
   const addField = useCallback(() => {
+    const currentFields = editedDefinition.Fields || []
     const newField: Field = {
-      Id: `new_field_${editedDefinition.Fields.length + 1}`,
+      Id: `new_field_${currentFields.length + 1}`,
       Name: 'New Field',
       Description: '',
       BitOffset: 0,
@@ -150,22 +151,23 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
     }
     setEditedDefinition(prev => ({
       ...prev,
-      Fields: [...prev.Fields, newField]
+      Fields: [...currentFields, newField]
     }))
-  }, [editedDefinition.Fields.length])
+  }, [editedDefinition.Fields])
 
   // Remove a field
   const removeField = useCallback((index: number) => {
     setEditedDefinition(prev => ({
       ...prev,
-      Fields: prev.Fields.filter((_, i) => i !== index)
+      Fields: (prev.Fields || []).filter((_, i) => i !== index)
     }))
   }, [])
 
   // Move field to new position
   const moveField = useCallback((fromIndex: number, toIndex: number) => {
     setEditedDefinition(prev => {
-      const newFields = [...prev.Fields]
+      const currentFields = prev.Fields || []
+      const newFields = [...currentFields]
       const [movedField] = newFields.splice(fromIndex, 1)
       newFields.splice(toIndex, 0, movedField)
       return {
@@ -177,6 +179,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
 
   // Lookup editing functions
   const openLookupEditor = useCallback((fieldIndex: number, type: 'lookup' | 'bitlookup') => {
+    if (!editedDefinition.Fields || fieldIndex >= editedDefinition.Fields.length) return
     const field = editedDefinition.Fields[fieldIndex]
     const enumName = type === 'lookup' ? field.LookupEnumeration : field.LookupBitEnumeration
     
@@ -244,6 +247,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
 
   const saveLookupValues = useCallback(() => {
     if (!editingLookup || !onLookupSave) return
+    if (!editedDefinition.Fields || editingLookup.fieldIndex >= editedDefinition.Fields.length) return
     
     const field = editedDefinition.Fields[editingLookup.fieldIndex]
     const enumName = editingLookup.type === 'lookup' ? field.LookupEnumeration : field.LookupBitEnumeration
@@ -657,12 +661,12 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
         </Col>
       </Row>
 
-      {editedDefinition.Fields && editedDefinition.Fields.length > 0 && (
+      {(editedDefinition.Fields && editedDefinition.Fields.length > 0) || isEditing ? (
         <div className="mt-3">
           <div className="d-flex justify-content-between align-items-center mb-2">
-            <h6>Fields ({editedDefinition.Fields.length})</h6>
+            <h6>Fields ({editedDefinition.Fields?.length || 0})</h6>
             <div className="d-flex align-items-center gap-2">
-              {isEditing && (
+              {isEditing && editedDefinition.Fields && editedDefinition.Fields.length > 0 && (
                 <small className="text-muted">
                   <i className="fa fa-info-circle me-1" />
                   Drag cards by the grip icon to reorder fields
@@ -678,6 +682,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
           </div>
           {!isEditing ? (
             // Table view for read-only mode  
+            editedDefinition.Fields && editedDefinition.Fields.length > 0 ? (
             <div>
               {/* Legend for repeating fields */}
               {(editedDefinition.RepeatingFieldSet1Size || editedDefinition.RepeatingFieldSet2Size) && (
@@ -786,18 +791,25 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
                 </table>
               </div>
             </div>
+            ) : (
+              <div className="text-muted text-center py-3">
+                <i className="fa fa-inbox fa-2x mb-2" />
+                <div>No fields defined yet.</div>
+              </div>
+            )
           ) : (
             // Card view for editing mode
             <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-              {editedDefinition.Fields.map((field, index) => (
-              <div 
-                key={index}
-                draggable={isEditing}
-                onDragStart={(e) => handleDragStart(e, index)}
-                onDragOver={(e) => handleDragOver(e, index)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, index)}
-                onDragEnd={handleDragEnd}
+              {editedDefinition.Fields && editedDefinition.Fields.length > 0 ? (
+                editedDefinition.Fields.map((field, index) => (
+                <div 
+                  key={index}
+                  draggable={isEditing}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
                 className={`
                   card mb-3 field-card
                   ${draggedIndex === index ? 'field-row-dragging' : ''}
@@ -1082,11 +1094,17 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
                   )}
                 </div>
               </div>
-            ))}
+                ))
+              ) : (
+                <div className="text-muted text-center py-3">
+                  <i className="fa fa-inbox fa-2x mb-2" />
+                  <div>No fields defined yet. Click "Add Field" to get started.</div>
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
+      ) : null}
 
       {/* Repeating Fields Info */}
       {(editedDefinition.RepeatingFieldSet1Size || isEditing) && editedDefinition.RepeatingFieldSet1Size! > 0 && (
