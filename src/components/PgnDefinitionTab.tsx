@@ -356,6 +356,7 @@ export const PgnDefinitionTab = ({
     if (definition.Fallback) {
       newDef.Description = `new${pgnData.pgn}`
       newDef.Id = `new${pgnData.pgn}`
+      newDef.Explanation = undefined
 
       if (newDef.Fields.length > 0 && newDef.Fields[0].Id === 'manufacturerCode') {
         newDef.Fields[0].Match = ManufacturerCodeValues[(pgnData.fields as any).manufacturerCode] || undefined
