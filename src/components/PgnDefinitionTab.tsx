@@ -39,12 +39,21 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
   const [exportedJson, setExportedJson] = useState('')
 
   // Update editedDefinition when the definition prop changes (when user selects different PGN)
+  // Don't update if currently editing unless the PGN number changed (different PGN selected)
   useEffect(() => {
-    setEditedDefinition({ ...definition, PGN: pgnNumber })
-    // Reset editing mode when definition changes
-    setIsEditing(false)
-    setEditingLookup(null)
-  }, [definition, pgnNumber]) // Also depend on pgnNumber to ensure updates
+    const currentPgn = editedDefinition.PGN
+    const newPgn = pgnNumber
+    
+    // Always update if PGN changed (user selected different PGN) or if not currently editing
+    if (!isEditing || currentPgn !== newPgn) {
+      setEditedDefinition({ ...definition, PGN: pgnNumber })
+      // Reset editing mode when PGN changes
+      if (currentPgn !== newPgn) {
+        setIsEditing(false)
+        setEditingLookup(null)
+      }
+    }
+  }, [definition, pgnNumber, isEditing, editedDefinition.PGN])
 
   // Helper function to format field types
   const formatFieldType = (fieldType?: string) => {
