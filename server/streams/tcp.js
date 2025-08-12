@@ -94,6 +94,7 @@ TcpStream.prototype.pipe = function (pipeTo) {
       this.tcpStream = con
       const msg = `Connected to ${this.options.host} ${this.options.port}`
       this.options.app.setProviderStatus(this.options.providerId, msg)
+      this.options.app.emit('connected')
       that.debug(msg)
     })
     .on('reconnect', (n, delay) => {

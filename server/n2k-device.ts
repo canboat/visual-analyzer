@@ -73,6 +73,7 @@ class CanDevice {
             canDevice: this.options.socketcanInterface,
           })
           this.stream.pipe(new NullStream())
+          this.options.app.emit('connected')
         } else if (this.options.type === 'network') {
           const netOptions = {
             app: this.app,
@@ -123,6 +124,7 @@ class CanDevice {
               reconnect: false,
               app: this.app,
             })
+            this.options.app.emit('connected')
           } else if (this.options.deviceType === 'Yacht Devices RAW') {
             this.serialStream = new SerialStream({
               app: this.app,

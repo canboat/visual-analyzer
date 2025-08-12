@@ -57,7 +57,7 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
         this.canDevice = new CanDevice(this.getServerApp(), this.options)
         await this.canDevice.start()
         this.isConnected = true
-        this.emit('connected')
+        //this.emit('connected')
       }
     } catch (error) {
       console.error('Failed to connect to NMEA source:', error)
