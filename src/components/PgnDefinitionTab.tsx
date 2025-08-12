@@ -367,7 +367,7 @@ export const PgnDefinitionTab = ({
     }
     setEditedDefinition(newDef)
     setIsEditing(true)
-  }, [])
+  }, [definition])
 
   // Handle export
   const handleExport = useCallback(() => {
