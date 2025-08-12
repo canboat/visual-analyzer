@@ -65,6 +65,14 @@ Udp.prototype.pipe = function (pipeTo) {
     self.debug(message.toString())
     self.push(message)
   })
+  socket.on('error', (err) => {
+    this.options.app.setProviderError(this.options.providerId, err)
+    console.error('UdpProvider:' + err)
+  })
+  socket.on('listening', () => {
+    self.debug('socket listening')
+    this.options.app.emit('connected')
+  })
   socket.bind(this.options.port, function () {
     socket.setBroadcast(true)
   })
