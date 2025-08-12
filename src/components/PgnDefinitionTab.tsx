@@ -949,7 +949,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
                       </div>
                     </div>
                     
-                    <div className="col-md-1">
+                    <div className="col-md-2">
                       <label className="form-label small fw-bold">Resolution</label>
                       <div>
                         {isEditing ? (
@@ -961,7 +961,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
                             onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Resolution: e.target.value ? parseFloat(e.target.value) : undefined })}
                             placeholder="1.0"
                           />
-                        ) : field.Resolution && field.Resolution !== 1 ? (
+                        ) : field.Resolution ? (
                           <code className="small" style={{ fontSize: '0.8em' }}>
                             {field.Resolution}
                           </code>
@@ -970,26 +970,9 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
                         )}
                       </div>
                     </div>
-                    
-                    <div className="col-md-2">
-                      <label className="form-label small fw-bold">ID</label>
-                      <div>
-                        {isEditing ? (
-                          <Input
-                            type="text"
-                            size="sm"
-                            value={field.Id || ''}
-                            onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Id: e.target.value })}
-                            placeholder="fieldId"
-                          />
-                        ) : (
-                          <code style={{ fontSize: '0.8em' }}>{field.Id}</code>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="col-md-2">
-                      <label className="form-label small fw-bold">Primary Key</label>
+                                        
+                    <div className="col-md-1">
+                      <label className="form-label small fw-bold">PK</label>
                       <div>
                         {isEditing ? (
                           <div className="form-check">
@@ -1000,7 +983,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
                               onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { PartOfPrimaryKey: e.target.checked })}
                             />
                             <label className="form-check-label small">
-                              Part of key
+                              PK
                             </label>
                           </div>
                         ) : field.PartOfPrimaryKey ? (
