@@ -15,7 +15,7 @@
  */
 
 import React, { useState } from 'react'
-import { Card, CardBody, Nav, NavItem, NavLink, TabContent, TabPane, Container, Row, Col } from 'reactstrap'
+import { Card, CardBody, Nav, NavItem, NavLink, TabContent, TabPane, Container, Row, Col, ListGroup, ListGroupItem, Button } from 'reactstrap'
 import {
   PGN,
   Definition,
@@ -26,7 +26,13 @@ import {
   updateLookup,
   updateBitLookup,
   removePGN,
+  createPGN,
+  Line,
 } from '@canboat/ts-pgns'
+import { FromPgn } from '@canboat/canboatjs'
+import { SentencePanel } from './SentencePanel'
+import { ReplaySubject } from 'rxjs'
+import { DeviceMap } from '../types'
 
 const PGN_DEFINITIONS_TAB = 'pgn-definitions'
 const LOOKUPS_TAB = 'lookups'
@@ -34,6 +40,7 @@ const BIT_LOOKUPS_TAB = 'bit-lookups'
 
 interface EditorTabProps {
   isEmbedded?: boolean
+  deviceInfo?: ReplaySubject<DeviceMap>
 }
 
 type DefinitionMap = {
@@ -110,11 +117,56 @@ export const changedDefinitionsTracker = {
   },
 }
 
-const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false }) => {
+const parser = new FromPgn({
+  returnNulls: true,
+  checkForInvalidFields: true,
+  useCamel: true, 
+  useCamelCompat: false,
+  returnNonMatches: true,
+  createPGNObjects: true,
+  includeInputData: true,
+  includeRawData: true,
+  includeByteMapping: true,
+})
+
+parser.on('error', (pgn: any, error: any) => {
+  console.error(`Error parsing ${pgn.pgn} ${error}`)
+  //console.error(error.stack)
+})
+
+const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo }) => {
   const [activeSubTab, setActiveSubTab] = useState(PGN_DEFINITIONS_TAB)
+  const [selectedPgn] = useState(new ReplaySubject<PGN>())
+  const [selectedPgnWithHistory] = useState(new ReplaySubject<{ current: PGN; history: PGN[] } | null>())
+  const [selectedDefinitionId, setSelectedDefinitionId] = useState<string | null>(null)
 
   const handleSubTabChange = (tabId: string) => {
     setActiveSubTab(tabId)
+  }
+
+  const handleDefinitionSelect = (definitionId: string, definition: Definition) => {
+    setSelectedDefinitionId(definitionId)
+    const input = (definition as any).sampleData as string[]
+
+    let pgnData: PGN | undefined = undefined
+    for ( const line of input) {
+      pgnData = parser.parseString(line)
+    }
+
+    if (pgnData) {
+      selectedPgn.next(pgnData)
+      selectedPgnWithHistory.next({
+        current: pgnData,
+        history: []
+      })
+    } else {
+      console.error(`Failed to parse PGN data for definition ID ${definitionId}`)
+    }
+  }
+
+  const clearDefinitionSelection = () => {
+    setSelectedDefinitionId(null)
+    selectedPgnWithHistory.next(null)
   }
 
   return (
@@ -161,31 +213,96 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false }) => {
 
           <TabContent activeTab={activeSubTab}>
             <TabPane tabId={PGN_DEFINITIONS_TAB}>
-              <Card>
-                <CardBody>
-                  <Row>
-                    <Col>
-                      <h5>PGN Definitions</h5>
-                      <p className="text-muted">
-                        Create and edit Parameter Group Number (PGN) definitions that describe the structure and 
-                        interpretation of NMEA 2000 messages.
-                      </p>
-                      <div className="alert alert-info">
-                        <h6>Features (Coming Soon):</h6>
-                        <ul className="mb-0">
-                          <li>Browse existing PGN definitions</li>
-                          <li>Create new PGN definitions</li>
-                          <li>Edit field definitions and properties</li>
-                          <li>Set data types, units, and scaling factors</li>
-                          <li>Define repeating field groups</li>
-                          <li>Validate PGN structure and syntax</li>
-                          <li>Export definitions in various formats</li>
-                        </ul>
+              <Row>
+                <Col md="4">
+                  <Card>
+                    <CardBody>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 className="mb-0">Changed PGN Definitions</h5>
+                        <Button 
+                          color="secondary" 
+                          size="sm" 
+                          onClick={() => changedDefinitionsTracker.clearAll()}
+                          disabled={Object.keys(changedDefinitionsTracker.definitions).length === 0}
+                        >
+                          Clear All
+                        </Button>
                       </div>
-                    </Col>
-                  </Row>
-                </CardBody>
-              </Card>
+                      
+                      {Object.keys(changedDefinitionsTracker.definitions).length === 0 ? (
+                        <div className="text-muted text-center p-4">
+                          <p>No changed definitions</p>
+                          <small>Modified PGN definitions will appear here</small>
+                        </div>
+                      ) : (
+                        <ListGroup flush>
+                          {Object.entries(changedDefinitionsTracker.definitions).map(([id, definition]) => (
+                            <ListGroupItem 
+                              key={id}
+                              active={selectedDefinitionId === id}
+                              action
+                              onClick={() => handleDefinitionSelect(id, definition)}
+                              className="px-0 d-flex justify-content-between align-items-center"
+                            >
+                              <div className="flex-grow-1 text-truncate">
+                                <span className="fw-bold">PGN {definition.PGN}</span>
+                                <span className="text-muted mx-2">•</span>
+                                <span className="text-muted">{definition.Description}</span>
+                                <span className="text-success ms-2">({id})</span>
+                              </div>
+                              <Button
+                                color="danger"
+                                size="sm"
+                                outline
+                                onClick={(e: React.MouseEvent) => {
+                                  e.stopPropagation()
+                                  changedDefinitionsTracker.clearDefinition(id)
+                                  if (selectedDefinitionId === id) {
+                                    clearDefinitionSelection()
+                                  }
+                                }}
+                                title="Remove from changed list"
+                                className="ms-2 flex-shrink-0"
+                              >
+                                ×
+                              </Button>
+                            </ListGroupItem>
+                          ))}
+                        </ListGroup>
+                      )}
+                      
+                    </CardBody>
+                  </Card>
+                </Col>
+                <Col md="8">
+                  {selectedDefinitionId ? (
+                    <SentencePanel
+                      selectedPgn={selectedPgn}
+                      selectedPgnWithHistory={selectedPgnWithHistory}
+                      info={deviceInfo || new ReplaySubject<DeviceMap>()}
+                    />
+                  ) : (
+                    <Card>
+                      <CardBody>
+                        <div className="text-center text-muted p-4">
+                          <h5>PGN Definition Details</h5>
+                          <p>Select a changed PGN definition from the list to view its details here.</p>
+                          <hr />
+                          <div className="text-start">
+                            <h6>Features Available:</h6>
+                            <ul className="list-unstyled">
+                              <li>✓ View PGN structure and field definitions</li>
+                              <li>✓ Examine field types, units, and scaling</li>
+                              <li>✓ Browse enumeration values and lookups</li>
+                              <li>✓ Track changes to definitions</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </CardBody>
+                    </Card>
+                  )}
+                </Col>
+              </Row>
             </TabPane>
 
             <TabPane tabId={LOOKUPS_TAB}>

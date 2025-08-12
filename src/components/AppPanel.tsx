@@ -1025,7 +1025,7 @@ const AppPanelInner = (props: any) => {
           <PgnBrowser />
         </TabPane>
         <TabPane tabId={EDITING_TAB_ID}>
-          <EditorTab isEmbedded={isEmbedded} />
+          <EditorTab isEmbedded={isEmbedded} deviceInfo={deviceInfo} />
         </TabPane>
         {!isEmbedded && (
           <TabPane tabId={RECORDING_TAB_ID}>

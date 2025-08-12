@@ -124,7 +124,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
 
       updatePGN(updatedDefinition)
 
-      ;(updatedDefinition as any).sampleData = pgnData
+      ;(updatedDefinition as any).sampleData = pgnData.input
     } catch (err) {
       console.error('Failed to save definition:', err)
     }
