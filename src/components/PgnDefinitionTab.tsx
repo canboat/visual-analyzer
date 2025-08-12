@@ -791,7 +791,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
                             {field.Resolution || ''}
                           </td>
                           <td>
-                            {field.PartOfPrimaryKey ? 'Primary Key' : ''}
+                            {field.PartOfPrimaryKey ? 'Yes' : ''}
                           </td>
                         </tr>
                       )
@@ -971,7 +971,7 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
                       </div>
                     </div>
                                         
-                    <div className="col-md-1">
+                    <div className="col-md-2">
                       <label className="form-label small fw-bold">PK</label>
                       <div>
                         {isEditing ? (
@@ -1020,6 +1020,16 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
                           </Button>
                         </div>
                       </div>
+                      <div className="col-md-3">
+                        <label className="form-label small fw-bold">Match</label>
+                        <Input
+                          type="number"
+                          size="sm"
+                          value={field.Match || ''}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Match: e.target.value ? parseInt(e.target.value) : undefined })}
+                          placeholder="0"
+                        />
+                      </div>
                     </div>
                   )}
                   
@@ -1045,6 +1055,32 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
                           </Button>
                         </div>
                       </div>
+                      <div className="col-md-3">
+                        <label className="form-label small fw-bold">Match</label>
+                        <Input
+                          type="number"
+                          size="sm"
+                          value={field.Match || ''}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Match: e.target.value ? parseInt(e.target.value) : undefined })}
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Second row for Match field when not using LOOKUP or BITLOOKUP */}
+                  {isEditing && field.FieldType !== 'LOOKUP' && field.FieldType !== 'BITLOOKUP' && (
+                    <div className="row g-3 mt-2">
+                      <div className="col-md-3">
+                        <label className="form-label small fw-bold">Match</label>
+                        <Input
+                          type="number"
+                          size="sm"
+                          value={field.Match || ''}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => updateField(index, { Match: e.target.value ? parseInt(e.target.value) : undefined })}
+                          placeholder="0"
+                        />
+                      </div>
                     </div>
                   )}
                   
@@ -1064,6 +1100,20 @@ export const PgnDefinitionTab = ({ definition, pgnNumber, onSave, onLookupSave, 
                               {field.LookupBitEnumeration}
                             </code>
                           )}
+                        </small>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Show Match info in read-only mode */}
+                  {!isEditing && field.Match !== undefined && (
+                    <div className="row g-3 mt-2">
+                      <div className="col-12">
+                        <small className="text-muted">
+                          <strong>Match:</strong> 
+                          <code className="ms-1" style={{ fontSize: '0.8em' }}>
+                            {field.Match}
+                          </code>
                         </small>
                       </div>
                     </div>
