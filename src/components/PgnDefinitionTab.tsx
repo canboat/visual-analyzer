@@ -546,6 +546,8 @@ export const PgnDefinitionTab = ({
                   size="sm"
                   value={editedDefinition.Id}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => updateDefinition({ Id: e.target.value })}
+                  readOnly={true}
+                  title="ID field is read-only"
                 />
               ) : (
                 <code>{editedDefinition.Id}</code>
