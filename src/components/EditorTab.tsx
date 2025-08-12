@@ -15,7 +15,7 @@
  */
 
 import React, { useState } from 'react'
-import { Card, CardBody, Nav, NavItem, NavLink, TabContent, TabPane, Container, Row, Col, ListGroup, ListGroupItem, Button } from 'reactstrap'
+import { Card, CardBody, Nav, NavItem, NavLink, TabContent, TabPane, Container, Row, Col, Button, Table } from 'reactstrap'
 import {
   PGN,
   Definition,
@@ -235,40 +235,67 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                           <small>Modified PGN definitions will appear here</small>
                         </div>
                       ) : (
-                        <ListGroup flush>
-                          {Object.entries(changedDefinitionsTracker.definitions).map(([id, definition]) => (
-                            <ListGroupItem 
-                              key={id}
-                              active={selectedDefinitionId === id}
-                              action
-                              onClick={() => handleDefinitionSelect(id, definition)}
-                              className="px-0 d-flex justify-content-between align-items-center"
-                            >
-                              <div className="flex-grow-1 text-truncate">
-                                <span className="fw-bold">PGN {definition.PGN}</span>
-                                <span className="text-muted mx-2">•</span>
-                                <span className="text-muted">{definition.Description}</span>
-                                <span className="text-success ms-2">({id})</span>
-                              </div>
-                              <Button
-                                color="danger"
-                                size="sm"
-                                outline
-                                onClick={(e: React.MouseEvent) => {
-                                  e.stopPropagation()
-                                  changedDefinitionsTracker.clearDefinition(id)
-                                  if (selectedDefinitionId === id) {
-                                    clearDefinitionSelection()
-                                  }
-                                }}
-                                title="Remove from changed list"
-                                className="ms-2 flex-shrink-0"
-                              >
-                                ×
-                              </Button>
-                            </ListGroupItem>
-                          ))}
-                        </ListGroup>
+                        <div
+                          style={{
+                            width: '100%',
+                            height: '400px',
+                            overflow: 'auto',
+                            display: 'flex',
+                            flexDirection: 'column',
+                          }}
+                        >
+                          <Table responsive bordered size="sm">
+                            <thead>
+                              <tr>
+                                <th>PGN</th>
+                                <th>Description</th>
+                                <th style={{ width: '50px' }}></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {Object.entries(changedDefinitionsTracker.definitions)
+                                .sort(([, a], [, b]) => a.PGN - b.PGN)
+                                .map(([id, definition], index) => {
+                                  const isEvenRow = index % 2 === 0
+                                  return (
+                                    <tr 
+                                      key={id}
+                                      style={{ 
+                                        backgroundColor: selectedDefinitionId === id ? '#d1ecf1' : (isEvenRow ? '#ffffff' : 'rgba(0,0,0,.05)'),
+                                        cursor: 'pointer'
+                                      }}
+                                      onClick={() => handleDefinitionSelect(id, definition)}
+                                    >
+                                      <td style={{ color: 'red', fontWeight: 'bold' }}>
+                                        {definition.PGN}
+                                      </td>
+                                      <td style={{ fontFamily: 'monospace' }}>
+                                        {definition.Description}
+                                      </td>
+                                      <td style={{ textAlign: 'center' }}>
+                                        <Button
+                                          color="danger"
+                                          size="sm"
+                                          outline
+                                          onClick={(e: React.MouseEvent) => {
+                                            e.stopPropagation()
+                                            changedDefinitionsTracker.clearDefinition(id)
+                                            if (selectedDefinitionId === id) {
+                                              clearDefinitionSelection()
+                                            }
+                                          }}
+                                          title="Remove from changed list"
+                                          style={{ lineHeight: 1, padding: '0.125rem 0.375rem' }}
+                                        >
+                                          ×
+                                        </Button>
+                                      </td>
+                                    </tr>
+                                  )
+                                })}
+                            </tbody>
+                          </Table>
+                        </div>
                       )}
                       
                     </CardBody>
