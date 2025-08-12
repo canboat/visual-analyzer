@@ -150,6 +150,17 @@ export const PgnDefinitionTab = ({
     return { isRepeating: false, setNumber: 0, fieldInSet: 0 }
   }
 
+  // Helper function to calculate BitOffsets for all fields
+  const calculateBitOffsets = useCallback((fields: Field[]): Field[] => {
+    let currentBitOffset = 0
+    
+    return fields.map((field, index) => {
+      const updatedField = { ...field, BitOffset: currentBitOffset }
+      currentBitOffset += field.BitLength || 0
+      return updatedField
+    })
+  }, [])
+
   // Update the definition state
   const updateDefinition = useCallback((updates: Partial<Definition>) => {
     setEditedDefinition((prev) => ({ ...prev, ...updates }))
@@ -167,11 +178,24 @@ export const PgnDefinitionTab = ({
 
   // Update a specific field
   const updateField = useCallback((index: number, updates: Partial<Field>) => {
-    setEditedDefinition((prev) => ({
-      ...prev,
-      Fields: (prev.Fields || []).map((field, i) => (i === index ? { ...field, ...updates } : field)),
-    }))
-  }, [])
+    setEditedDefinition((prev) => {
+      const updatedFields = (prev.Fields || []).map((field, i) => (i === index ? { ...field, ...updates } : field))
+      
+      // Recalculate BitOffsets if BitLength was updated
+      if ('BitLength' in updates) {
+        const fieldsWithCalculatedOffsets = calculateBitOffsets(updatedFields)
+        return {
+          ...prev,
+          Fields: fieldsWithCalculatedOffsets,
+        }
+      }
+      
+      return {
+        ...prev,
+        Fields: updatedFields,
+      }
+    })
+  }, [calculateBitOffsets])
 
   // Add a new field
   const addField = useCallback(() => {
@@ -184,20 +208,27 @@ export const PgnDefinitionTab = ({
       BitStart: 0,
       FieldType: 'NUMBER' as any,
       LookupFieldTypeEnumeration: '',
+      BitLength: 8, // Default to 8 bits
     }
+    const updatedFields = [...currentFields, newField]
+    const fieldsWithCalculatedOffsets = calculateBitOffsets(updatedFields)
+    
     setEditedDefinition((prev) => ({
       ...prev,
-      Fields: [...currentFields, newField],
+      Fields: fieldsWithCalculatedOffsets,
     }))
-  }, [editedDefinition.Fields])
+  }, [editedDefinition.Fields, calculateBitOffsets])
 
   // Remove a field
   const removeField = useCallback((index: number) => {
+    const updatedFields = (editedDefinition.Fields || []).filter((_, i) => i !== index)
+    const fieldsWithCalculatedOffsets = calculateBitOffsets(updatedFields)
+    
     setEditedDefinition((prev) => ({
       ...prev,
-      Fields: (prev.Fields || []).filter((_, i) => i !== index),
+      Fields: fieldsWithCalculatedOffsets,
     }))
-  }, [])
+  }, [editedDefinition.Fields, calculateBitOffsets])
 
   // Move field to new position
   const moveField = useCallback((fromIndex: number, toIndex: number) => {
@@ -206,12 +237,14 @@ export const PgnDefinitionTab = ({
       const newFields = [...currentFields]
       const [movedField] = newFields.splice(fromIndex, 1)
       newFields.splice(toIndex, 0, movedField)
+      const fieldsWithCalculatedOffsets = calculateBitOffsets(newFields)
+      
       return {
         ...prev,
-        Fields: newFields,
+        Fields: fieldsWithCalculatedOffsets,
       }
     })
-  }, [])
+  }, [calculateBitOffsets])
 
   // Lookup editing functions
   const openLookupEditor = useCallback(
@@ -365,9 +398,15 @@ export const PgnDefinitionTab = ({
         newDef.Fields[2].Match = IndustryCodeValues[(pgnData.fields as any).industryCode] || undefined
       }
     }
+    
+    // Ensure BitOffsets are calculated for existing fields
+    if (newDef.Fields && newDef.Fields.length > 0) {
+      newDef.Fields = calculateBitOffsets(newDef.Fields)
+    }
+    
     setEditedDefinition(newDef)
     setIsEditing(true)
-  }, [definition])
+  }, [definition, calculateBitOffsets])
 
   // Handle export
   const handleExport = useCallback(() => {
@@ -810,6 +849,7 @@ export const PgnDefinitionTab = ({
                         <th>Name</th>
                         <th>Type</th>
                         <th>Size</th>
+                        <th>Offset</th>
                         <th>Unit</th>
                         <th>Resolution</th>
                         <th>Key</th>
@@ -847,6 +887,14 @@ export const PgnDefinitionTab = ({
                             </td>
                             <td>{field.FieldType || ''}</td>
                             <td>{field.BitLength || ''}</td>
+                            <td>
+                              <span 
+                                title={`Bit offset: ${field.BitOffset} bits`}
+                                style={{ fontSize: '0.9em' }}
+                              >
+                                {field.BitOffset}
+                              </span>
+                            </td>
                             <td>{field.Unit || ''}</td>
                             <td>{field.Resolution || ''}</td>
                             <td>{field.PartOfPrimaryKey ? 'Yes' : ''}</td>
@@ -927,7 +975,7 @@ export const PgnDefinitionTab = ({
                       </div>
 
                       <div className="row g-3">
-                        <div className="col-md-3">
+                        <div className="col-md-2">
                           <label className="form-label small fw-bold">Type</label>
                           <div>
                             {isEditing ? (
@@ -980,6 +1028,24 @@ export const PgnDefinitionTab = ({
                               />
                             ) : (
                               <span style={{ fontSize: '0.9em' }}>{getFieldSize(field)}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="col-md-2">
+                          <label className="form-label small fw-bold">Offset</label>
+                          <div>
+                            <span 
+                              style={{ fontSize: '0.9em' }} 
+                              className={isEditing ? 'text-muted' : ''}
+                              title={`Bit offset: ${field.BitOffset} bits`}
+                            >
+                              {field.BitOffset}
+                            </span>
+                            {isEditing && (
+                              <small className="d-block text-muted" style={{ fontSize: '0.7em' }}>
+                                Auto-calculated
+                              </small>
                             )}
                           </div>
                         </div>
