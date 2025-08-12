@@ -49,20 +49,37 @@ interface LoginStatus {
 
 const LOCALSTORAGE_KEY = 'visual_analyzer_settings'
 const ACTIVE_TAB_KEY = 'visual_analyzer_active_tab'
+const DATALIST_VISIBILITY_KEY = 'visual_analyzer_datalist_visible'
 
-const saveFilterSettings = (filter: Filter, doFiltering: boolean, filterOptions: FilterOptions) => {
+const saveFilterSettings = (
+  filter: Filter,
+  doFiltering: boolean,
+  filterOptions: FilterOptions,
+  showDataList?: boolean,
+) => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       const settings = {
         filter,
         doFiltering,
         filterOptions,
+        showDataList,
         lastSaved: new Date().toISOString(),
       }
       window.localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(settings))
     }
   } catch (e) {
     console.warn('Failed to save filter settings to localStorage:', e)
+  }
+}
+
+const saveDataListVisibility = (visible: boolean) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(DATALIST_VISIBILITY_KEY, JSON.stringify(visible))
+    }
+  } catch (e) {
+    console.warn('Failed to save DataList visibility to localStorage:', e)
   }
 }
 
@@ -85,6 +102,20 @@ const loadActiveTab = (): string | null => {
     console.warn('Failed to load active tab from localStorage:', e)
   }
   return null
+}
+
+const loadDataListVisibility = (): boolean => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = window.localStorage.getItem(DATALIST_VISIBILITY_KEY)
+      if (saved !== null) {
+        return JSON.parse(saved)
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load DataList visibility from localStorage:', e)
+  }
+  return true // Default to visible
 }
 
 const loadFilterSettings = (): { filter: Filter; doFiltering: boolean; filterOptions: FilterOptions } | null => {
@@ -225,12 +256,20 @@ const AppPanelInner = (props: any) => {
   const sentInfoReq: number[] = []
   const [outAvailable, setOutAvailable] = useState(false)
   const outAvailableRef = useRef(false)
+  const [showDataList, setShowDataList] = useState(() => loadDataListVisibility())
   let sentReqAll = false
 
   // Handler for tab changes with persistence
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId)
     saveActiveTab(tabId)
+  }
+
+  // Handler for DataList visibility toggle
+  const handleDataListToggle = () => {
+    const newVisibility = !showDataList
+    setShowDataList(newVisibility)
+    saveDataListVisibility(newVisibility)
   }
 
   // Make debugging functions available globally
@@ -324,7 +363,7 @@ const AppPanelInner = (props: any) => {
 
       initialParser.on('error', (pgn: any, error: any) => {
         console.error(`Error parsing ${pgn.pgn} ${error}`)
-        console.error(error.stack)
+        //console.error(error.stack)
       })
 
       setParser(initialParser)
@@ -892,7 +931,14 @@ const AppPanelInner = (props: any) => {
         </Nav>
 
         {/* Small connection status indicator */}
-        <div className="d-flex align-items-center">
+        <div className="d-flex align-items-center gap-2">
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            onClick={handleDataListToggle}
+            title={showDataList ? 'Hide DataList' : 'Show DataList'}
+          >
+            {showDataList ? '👁️ Hide List' : '👁️‍🗨️ Show List'}
+          </button>
           <span
             className={`badge ${connectionStatus.isConnected ? 'bg-success' : 'bg-danger'}`}
             title={connectionStatus.error || 'Connection status'}
@@ -918,33 +964,35 @@ const AppPanelInner = (props: any) => {
                   </Col>
                 </Row>
                 <Row>
-                  <Col xs="12" md="6">
-                    <DataList
-                      data={data}
-                      filter={filter}
-                      doFiltering={doFiltering}
-                      filterOptions={filterOptions}
-                      onRowClicked={(row: PGN) => {
-                        const rowKey = getRowKey(row, filterOptionsRef.current || undefined)
-                        setSelectedPgnKey(rowKey)
-                        selectedPgn.next(row)
-                        // Find the entry in the current list to get the history
-                        const entry = list[rowKey]
-                        if (entry) {
-                          selectedPgnWithHistory.next({
-                            current: row,
-                            history: entry.history,
-                          })
-                        } else {
-                          selectedPgnWithHistory.next({
-                            current: row,
-                            history: [],
-                          })
-                        }
-                      }}
-                    />
-                  </Col>
-                  <Col xs="12" md="6">
+                  {showDataList && (
+                    <Col xs="12" md="6">
+                      <DataList
+                        data={data}
+                        filter={filter}
+                        doFiltering={doFiltering}
+                        filterOptions={filterOptions}
+                        onRowClicked={(row: PGN) => {
+                          const rowKey = getRowKey(row, filterOptionsRef.current || undefined)
+                          setSelectedPgnKey(rowKey)
+                          selectedPgn.next(row)
+                          // Find the entry in the current list to get the history
+                          const entry = list[rowKey]
+                          if (entry) {
+                            selectedPgnWithHistory.next({
+                              current: row,
+                              history: entry.history,
+                            })
+                          } else {
+                            selectedPgnWithHistory.next({
+                              current: row,
+                              history: [],
+                            })
+                          }
+                        }}
+                      />
+                    </Col>
+                  )}
+                  <Col xs="12" md={showDataList ? '6' : '12'}>
                     <SentencePanel
                       selectedPgn={selectedPgn}
                       selectedPgnWithHistory={selectedPgnWithHistory}

@@ -43,6 +43,7 @@ export interface ConnectionProfile {
   // File playback specific
   filePath?: string
   playbackSpeed?: number
+  loopPlayback?: boolean
 
   // Additional properties
   [key: string]: any

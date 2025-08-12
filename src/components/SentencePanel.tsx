@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 
-import { PGN, Definition } from '@canboat/ts-pgns'
+import {
+  PGN,
+  Definition,
+  Enumeration,
+  BitEnumeration,
+  updatePGN,
+  updateLookup,
+  updateBitLookup,
+} from '@canboat/ts-pgns'
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
 import { DeviceMap } from '../types'
@@ -39,7 +47,70 @@ interface SentencePanelProps {
   selectedPgn: Subject<PGN>
   selectedPgnWithHistory?: Subject<PGNDataEntry | null>
   info: Subject<DeviceMap>
+  onDefinitionsChanged?: (changedDefinitions: Set<string>) => void
 }
+
+// Global tracking for changed definitions across component instances
+const changedDefinitionsTracker = {
+  definitions: new Set<string>(),
+  lookups: new Set<string>(),
+  bitLookups: new Set<string>(),
+
+  addDefinition(pgnId: string) {
+    this.definitions.add(pgnId)
+    console.log(`Tracked definition change for PGN ID ${pgnId}. Total tracked: ${this.definitions.size}`)
+  },
+
+  addLookup(enumName: string, type: 'lookup' | 'bitlookup') {
+    if (type === 'lookup') {
+      this.lookups.add(enumName)
+    } else {
+      this.bitLookups.add(enumName)
+    }
+    console.log(`Tracked ${type} change for ${enumName}`)
+  },
+
+  getChangedDefinitions(): Set<string> {
+    return new Set(this.definitions)
+  },
+
+  getChangedLookups(): { lookups: Set<string>; bitLookups: Set<string> } {
+    return {
+      lookups: new Set(this.lookups),
+      bitLookups: new Set(this.bitLookups),
+    }
+  },
+
+  getAllChanges() {
+    return {
+      definitions: this.getChangedDefinitions(),
+      ...this.getChangedLookups(),
+    }
+  },
+
+  clearDefinition(pgnId: string) {
+    this.definitions.delete(pgnId)
+    console.log(`Cleared tracking for PGN ID ${pgnId}. Remaining: ${this.definitions.size}`)
+  },
+
+  clearLookup(enumName: string, type: 'lookup' | 'bitlookup') {
+    if (type === 'lookup') {
+      this.lookups.delete(enumName)
+    } else {
+      this.bitLookups.delete(enumName)
+    }
+  },
+
+  clearAll() {
+    this.definitions.clear()
+    this.lookups.clear()
+    this.bitLookups.clear()
+    console.log('Cleared all tracked changes')
+  },
+}
+
+// Export the tracker for external access
+export const definitionTracker = changedDefinitionsTracker
 
 const DATA_TAB_ID = 'data'
 const PGNDEF_TAB_ID = 'pgndef'
@@ -53,6 +124,13 @@ export const SentencePanel = (props: SentencePanelProps) => {
   const pgnData = useObservableState<PGN>(props.selectedPgn)
   const pgnWithHistory = useObservableState<PGNDataEntry | null>(props.selectedPgnWithHistory || new Subject())
   const info = useObservableState<DeviceMap>(props.info, {})
+
+  // Track when definitions change
+  const notifyDefinitionsChanged = useCallback(() => {
+    if (props.onDefinitionsChanged) {
+      props.onDefinitionsChanged(changedDefinitionsTracker.getChangedDefinitions())
+    }
+  }, [props.onDefinitionsChanged])
 
   const copyPgnData = async () => {
     if (pgnData) {
@@ -81,6 +159,118 @@ export const SentencePanel = (props: SentencePanelProps) => {
       }
     }
   }
+
+  const handleDefinitionSave = async (updatedDefinition: Definition) => {
+    try {
+      // Track this definition as changed using the PGN Id
+      changedDefinitionsTracker.addDefinition(updatedDefinition.Id)
+      notifyDefinitionsChanged()
+
+      // Here you would typically save the updated definition to a backend or local storage
+      // For now, we'll just copy it to clipboard as JSON
+      const definitionJson = JSON.stringify(updatedDefinition, null, 2)
+      await navigator.clipboard.writeText(definitionJson)
+
+      // You could also show a toast notification
+      console.log('Definition saved to clipboard:', updatedDefinition)
+
+      updatePGN(updatedDefinition)
+
+      // In a real application, you might want to:
+      // 1. Send to a REST API endpoint
+      // 2. Save to local storage
+      // 3. Update a global state management store
+      // 4. Emit an event to parent components
+    } catch (err) {
+      console.error('Failed to save definition:', err)
+    }
+  }
+
+  const handleDefinitionExport = async (definition: Definition) => {
+    try {
+      const definitionJson = JSON.stringify(definition, null, 2)
+
+      // Try to save as a file if possible, otherwise copy to clipboard
+      if ('showSaveFilePicker' in window) {
+        try {
+          const fileHandle = await (window as any).showSaveFilePicker({
+            suggestedName: `pgn_${definition.PGN}_${definition.Id}.json`,
+            types: [
+              {
+                description: 'JSON files',
+                accept: { 'application/json': ['.json'] },
+              },
+            ],
+          })
+
+          const writable = await fileHandle.createWritable()
+          await writable.write(definitionJson)
+          await writable.close()
+
+          console.log('Definition exported to file:', definition.Id)
+          return
+        } catch (exportErr: any) {
+          // User cancelled file picker or other error, fall back to clipboard
+          if (exportErr.name !== 'AbortError') {
+            console.warn('File picker failed, falling back to clipboard:', exportErr)
+          }
+        }
+      }
+
+      // Fallback to clipboard
+      await navigator.clipboard.writeText(definitionJson)
+      console.log('Definition exported to clipboard:', definition.Id)
+
+      // You could show a toast notification here if you have a toast system
+      alert('PGN definition exported to clipboard!')
+    } catch (err) {
+      console.error('Failed to export definition:', err)
+      alert('Failed to export definition. Please try again.')
+    }
+  }
+
+  const handleLookupSave = useCallback(
+    (enumName: string, lookupType: 'lookup' | 'bitlookup', lookupValues: { key: string; value: string }[]) => {
+      if (!enumName) {
+        console.warn('No enumeration name provided for lookup save')
+        return
+      }
+
+      try {
+        // Track this lookup as changed
+        changedDefinitionsTracker.addLookup(enumName, lookupType)
+
+        if (lookupType === 'lookup') {
+          // Create regular enumeration from lookup values
+          const enumeration: Enumeration = {
+            Name: enumName,
+            MaxValue: Math.max(...lookupValues.map((lv) => parseInt(lv.key, 10))),
+            EnumValues: lookupValues.map((lv) => ({
+              Name: lv.value,
+              Value: parseInt(lv.key, 10),
+            })),
+          }
+          updateLookup(enumeration)
+        } else {
+          // Create bit enumeration from lookup values
+          const bitEnumeration: BitEnumeration = {
+            Name: enumName,
+            MaxValue: Math.max(...lookupValues.map((lv) => parseInt(lv.key, 10))),
+            EnumBitValues: lookupValues.map((lv) => ({
+              Name: lv.value,
+              Bit: parseInt(lv.key, 10),
+            })),
+          }
+          updateBitLookup(bitEnumeration)
+        }
+
+        console.log(`Successfully updated ${lookupType} enumeration: ${enumName}`)
+      } catch (error) {
+        console.error(`Failed to save ${lookupType} enumeration:`, error)
+      }
+    },
+    [],
+  )
 
   if (pgnData === undefined || pgnData === null) {
     return <div>Select a PGN to view its data</div>
@@ -171,7 +361,16 @@ export const SentencePanel = (props: SentencePanelProps) => {
           <TabPane tabId={PGNDEF_TAB_ID}>
             <Card>
               <CardBody style={{ padding: 0 }}>
-                <PgnDefinitionTab definition={definition} />
+                <PgnDefinitionTab
+                  key={pgnData.pgn}
+                  definition={definition}
+                  pgnData={pgnData}
+                  onSave={handleDefinitionSave}
+                  onLookupSave={handleLookupSave}
+                  hasBeenChanged={changedDefinitionsTracker.definitions.has(definition.Id)}
+                  onExport={handleDefinitionExport}
+                  changedLookups={changedDefinitionsTracker.getChangedLookups()}
+                />
               </CardBody>
             </Card>
           </TabPane>

@@ -62,7 +62,7 @@ const calculatePgnRate = (current: PGN, history: PGN[]): number | null => {
   // Rate = 1 / average interval (messages per second)
   const rate = 1 / movingAvgInterval
 
-  return parseFloat(rate.toFixed(2))
+  return parseFloat(rate.toFixed(1))
 }
 
 export const HumanReadableTab = ({ pgnData, definition, pgnHistory = [] }: HumanReadableTabProps) => {
