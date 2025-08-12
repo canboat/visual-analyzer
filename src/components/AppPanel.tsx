@@ -51,7 +51,12 @@ const LOCALSTORAGE_KEY = 'visual_analyzer_settings'
 const ACTIVE_TAB_KEY = 'visual_analyzer_active_tab'
 const DATALIST_VISIBILITY_KEY = 'visual_analyzer_datalist_visible'
 
-const saveFilterSettings = (filter: Filter, doFiltering: boolean, filterOptions: FilterOptions, showDataList?: boolean) => {
+const saveFilterSettings = (
+  filter: Filter,
+  doFiltering: boolean,
+  filterOptions: FilterOptions,
+  showDataList?: boolean,
+) => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       const settings = {
@@ -987,7 +992,7 @@ const AppPanelInner = (props: any) => {
                       />
                     </Col>
                   )}
-                  <Col xs="12" md={showDataList ? "6" : "12"}>
+                  <Col xs="12" md={showDataList ? '6' : '12'}>
                     <SentencePanel
                       selectedPgn={selectedPgn}
                       selectedPgnWithHistory={selectedPgnWithHistory}
