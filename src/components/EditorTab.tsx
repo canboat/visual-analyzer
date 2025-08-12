@@ -16,6 +16,17 @@
 
 import React, { useState } from 'react'
 import { Card, CardBody, Nav, NavItem, NavLink, TabContent, TabPane, Container, Row, Col } from 'reactstrap'
+import {
+  PGN,
+  Definition,
+  EnumBase,
+  Enumeration,
+  BitEnumeration,
+  updatePGN,
+  updateLookup,
+  updateBitLookup,
+  removePGN,
+} from '@canboat/ts-pgns'
 
 const PGN_DEFINITIONS_TAB = 'pgn-definitions'
 const LOOKUPS_TAB = 'lookups'
@@ -23,6 +34,80 @@ const BIT_LOOKUPS_TAB = 'bit-lookups'
 
 interface EditorTabProps {
   isEmbedded?: boolean
+}
+
+type DefinitionMap = {
+  [key: string]: Definition
+}
+
+type EnumerationMap = {
+  [key: string]: Enumeration
+}
+
+type BitEnumerationMap = {
+  [key: string]: BitEnumeration
+}
+
+export const changedDefinitionsTracker = {
+  definitions: {} as DefinitionMap,
+  lookups: {} as EnumerationMap,
+  bitLookups: {} as BitEnumerationMap,
+
+  addDefinition(definition: Definition) {
+    this.definitions[definition.Id] = definition
+    console.log(`Tracked definition change for PGN ID ${definition.Id}. Total tracked: ${Object.keys(this.definitions).length}`)
+  },
+
+  hasDefinition(pgnId: string): boolean {
+    return this.definitions.hasOwnProperty(pgnId)
+  },
+
+  clearDefinition(pgnId: string) {
+    delete this.definitions[pgnId]
+    console.log(`Removed tracking for PGN ID ${pgnId}. Remaining: ${Object.keys(this.definitions).length}`)
+  },
+
+  addLookup(enumeration: EnumBase) {
+    if ((enumeration as Enumeration).EnumValues) {
+      this.lookups[enumeration.Name] = enumeration as Enumeration
+    } else {
+      this.bitLookups[enumeration.Name] = enumeration as BitEnumeration
+    }
+    console.log(`Tracked change for ${enumeration.Name}`)
+  },
+
+  getChangedDefinitions(): Set<string> {
+    return new Set(Object.keys(this.definitions))
+  },
+
+  getChangedLookups(): { lookups: Set<string>; bitLookups: Set<string> } {
+    return {
+      lookups: new Set(Object.keys(this.lookups)),
+      bitLookups: new Set(Object.keys(this.bitLookups)),
+    }
+  },
+
+  getAllChanges() {
+    return {
+      definitions: this.getChangedDefinitions(),
+      ...this.getChangedLookups(),
+    }
+  },
+
+  clearLookup(enumName: string, type: 'lookup' | 'bitlookup') {
+    if (type === 'lookup') {
+      delete this.lookups[enumName]
+    } else {
+      this.bitLookups[enumName]
+    }
+  },
+
+  clearAll() {
+    this.definitions = {}
+    this.lookups = {}
+    this.bitLookups = {}
+    console.log('Cleared all tracked changes')
+  },
 }
 
 const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false }) => {

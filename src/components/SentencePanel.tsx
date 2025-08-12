@@ -29,6 +29,7 @@ import {
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
 import { DeviceMap } from '../types'
+import { changedDefinitionsTracker } from './EditorTab'
 import { Nav, NavItem, NavLink, TabContent, TabPane, Card, CardBody, CardHeader } from 'reactstrap'
 
 // Import the separated tab components
@@ -50,77 +51,6 @@ interface SentencePanelProps {
   info: Subject<DeviceMap>
   onDefinitionsChanged?: (changedDefinitions: Set<string>) => void
 }
-
-// Global tracking for changed definitions across component instances
-const changedDefinitionsTracker = {
-  definitions: new Set<string>(),
-  lookups: new Set<string>(),
-  bitLookups: new Set<string>(),
-
-  addDefinition(pgnId: string) {
-    this.definitions.add(pgnId)
-    console.log(`Tracked definition change for PGN ID ${pgnId}. Total tracked: ${this.definitions.size}`)
-  },
-
-  hasDefinition(pgnId: string): boolean {
-    return this.definitions.has(pgnId)
-  },
-
-  removeDefinition(pgnId: string) {
-    this.definitions.delete(pgnId)
-    console.log(`Removed tracking for PGN ID ${pgnId}. Remaining: ${this.definitions.size}`)
-  },
-
-  addLookup(enumName: string, type: 'lookup' | 'bitlookup') {
-    if (type === 'lookup') {
-      this.lookups.add(enumName)
-    } else {
-      this.bitLookups.add(enumName)
-    }
-    console.log(`Tracked ${type} change for ${enumName}`)
-  },
-
-  getChangedDefinitions(): Set<string> {
-    return new Set(this.definitions)
-  },
-
-  getChangedLookups(): { lookups: Set<string>; bitLookups: Set<string> } {
-    return {
-      lookups: new Set(this.lookups),
-      bitLookups: new Set(this.bitLookups),
-    }
-  },
-
-  getAllChanges() {
-    return {
-      definitions: this.getChangedDefinitions(),
-      ...this.getChangedLookups(),
-    }
-  },
-
-  clearDefinition(pgnId: string) {
-    this.definitions.delete(pgnId)
-    console.log(`Cleared tracking for PGN ID ${pgnId}. Remaining: ${this.definitions.size}`)
-  },
-
-  clearLookup(enumName: string, type: 'lookup' | 'bitlookup') {
-    if (type === 'lookup') {
-      this.lookups.delete(enumName)
-    } else {
-      this.bitLookups.delete(enumName)
-    }
-  },
-
-  clearAll() {
-    this.definitions.clear()
-    this.lookups.clear()
-    this.bitLookups.clear()
-    console.log('Cleared all tracked changes')
-  },
-}
-
-// Export the tracker for external access
-export const definitionTracker = changedDefinitionsTracker
 
 const DATA_TAB_ID = 'data'
 const PGNDEF_TAB_ID = 'pgndef'
@@ -172,19 +102,25 @@ export const SentencePanel = (props: SentencePanelProps) => {
 
   const handleDefinitionSave = async (updatedDefinition: Definition) => {
     try {
-      // Track this definition as changed using the PGN Id
+      // Track this definition as changed us`ing the PGN Id
 
-      let definition = pgnData?.getDefinition()
-
-      if (definition && changedDefinitionsTracker.hasDefinition(definition.Id)) {
-        if (definition.Id !== updatedDefinition.Id) {
-          changedDefinitionsTracker.removeDefinition(definition.Id)
-          removePGN(definition)
-        }
-
-        changedDefinitionsTracker.addDefinition(updatedDefinition.Id)
+      if ( !pgnData ) {
+        return
       }
-      notifyDefinitionsChanged()
+
+      let definition = pgnData.getDefinition()
+
+      if (changedDefinitionsTracker.hasDefinition(definition.Id)) {
+        if (definition.Id !== updatedDefinition.Id) {
+          changedDefinitionsTracker.clearDefinition(definition.Id)
+          removePGN(definition)
+          changedDefinitionsTracker.addDefinition(updatedDefinition)
+        }
+      } else {
+        changedDefinitionsTracker.addDefinition(updatedDefinition)
+      }
+
+      notifyDefinitionsChanged
 
       updatePGN(updatedDefinition)
     } catch (err) {
@@ -243,8 +179,6 @@ export const SentencePanel = (props: SentencePanelProps) => {
       }
 
       try {
-        // Track this lookup as changed
-        changedDefinitionsTracker.addLookup(enumName, lookupType)
 
         if (lookupType === 'lookup') {
           // Create regular enumeration from lookup values
@@ -256,6 +190,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
               Value: parseInt(lv.key, 10),
             })),
           }
+          changedDefinitionsTracker.addLookup(enumeration)
           updateLookup(enumeration)
         } else {
           // Create bit enumeration from lookup values
@@ -267,6 +202,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
               Bit: parseInt(lv.key, 10),
             })),
           }
+          changedDefinitionsTracker.addLookup(bitEnumeration)
           updateBitLookup(bitEnumeration)
         }
 
@@ -373,7 +309,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
                   pgnData={pgnData}
                   onSave={handleDefinitionSave}
                   onLookupSave={handleLookupSave}
-                  hasBeenChanged={changedDefinitionsTracker.definitions.has(definition.Id)}
+                  hasBeenChanged={changedDefinitionsTracker.hasDefinition(definition.Id)}
                   onExport={handleDefinitionExport}
                   changedLookups={changedDefinitionsTracker.getChangedLookups()}
                 />
