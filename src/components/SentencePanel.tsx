@@ -24,6 +24,7 @@ import {
   updatePGN,
   updateLookup,
   updateBitLookup,
+  removePGN,
 } from '@canboat/ts-pgns'
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
@@ -59,6 +60,15 @@ const changedDefinitionsTracker = {
   addDefinition(pgnId: string) {
     this.definitions.add(pgnId)
     console.log(`Tracked definition change for PGN ID ${pgnId}. Total tracked: ${this.definitions.size}`)
+  },
+
+  hasDefinition(pgnId: string): boolean {
+    return this.definitions.has(pgnId)
+  },
+
+  removeDefinition(pgnId: string) {
+    this.definitions.delete(pgnId)
+    console.log(`Removed tracking for PGN ID ${pgnId}. Remaining: ${this.definitions.size}`)
   },
 
   addLookup(enumName: string, type: 'lookup' | 'bitlookup') {
@@ -163,24 +173,20 @@ export const SentencePanel = (props: SentencePanelProps) => {
   const handleDefinitionSave = async (updatedDefinition: Definition) => {
     try {
       // Track this definition as changed using the PGN Id
-      changedDefinitionsTracker.addDefinition(updatedDefinition.Id)
+
+      let definition = pgnData?.getDefinition()
+
+      if (definition && changedDefinitionsTracker.hasDefinition(definition.Id)) {
+        if (definition.Id !== updatedDefinition.Id) {
+          changedDefinitionsTracker.removeDefinition(definition.Id)
+          removePGN(definition)
+        }
+
+        changedDefinitionsTracker.addDefinition(updatedDefinition.Id)
+      }
       notifyDefinitionsChanged()
 
-      // Here you would typically save the updated definition to a backend or local storage
-      // For now, we'll just copy it to clipboard as JSON
-      const definitionJson = JSON.stringify(updatedDefinition, null, 2)
-      await navigator.clipboard.writeText(definitionJson)
-
-      // You could also show a toast notification
-      console.log('Definition saved to clipboard:', updatedDefinition)
-
       updatePGN(updatedDefinition)
-
-      // In a real application, you might want to:
-      // 1. Send to a REST API endpoint
-      // 2. Save to local storage
-      // 3. Update a global state management store
-      // 4. Emit an event to parent components
     } catch (err) {
       console.error('Failed to save definition:', err)
     }

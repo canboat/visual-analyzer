@@ -25,7 +25,7 @@ import {
   generateBitLookupHeaderEntry,
   generateLookupHeaderEntry,
   ManufacturerCodeValues,
-  IndustryCodeValues
+  IndustryCodeValues,
 } from '@canboat/ts-pgns'
 import { Table, Badge, Row, Col, Button, Input, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
 
@@ -72,7 +72,7 @@ export const PgnDefinitionTab = ({
       const newDef = {
         ...definition,
         PGN: pgnData.pgn,
-        Fallback: false
+        Fallback: false,
       }
 
       setEditedDefinition(newDef)
@@ -153,7 +153,7 @@ export const PgnDefinitionTab = ({
   // Helper function to calculate BitOffsets for all fields
   const calculateBitOffsets = useCallback((fields: Field[]): Field[] => {
     let currentBitOffset = 0
-    
+
     return fields.map((field, index) => {
       const updatedField = { ...field, BitOffset: currentBitOffset }
       currentBitOffset += field.BitLength || 0
@@ -177,25 +177,28 @@ export const PgnDefinitionTab = ({
   }, [])
 
   // Update a specific field
-  const updateField = useCallback((index: number, updates: Partial<Field>) => {
-    setEditedDefinition((prev) => {
-      const updatedFields = (prev.Fields || []).map((field, i) => (i === index ? { ...field, ...updates } : field))
-      
-      // Recalculate BitOffsets if BitLength was updated
-      if ('BitLength' in updates) {
-        const fieldsWithCalculatedOffsets = calculateBitOffsets(updatedFields)
+  const updateField = useCallback(
+    (index: number, updates: Partial<Field>) => {
+      setEditedDefinition((prev) => {
+        const updatedFields = (prev.Fields || []).map((field, i) => (i === index ? { ...field, ...updates } : field))
+
+        // Recalculate BitOffsets if BitLength was updated
+        if ('BitLength' in updates) {
+          const fieldsWithCalculatedOffsets = calculateBitOffsets(updatedFields)
+          return {
+            ...prev,
+            Fields: fieldsWithCalculatedOffsets,
+          }
+        }
+
         return {
           ...prev,
-          Fields: fieldsWithCalculatedOffsets,
+          Fields: updatedFields,
         }
-      }
-      
-      return {
-        ...prev,
-        Fields: updatedFields,
-      }
-    })
-  }, [calculateBitOffsets])
+      })
+    },
+    [calculateBitOffsets],
+  )
 
   // Add a new field
   const addField = useCallback(() => {
@@ -212,7 +215,7 @@ export const PgnDefinitionTab = ({
     }
     const updatedFields = [...currentFields, newField]
     const fieldsWithCalculatedOffsets = calculateBitOffsets(updatedFields)
-    
+
     setEditedDefinition((prev) => ({
       ...prev,
       Fields: fieldsWithCalculatedOffsets,
@@ -220,31 +223,37 @@ export const PgnDefinitionTab = ({
   }, [editedDefinition.Fields, calculateBitOffsets])
 
   // Remove a field
-  const removeField = useCallback((index: number) => {
-    const updatedFields = (editedDefinition.Fields || []).filter((_, i) => i !== index)
-    const fieldsWithCalculatedOffsets = calculateBitOffsets(updatedFields)
-    
-    setEditedDefinition((prev) => ({
-      ...prev,
-      Fields: fieldsWithCalculatedOffsets,
-    }))
-  }, [editedDefinition.Fields, calculateBitOffsets])
+  const removeField = useCallback(
+    (index: number) => {
+      const updatedFields = (editedDefinition.Fields || []).filter((_, i) => i !== index)
+      const fieldsWithCalculatedOffsets = calculateBitOffsets(updatedFields)
 
-  // Move field to new position
-  const moveField = useCallback((fromIndex: number, toIndex: number) => {
-    setEditedDefinition((prev) => {
-      const currentFields = prev.Fields || []
-      const newFields = [...currentFields]
-      const [movedField] = newFields.splice(fromIndex, 1)
-      newFields.splice(toIndex, 0, movedField)
-      const fieldsWithCalculatedOffsets = calculateBitOffsets(newFields)
-      
-      return {
+      setEditedDefinition((prev) => ({
         ...prev,
         Fields: fieldsWithCalculatedOffsets,
-      }
-    })
-  }, [calculateBitOffsets])
+      }))
+    },
+    [editedDefinition.Fields, calculateBitOffsets],
+  )
+
+  // Move field to new position
+  const moveField = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      setEditedDefinition((prev) => {
+        const currentFields = prev.Fields || []
+        const newFields = [...currentFields]
+        const [movedField] = newFields.splice(fromIndex, 1)
+        newFields.splice(toIndex, 0, movedField)
+        const fieldsWithCalculatedOffsets = calculateBitOffsets(newFields)
+
+        return {
+          ...prev,
+          Fields: fieldsWithCalculatedOffsets,
+        }
+      })
+    },
+    [calculateBitOffsets],
+  )
 
   // Lookup editing functions
   const openLookupEditor = useCallback(
@@ -383,7 +392,7 @@ export const PgnDefinitionTab = ({
     const newDef = {
       ...definition,
       PGN: pgnData.pgn,
-      Fallback: false
+      Fallback: false,
     }
 
     if (definition.Fallback) {
@@ -398,12 +407,12 @@ export const PgnDefinitionTab = ({
         newDef.Fields[2].Match = IndustryCodeValues[(pgnData.fields as any).industryCode] || undefined
       }
     }
-    
+
     // Ensure BitOffsets are calculated for existing fields
     if (newDef.Fields && newDef.Fields.length > 0) {
       newDef.Fields = calculateBitOffsets(newDef.Fields)
     }
-    
+
     setEditedDefinition(newDef)
     setIsEditing(true)
   }, [definition, calculateBitOffsets])
@@ -888,10 +897,7 @@ export const PgnDefinitionTab = ({
                             <td>{field.FieldType || ''}</td>
                             <td>{field.BitLength || ''}</td>
                             <td>
-                              <span 
-                                title={`Bit offset: ${field.BitOffset} bits`}
-                                style={{ fontSize: '0.9em' }}
-                              >
+                              <span title={`Bit offset: ${field.BitOffset} bits`} style={{ fontSize: '0.9em' }}>
                                 {field.BitOffset}
                               </span>
                             </td>
@@ -1035,8 +1041,8 @@ export const PgnDefinitionTab = ({
                         <div className="col-md-2">
                           <label className="form-label small fw-bold">Offset</label>
                           <div>
-                            <span 
-                              style={{ fontSize: '0.9em' }} 
+                            <span
+                              style={{ fontSize: '0.9em' }}
                               className={isEditing ? 'text-muted' : ''}
                               title={`Bit offset: ${field.BitOffset} bits`}
                             >
