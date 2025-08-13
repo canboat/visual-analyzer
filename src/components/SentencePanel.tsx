@@ -24,10 +24,12 @@ import {
   updatePGN,
   updateLookup,
   updateBitLookup,
+  removePGN,
 } from '@canboat/ts-pgns'
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
 import { DeviceMap } from '../types'
+import { changedDefinitionsTracker, saveDefinition } from './EditorTab'
 import { Nav, NavItem, NavLink, TabContent, TabPane, Card, CardBody, CardHeader } from 'reactstrap'
 
 // Import the separated tab components
@@ -46,71 +48,12 @@ type PGNDataEntry = {
 interface SentencePanelProps {
   selectedPgn: Subject<PGN>
   selectedPgnWithHistory?: Subject<PGNDataEntry | null>
+  definition?: Definition
   info: Subject<DeviceMap>
   onDefinitionsChanged?: (changedDefinitions: Set<string>) => void
+  onDefinitionSave?: (definition: Definition) => void
+  inEditingTab?: boolean
 }
-
-// Global tracking for changed definitions across component instances
-const changedDefinitionsTracker = {
-  definitions: new Set<string>(),
-  lookups: new Set<string>(),
-  bitLookups: new Set<string>(),
-
-  addDefinition(pgnId: string) {
-    this.definitions.add(pgnId)
-    console.log(`Tracked definition change for PGN ID ${pgnId}. Total tracked: ${this.definitions.size}`)
-  },
-
-  addLookup(enumName: string, type: 'lookup' | 'bitlookup') {
-    if (type === 'lookup') {
-      this.lookups.add(enumName)
-    } else {
-      this.bitLookups.add(enumName)
-    }
-    console.log(`Tracked ${type} change for ${enumName}`)
-  },
-
-  getChangedDefinitions(): Set<string> {
-    return new Set(this.definitions)
-  },
-
-  getChangedLookups(): { lookups: Set<string>; bitLookups: Set<string> } {
-    return {
-      lookups: new Set(this.lookups),
-      bitLookups: new Set(this.bitLookups),
-    }
-  },
-
-  getAllChanges() {
-    return {
-      definitions: this.getChangedDefinitions(),
-      ...this.getChangedLookups(),
-    }
-  },
-
-  clearDefinition(pgnId: string) {
-    this.definitions.delete(pgnId)
-    console.log(`Cleared tracking for PGN ID ${pgnId}. Remaining: ${this.definitions.size}`)
-  },
-
-  clearLookup(enumName: string, type: 'lookup' | 'bitlookup') {
-    if (type === 'lookup') {
-      this.lookups.delete(enumName)
-    } else {
-      this.bitLookups.delete(enumName)
-    }
-  },
-
-  clearAll() {
-    this.definitions.clear()
-    this.lookups.clear()
-    this.bitLookups.clear()
-    console.log('Cleared all tracked changes')
-  },
-}
-
-// Export the tracker for external access
-export const definitionTracker = changedDefinitionsTracker
 
 const DATA_TAB_ID = 'data'
 const PGNDEF_TAB_ID = 'pgndef'
@@ -137,7 +80,8 @@ export const SentencePanel = (props: SentencePanelProps) => {
       try {
         const dataToSave = JSON.stringify(
           pgnData,
-          (key, value) => (key === 'input' || key === 'rawData' || key === 'byteMapping' ? undefined : value),
+          (key, value) =>
+            key === 'input' || key === 'rawData' || key === 'byteMapping' || key === 'definition' ? undefined : value,
           2,
         )
         await navigator.clipboard.writeText(dataToSave)
@@ -162,25 +106,19 @@ export const SentencePanel = (props: SentencePanelProps) => {
 
   const handleDefinitionSave = async (updatedDefinition: Definition) => {
     try {
-      // Track this definition as changed using the PGN Id
-      changedDefinitionsTracker.addDefinition(updatedDefinition.Id)
+      // Track this definition as changed us`ing the PGN Id
+
+      if (!pgnData) {
+        return
+      }
+
+      saveDefinition(updatedDefinition, pgnData)
+
       notifyDefinitionsChanged()
 
-      // Here you would typically save the updated definition to a backend or local storage
-      // For now, we'll just copy it to clipboard as JSON
-      const definitionJson = JSON.stringify(updatedDefinition, null, 2)
-      await navigator.clipboard.writeText(definitionJson)
-
-      // You could also show a toast notification
-      console.log('Definition saved to clipboard:', updatedDefinition)
-
-      updatePGN(updatedDefinition)
-
-      // In a real application, you might want to:
-      // 1. Send to a REST API endpoint
-      // 2. Save to local storage
-      // 3. Update a global state management store
-      // 4. Emit an event to parent components
+      if (props.onDefinitionSave) {
+        props.onDefinitionSave(updatedDefinition)
+      }
     } catch (err) {
       console.error('Failed to save definition:', err)
     }
@@ -229,6 +167,23 @@ export const SentencePanel = (props: SentencePanelProps) => {
     }
   }
 
+  const handleInputDataChange = useCallback(
+    (newInput: string[]) => {
+      if (pgnData && props.definition) {
+        // Update the PGN data with new input
+        //pgnData.input = newInput
+        // Trigger any necessary updates
+        //props.selectedPgn.next(pgnData)
+        //(props.definition as any).sampleData = newInput
+        pgnData.input = newInput
+        if (props.onDefinitionSave) {
+          props.onDefinitionSave(props.definition)
+        }
+      }
+    },
+    [pgnData, props.selectedPgn],
+  )
+
   const handleLookupSave = useCallback(
     (enumName: string, lookupType: 'lookup' | 'bitlookup', lookupValues: { key: string; value: string }[]) => {
       if (!enumName) {
@@ -237,9 +192,6 @@ export const SentencePanel = (props: SentencePanelProps) => {
       }
 
       try {
-        // Track this lookup as changed
-        changedDefinitionsTracker.addLookup(enumName, lookupType)
-
         if (lookupType === 'lookup') {
           // Create regular enumeration from lookup values
           const enumeration: Enumeration = {
@@ -250,6 +202,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
               Value: parseInt(lv.key, 10),
             })),
           }
+          changedDefinitionsTracker.addLookup(enumeration)
           updateLookup(enumeration)
         } else {
           // Create bit enumeration from lookup values
@@ -261,6 +214,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
               Bit: parseInt(lv.key, 10),
             })),
           }
+          changedDefinitionsTracker.addLookup(bitEnumeration)
           updateBitLookup(bitEnumeration)
         }
 
@@ -276,13 +230,14 @@ export const SentencePanel = (props: SentencePanelProps) => {
     return <div>Select a PGN to view its data</div>
   }
 
-  let definition: Definition = pgnData.getDefinition()
+  //let definition: Definition = pgnData.getDefinition()
+  let definition = props.definition || pgnData.getDefinition()
   //console.debug('pgnData', pgnData)
   return (
     <div
       style={{
         width: '100%',
-        height: '600px',
+        height: '100%',
         overflow: 'auto',
         display: 'flex',
         flexDirection: 'column',
@@ -302,13 +257,11 @@ export const SentencePanel = (props: SentencePanelProps) => {
             JSON
           </NavLink>
         </NavItem>
-        {pgnData.input && pgnData.input.length > 0 && (
-          <NavItem>
-            <NavLink className={activeTab === INPUT_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(INPUT_TAB_ID)}>
-              Input
-            </NavLink>
-          </NavItem>
-        )}
+        <NavItem>
+          <NavLink className={activeTab === INPUT_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(INPUT_TAB_ID)}>
+            Input
+          </NavLink>
+        </NavItem>
         {info[pgnData.src!]?.info && (
           <NavItem>
             <NavLink
@@ -319,11 +272,16 @@ export const SentencePanel = (props: SentencePanelProps) => {
             </NavLink>
           </NavItem>
         )}
-        <NavItem>
-          <NavLink className={activeTab === PGNDEF_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(PGNDEF_TAB_ID)}>
-            Definition
-          </NavLink>
-        </NavItem>
+        {!props.inEditingTab && (
+          <NavItem>
+            <NavLink
+              className={activeTab === PGNDEF_TAB_ID ? 'active ' : ''}
+              onClick={() => setActiveTab(PGNDEF_TAB_ID)}
+            >
+              Definition
+            </NavLink>
+          </NavItem>
+        )}
         <NavItem>
           <NavLink
             className={activeTab === MAPPING_TAB_ID ? 'active ' : ''}
@@ -348,16 +306,19 @@ export const SentencePanel = (props: SentencePanelProps) => {
             </CardBody>
           </Card>
         </TabPane>
-        {pgnData.input && pgnData.input.length > 0 && (
-          <TabPane tabId={INPUT_TAB_ID}>
-            <Card>
-              <CardBody style={{ padding: 0 }}>
-                <InputDataTab pgnData={pgnData} onCopyInput={copyInputData} />
-              </CardBody>
-            </Card>
-          </TabPane>
-        )}
-        {definition !== undefined && (
+        <TabPane tabId={INPUT_TAB_ID}>
+          <Card>
+            <CardBody style={{ padding: 0 }}>
+              <InputDataTab
+                pgnData={pgnData}
+                onCopyInput={copyInputData}
+                isEditing={props.inEditingTab}
+                onInputChange={handleInputDataChange}
+              />
+            </CardBody>
+          </Card>
+        </TabPane>
+        {definition !== undefined && !props.inEditingTab && (
           <TabPane tabId={PGNDEF_TAB_ID}>
             <Card>
               <CardBody style={{ padding: 0 }}>
@@ -366,8 +327,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
                   definition={definition}
                   pgnData={pgnData}
                   onSave={handleDefinitionSave}
-                  onLookupSave={handleLookupSave}
-                  hasBeenChanged={changedDefinitionsTracker.definitions.has(definition.Id)}
+                  hasBeenChanged={changedDefinitionsTracker.hasDefinition(definition.Id)}
                   onExport={handleDefinitionExport}
                   changedLookups={changedDefinitionsTracker.getChangedLookups()}
                 />
