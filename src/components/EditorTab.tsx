@@ -15,7 +15,20 @@
  */
 
 import React, { useState } from 'react'
-import { Card, CardBody, Nav, NavItem, NavLink, TabContent, TabPane, Container, Row, Col, Button, Table } from 'reactstrap'
+import {
+  Card,
+  CardBody,
+  Nav,
+  NavItem,
+  NavLink,
+  TabContent,
+  TabPane,
+  Container,
+  Row,
+  Col,
+  Button,
+  Table,
+} from 'reactstrap'
 import {
   PGN,
   Definition,
@@ -62,14 +75,14 @@ export const changedDefinitionsTracker = {
   _storageKeys: {
     definitions: 'changedDefinitionsTracker_definitions',
     lookups: 'changedDefinitionsTracker_lookups',
-    bitLookups: 'changedDefinitionsTracker_bitLookups'
+    bitLookups: 'changedDefinitionsTracker_bitLookups',
   },
 
   // In-memory cache
   _cache: {
     definitions: null as DefinitionMap | null,
     lookups: null as EnumerationMap | null,
-    bitLookups: null as BitEnumerationMap | null
+    bitLookups: null as BitEnumerationMap | null,
   },
 
   // Load from local storage with error handling
@@ -96,7 +109,7 @@ export const changedDefinitionsTracker = {
   get definitions(): DefinitionMap {
     if (this._cache.definitions === null) {
       this._cache.definitions = this._loadFromStorage(this._storageKeys.definitions, {})
-      Object.values(this._cache.definitions).forEach(def => {
+      Object.values(this._cache.definitions).forEach((def) => {
         updatePGN(def)
       })
     }
@@ -106,7 +119,7 @@ export const changedDefinitionsTracker = {
   get lookups(): EnumerationMap {
     if (this._cache.lookups === null) {
       this._cache.lookups = this._loadFromStorage(this._storageKeys.lookups, {})
-      Object.values(this._cache.lookups).forEach(enumItem => {
+      Object.values(this._cache.lookups).forEach((enumItem) => {
         updateLookup(enumItem)
       })
     }
@@ -116,7 +129,7 @@ export const changedDefinitionsTracker = {
   get bitLookups(): BitEnumerationMap {
     if (this._cache.bitLookups === null) {
       this._cache.bitLookups = this._loadFromStorage(this._storageKeys.bitLookups, {})
-      Object.values(this._cache.bitLookups).forEach(bitEnumItem => {
+      Object.values(this._cache.bitLookups).forEach((bitEnumItem) => {
         updateBitLookup(bitEnumItem)
       })
     }
@@ -126,7 +139,9 @@ export const changedDefinitionsTracker = {
   addDefinition(definition: Definition) {
     this.definitions[definition.Id] = definition
     this._saveToStorage(this._storageKeys.definitions, this.definitions)
-    console.log(`Tracked definition change for PGN ID ${definition.Id}. Total tracked: ${Object.keys(this.definitions).length}`)
+    console.log(
+      `Tracked definition change for PGN ID ${definition.Id}. Total tracked: ${Object.keys(this.definitions).length}`,
+    )
   },
 
   hasDefinition(pgnId: string): boolean {
@@ -201,22 +216,24 @@ export const changedDefinitionsTracker = {
     this._cache.definitions = {}
     this._cache.lookups = {}
     this._cache.bitLookups = {}
-    
+
     // Clear local storage
     this._saveToStorage(this._storageKeys.definitions, {})
     this._saveToStorage(this._storageKeys.lookups, {})
     this._saveToStorage(this._storageKeys.bitLookups, {})
-    
+
     console.log('Cleared all tracked changes')
   },
 }
 
-export const saveDefinition = (updatedDefinition: Definition, pgnData: PGN) => {
-  let definition = pgnData.getDefinition()
+export const saveDefinition = (updatedDefinition: Definition, pgnData?: PGN) => {
+  let definition = pgnData?.getDefinition()
 
-  ; (updatedDefinition as any).sampleData = pgnData.input
+  if (pgnData !== undefined) {
+    ;(updatedDefinition as any).sampleData = pgnData.input
+  }
 
-  if (changedDefinitionsTracker.hasDefinition(definition.Id)) {
+  if (definition !== undefined && changedDefinitionsTracker.hasDefinition(definition.Id)) {
     if (definition.Id !== updatedDefinition.Id) {
       changedDefinitionsTracker.clearDefinition(definition.Id)
       removePGN(definition)
@@ -232,7 +249,7 @@ export const saveDefinition = (updatedDefinition: Definition, pgnData: PGN) => {
 const parser = new FromPgn({
   returnNulls: true,
   checkForInvalidFields: true,
-  useCamel: true, 
+  useCamel: true,
   useCamelCompat: false,
   returnNonMatches: true,
   createPGNObjects: true,
@@ -252,7 +269,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
   const [selectedPgnWithHistory] = useState(new ReplaySubject<{ current: PGN; history: PGN[] } | null>())
   const [selectedDefinitionId, setSelectedDefinitionId] = useState<string | null>(null)
   const [trackerVersion, setTrackerVersion] = useState(0) // Force re-renders when tracker changes
-  
+
   // Get the current PGN value for PgnDefinitionTab
   const currentPgn = useObservableState<PGN | undefined>(selectedPgn, undefined)
 
@@ -265,15 +282,19 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
     const input = (definition as any).sampleData as string[]
 
     let pgnData: PGN | undefined = undefined
-    for ( const line of input) {
-      pgnData = parser.parseString(line)
+    if (input && input.length > 0) {
+      for (const line of input) {
+        pgnData = parser.parseString(line)
+      }
+    } else {
+      pgnData = { getDefinition: () => definition } as any as PGN
     }
 
     if (pgnData) {
       selectedPgn.next(pgnData)
       selectedPgnWithHistory.next({
         current: pgnData,
-        history: []
+        history: [],
       })
     } else {
       console.error(`Failed to parse PGN data for definition ID ${definitionId}`)
@@ -282,7 +303,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
 
   const handleDefinitionSave = (definition: Definition) => {
     saveDefinition(definition, currentPgn!)
-    setTrackerVersion(v => v + 1) // Force re-render when adding/updating definitions
+    setTrackerVersion((v) => v + 1) // Force re-render when adding/updating definitions
     handleDefinitionSelect(definition.Id, definition)
   }
 
@@ -294,13 +315,13 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
   // Helper functions that update the tracker and force re-renders
   const clearAllDefinitions = () => {
     changedDefinitionsTracker.clearAll()
-    setTrackerVersion(v => v + 1)
+    setTrackerVersion((v) => v + 1)
     clearDefinitionSelection()
   }
 
   const clearSingleDefinition = (id: string) => {
     changedDefinitionsTracker.clearDefinition(id)
-    setTrackerVersion(v => v + 1)
+    setTrackerVersion((v) => v + 1)
     if (selectedDefinitionId === id) {
       clearDefinitionSelection()
     }
@@ -357,16 +378,16 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                     <CardBody>
                       <div className="d-flex justify-content-between align-items-center mb-3">
                         <h5 className="mb-0">Changed PGN Definitions</h5>
-                        <Button 
-                          color="secondary" 
-                          size="sm" 
+                        <Button
+                          color="secondary"
+                          size="sm"
                           onClick={clearAllDefinitions}
                           disabled={Object.keys(changedDefinitionsTracker.definitions).length === 0}
                         >
                           Clear All
                         </Button>
                       </div>
-                      
+
                       {Object.keys(changedDefinitionsTracker.definitions).length === 0 ? (
                         <div className="text-muted text-center p-4">
                           <p>No changed definitions</p>
@@ -396,20 +417,21 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                                 .map(([id, definition], index) => {
                                   const isEvenRow = index % 2 === 0
                                   return (
-                                    <tr 
+                                    <tr
                                       key={id}
-                                      style={{ 
-                                        backgroundColor: selectedDefinitionId === id ? '#d1ecf1' : (isEvenRow ? '#ffffff' : 'rgba(0,0,0,.05)'),
-                                        cursor: 'pointer'
+                                      style={{
+                                        backgroundColor:
+                                          selectedDefinitionId === id
+                                            ? '#d1ecf1'
+                                            : isEvenRow
+                                              ? '#ffffff'
+                                              : 'rgba(0,0,0,.05)',
+                                        cursor: 'pointer',
                                       }}
                                       onClick={() => handleDefinitionSelect(id, definition)}
                                     >
-                                      <td style={{ color: 'red', fontWeight: 'bold' }}>
-                                        {definition.PGN}
-                                      </td>
-                                      <td style={{ fontFamily: 'monospace' }}>
-                                        {definition.Description}
-                                      </td>
+                                      <td style={{ color: 'red', fontWeight: 'bold' }}>{definition.PGN}</td>
+                                      <td style={{ fontFamily: 'monospace' }}>{definition.Description}</td>
                                       <td style={{ textAlign: 'center' }}>
                                         <Button
                                           color="danger"
@@ -432,7 +454,6 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                           </Table>
                         </div>
                       )}
-                      
                     </CardBody>
                   </Card>
                 </Col>
@@ -452,9 +473,14 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                           hasBeenChanged={true}
                         />
                       ) : (
-                        <div className="text-center text-muted p-4" style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <div
+                          className="text-center text-muted p-4"
+                          style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+                        >
                           <h5>PGN Definition Structure</h5>
-                          <p>Select a PGN definition from the list above to view its field structure and properties here.</p>
+                          <p>
+                            Select a PGN definition from the list above to view its field structure and properties here.
+                          </p>
                           <div className="text-start">
                             <h6>This panel will show:</h6>
                             <ul className="list-unstyled">
@@ -469,7 +495,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                     </CardBody>
                   </Card>
                 </Col>
-                
+
                 {/* Right Column - Sentence Panel */}
                 <Col md="6">
                   <Card style={{ height: 'calc(100vh - 400px)', minHeight: '800px' }}>
@@ -481,10 +507,13 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                           definition={changedDefinitionsTracker.getDefinition(selectedDefinitionId)}
                           onDefinitionSave={handleDefinitionSave}
                           info={deviceInfo || new ReplaySubject<DeviceMap>()}
-                          hideDefinitionTab={true}
+                          inEditingTab={true}
                         />
                       ) : (
-                        <div className="text-center text-muted p-4" style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <div
+                          className="text-center text-muted p-4"
+                          style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+                        >
                           <h5>PGN Data Analysis</h5>
                           <p>Select a PGN definition from the list above to view parsed data and analysis here.</p>
                           <div className="text-start">
@@ -511,8 +540,8 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                     <Col>
                       <h5>Lookups</h5>
                       <p className="text-muted">
-                        Manage lookup tables that map numeric values to human-readable descriptions 
-                        for enumerated fields in PGN definitions.
+                        Manage lookup tables that map numeric values to human-readable descriptions for enumerated
+                        fields in PGN definitions.
                       </p>
                       <div className="alert alert-info">
                         <h6>Features (Coming Soon):</h6>
@@ -539,8 +568,8 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                     <Col>
                       <h5>Bit Lookups</h5>
                       <p className="text-muted">
-                        Define and manage bit field lookups for interpreting individual bits or bit ranges 
-                        within larger data fields.
+                        Define and manage bit field lookups for interpreting individual bits or bit ranges within larger
+                        data fields.
                       </p>
                       <div className="alert alert-info">
                         <h6>Features (Coming Soon):</h6>

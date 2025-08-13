@@ -52,7 +52,7 @@ interface SentencePanelProps {
   info: Subject<DeviceMap>
   onDefinitionsChanged?: (changedDefinitions: Set<string>) => void
   onDefinitionSave?: (definition: Definition) => void
-  hideDefinitionTab?: boolean
+  inEditingTab?: boolean
 }
 
 const DATA_TAB_ID = 'data'
@@ -80,7 +80,8 @@ export const SentencePanel = (props: SentencePanelProps) => {
       try {
         const dataToSave = JSON.stringify(
           pgnData,
-          (key, value) => (key === 'input' || key === 'rawData' || key === 'byteMapping' ? undefined : value),
+          (key, value) =>
+            key === 'input' || key === 'rawData' || key === 'byteMapping' || key === 'definition' ? undefined : value,
           2,
         )
         await navigator.clipboard.writeText(dataToSave)
@@ -107,15 +108,15 @@ export const SentencePanel = (props: SentencePanelProps) => {
     try {
       // Track this definition as changed us`ing the PGN Id
 
-      if ( !pgnData ) {
+      if (!pgnData) {
         return
       }
-      
+
       saveDefinition(updatedDefinition, pgnData)
 
       notifyDefinitionsChanged()
 
-      if ( props.onDefinitionSave ) {
+      if (props.onDefinitionSave) {
         props.onDefinitionSave(updatedDefinition)
       }
     } catch (err) {
@@ -174,7 +175,6 @@ export const SentencePanel = (props: SentencePanelProps) => {
       }
 
       try {
-
         if (lookupType === 'lookup') {
           // Create regular enumeration from lookup values
           const enumeration: Enumeration = {
@@ -240,13 +240,11 @@ export const SentencePanel = (props: SentencePanelProps) => {
             JSON
           </NavLink>
         </NavItem>
-        {pgnData.input && pgnData.input.length > 0 && (
-          <NavItem>
-            <NavLink className={activeTab === INPUT_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(INPUT_TAB_ID)}>
-              Input
-            </NavLink>
-          </NavItem>
-        )}
+        <NavItem>
+          <NavLink className={activeTab === INPUT_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(INPUT_TAB_ID)}>
+            Input
+          </NavLink>
+        </NavItem>
         {info[pgnData.src!]?.info && (
           <NavItem>
             <NavLink
@@ -257,9 +255,12 @@ export const SentencePanel = (props: SentencePanelProps) => {
             </NavLink>
           </NavItem>
         )}
-        {!props.hideDefinitionTab && (
+        {!props.inEditingTab && (
           <NavItem>
-            <NavLink className={activeTab === PGNDEF_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(PGNDEF_TAB_ID)}>
+            <NavLink
+              className={activeTab === PGNDEF_TAB_ID ? 'active ' : ''}
+              onClick={() => setActiveTab(PGNDEF_TAB_ID)}
+            >
               Definition
             </NavLink>
           </NavItem>
@@ -288,16 +289,14 @@ export const SentencePanel = (props: SentencePanelProps) => {
             </CardBody>
           </Card>
         </TabPane>
-        {pgnData.input && pgnData.input.length > 0 && (
-          <TabPane tabId={INPUT_TAB_ID}>
-            <Card>
-              <CardBody style={{ padding: 0 }}>
-                <InputDataTab pgnData={pgnData} onCopyInput={copyInputData} />
-              </CardBody>
-            </Card>
-          </TabPane>
-        )}
-        {definition !== undefined && !props.hideDefinitionTab && (
+        <TabPane tabId={INPUT_TAB_ID}>
+          <Card>
+            <CardBody style={{ padding: 0 }}>
+              <InputDataTab pgnData={pgnData} onCopyInput={copyInputData} />
+            </CardBody>
+          </Card>
+        </TabPane>
+        {definition !== undefined && !props.inEditingTab && (
           <TabPane tabId={PGNDEF_TAB_ID}>
             <Card>
               <CardBody style={{ padding: 0 }}>

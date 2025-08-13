@@ -39,7 +39,9 @@ import {
 } from 'reactstrap'
 import { getAllPGNs, Definition, getEnumeration, getBitEnumeration, getFieldTypeEnumeration } from '@canboat/ts-pgns'
 
-interface PgnBrowserProps {}
+interface PgnBrowserProps {
+  onEditPgn?: (definition: Definition) => void
+}
 
 // Debounce hook for search performance
 const useDebounce = (value: string, delay: number) => {
@@ -69,6 +71,7 @@ const PgnRow = React.memo(
     getFieldSize,
     hasLookupValues,
     showLookupPopup,
+    onEditPgn,
   }: {
     pgn: Definition
     isExpanded: boolean
@@ -78,6 +81,7 @@ const PgnRow = React.memo(
     getFieldSize: (field: any) => string
     hasLookupValues: (field: any) => boolean
     showLookupPopup: (field: any) => void
+    onEditPgn?: (definition: Definition) => void
   }) => (
     <React.Fragment>
       <tr style={{ cursor: 'pointer' }} onClick={() => onToggle(pgn.Id)} data-pgn-id={pgn.Id}>
@@ -118,7 +122,15 @@ const PgnRow = React.memo(
             <div className="p-3 bg-light">
               <Row>
                 <Col md={6}>
-                  <h6>PGN Details</h6>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <h6 className="mb-0">PGN Details</h6>
+                    {onEditPgn && (
+                      <Button color="primary" size="sm" onClick={() => onEditPgn(pgn)} title="Edit this PGN definition">
+                        <i className="fas fa-edit me-1" />
+                        Edit PGN
+                      </Button>
+                    )}
+                  </div>
                   <dl className="row">
                     <dt className="col-sm-4">ID:</dt>
                     <dd className="col-sm-8">
@@ -340,9 +352,11 @@ const PgnRow = React.memo(
   ),
 )
 
-interface PgnBrowserProps {}
+interface PgnBrowserProps {
+  onEditPgn?: (definition: Definition) => void
+}
 
-export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
+export const PgnBrowser: React.FC<PgnBrowserProps> = ({ onEditPgn }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [expandedPgn, setExpandedPgn] = useState<string | null>(null)
@@ -654,6 +668,7 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = () => {
                   getFieldSize={getFieldSize}
                   hasLookupValues={hasLookupValues}
                   showLookupPopup={showLookupPopup}
+                  onEditPgn={onEditPgn}
                 />
               ))}
             </tbody>

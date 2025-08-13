@@ -32,10 +32,10 @@ import { SendTab } from './SendTab'
 import TransformTab from './TransformTab'
 import RecordingTab from './RecordingTab'
 import { PgnBrowser } from './PgnBrowser'
-import EditorTab from './EditorTab'
+import EditorTab, { saveDefinition } from './EditorTab'
 import { RecordingProvider, useRecording } from '../contexts/RecordingContext'
 import { FromPgn } from '@canboat/canboatjs'
-import { Field, PGN, PGN_59904 } from '@canboat/ts-pgns'
+import { Field, PGN, PGN_59904, Definition } from '@canboat/ts-pgns'
 
 interface LoginStatus {
   status: string
@@ -213,7 +213,14 @@ const AppPanelInner = (props: any) => {
     const savedTab = loadActiveTab()
     // Validate the saved tab - if in embedded mode, don't allow connections tab
     if (savedTab && (savedTab !== CONNECTIONS_TAB_ID || !isEmbedded)) {
-      const validTabs = [ANALYZER_TAB_ID, SEND_TAB_ID, TRANSFORM_TAB_ID, RECORDING_TAB_ID, PGN_BROWSER_TAB_ID, EDITING_TAB_ID]
+      const validTabs = [
+        ANALYZER_TAB_ID,
+        SEND_TAB_ID,
+        TRANSFORM_TAB_ID,
+        RECORDING_TAB_ID,
+        PGN_BROWSER_TAB_ID,
+        EDITING_TAB_ID,
+      ]
       if (!isEmbedded) {
         validTabs.push(CONNECTIONS_TAB_ID)
       }
@@ -272,6 +279,15 @@ const AppPanelInner = (props: any) => {
     const newVisibility = !showDataList
     setShowDataList(newVisibility)
     saveDataListVisibility(newVisibility)
+  }
+
+  // Handler for editing PGN from PgnBrowser
+  const handleEditPgn = (definition: Definition) => {
+    // Save the definition for editing
+    saveDefinition(definition)
+
+    // Switch to the Editing tab
+    handleTabChange(EDITING_TAB_ID)
   }
 
   // Make debugging functions available globally
@@ -1023,7 +1039,7 @@ const AppPanelInner = (props: any) => {
           <TransformTab isEmbedded={isEmbedded} />
         </TabPane>
         <TabPane tabId={PGN_BROWSER_TAB_ID}>
-          <PgnBrowser />
+          <PgnBrowser onEditPgn={handleEditPgn} />
         </TabPane>
         <TabPane tabId={EDITING_TAB_ID}>
           <EditorTab isEmbedded={isEmbedded} deviceInfo={deviceInfo} />

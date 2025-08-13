@@ -68,7 +68,7 @@ export const PgnDefinitionTab = ({
     const currentPgn = editedDefinition.Id
     const newPgn = pgnData.getDefinition().Id
 
-    if (!isEditing ) {
+    if (!isEditing) {
       /*
       const newDef = {
         ...JSON.parse(JSON.stringify(definition)),
@@ -81,7 +81,7 @@ export const PgnDefinitionTab = ({
   }, [definition, pgnData, isEditing, editedDefinition.PGN])
 
   useEffect(() => {
-    if (onSave && isEditing ) { 
+    if (onSave && isEditing) {
       //console.log('Definition changed:', editedDefinition.Id)
       onSave(editedDefinition)
     }
@@ -204,13 +204,16 @@ export const PgnDefinitionTab = ({
   )
 
   // Special handler for field name changes that also updates the field ID
-  const handleFieldNameChange = useCallback((index: number, newName: string) => {
-    const camelCaseId = toCamelCase(newName)
-    updateField(index, { 
-      Name: newName,
-      Id: camelCaseId
-    })
-  }, [updateField])
+  const handleFieldNameChange = useCallback(
+    (index: number, newName: string) => {
+      const camelCaseId = toCamelCase(newName)
+      updateField(index, {
+        Name: newName,
+        Id: camelCaseId,
+      })
+    },
+    [updateField],
+  )
 
   // Add a new field
   const addField = useCallback(() => {
@@ -420,24 +423,24 @@ export const PgnDefinitionTab = ({
       }
 
       const partialMatch = (pgnData as any).partialMatch as string
-      if ( partialMatch ) {
+      if (partialMatch) {
         const partial = getPGNWithId(partialMatch)!
-        const hasDataField = definition.Fields[definition.Fields.length-1].Id === 'data' 
-        const start = hasDataField ? definition.Fields.length - 1 : definition.Fields.length 
+        const hasDataField = definition.Fields[definition.Fields.length - 1].Id === 'data'
+        const start = hasDataField ? definition.Fields.length - 1 : definition.Fields.length
 
-        if ( hasDataField ) {
+        if (hasDataField) {
           newDef.Fields = newDef.Fields.slice(0, start)
         }
 
-        for ( let i = start; i < partial.Fields.length; i++) {
+        for (let i = start; i < partial.Fields.length; i++) {
           const field = partial.Fields[i]
-          
+
           const val = (pgnData.fields as any)[field.Id]
-          
+
           if (val !== undefined) {
-            const newField = {...field}
-            if ( field.Match !== undefined ) {
-               newField.Match = typeof val === 'string' ? field.Match : val
+            const newField = { ...field }
+            if (field.Match !== undefined) {
+              newField.Match = typeof val === 'string' ? field.Match : val
             }
             newDef.Fields.push(newField)
           }
@@ -628,7 +631,7 @@ export const PgnDefinitionTab = ({
               PGN:
             </dt>
             <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
-                {editedDefinition.PGN}
+              {editedDefinition.PGN}
             </dd>
             <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
               Description:
