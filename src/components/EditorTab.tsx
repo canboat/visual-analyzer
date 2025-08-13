@@ -58,12 +58,74 @@ type BitEnumerationMap = {
 }
 
 export const changedDefinitionsTracker = {
-  definitions: {} as DefinitionMap,
-  lookups: {} as EnumerationMap,
-  bitLookups: {} as BitEnumerationMap,
+  // Local storage keys
+  _storageKeys: {
+    definitions: 'changedDefinitionsTracker_definitions',
+    lookups: 'changedDefinitionsTracker_lookups',
+    bitLookups: 'changedDefinitionsTracker_bitLookups'
+  },
+
+  // In-memory cache
+  _cache: {
+    definitions: null as DefinitionMap | null,
+    lookups: null as EnumerationMap | null,
+    bitLookups: null as BitEnumerationMap | null
+  },
+
+  // Load from local storage with error handling
+  _loadFromStorage<T>(key: string, defaultValue: T): T {
+    try {
+      const stored = localStorage.getItem(key)
+      return stored ? JSON.parse(stored) : defaultValue
+    } catch (error) {
+      console.warn(`Failed to load ${key} from local storage:`, error)
+      return defaultValue
+    }
+  },
+
+  // Save to local storage with error handling
+  _saveToStorage(key: string, value: any): void {
+    try {
+      localStorage.setItem(key, JSON.stringify(value))
+    } catch (error) {
+      console.warn(`Failed to save ${key} to local storage:`, error)
+    }
+  },
+
+  // Lazy getters with caching
+  get definitions(): DefinitionMap {
+    if (this._cache.definitions === null) {
+      this._cache.definitions = this._loadFromStorage(this._storageKeys.definitions, {})
+      Object.values(this._cache.definitions).forEach(def => {
+        updatePGN(def)
+      })
+    }
+    return this._cache.definitions
+  },
+
+  get lookups(): EnumerationMap {
+    if (this._cache.lookups === null) {
+      this._cache.lookups = this._loadFromStorage(this._storageKeys.lookups, {})
+      Object.values(this._cache.lookups).forEach(enumItem => {
+        updateLookup(enumItem)
+      })
+    }
+    return this._cache.lookups
+  },
+
+  get bitLookups(): BitEnumerationMap {
+    if (this._cache.bitLookups === null) {
+      this._cache.bitLookups = this._loadFromStorage(this._storageKeys.bitLookups, {})
+      Object.values(this._cache.bitLookups).forEach(bitEnumItem => {
+        updateBitLookup(bitEnumItem)
+      })
+    }
+    return this._cache.bitLookups
+  },
 
   addDefinition(definition: Definition) {
     this.definitions[definition.Id] = definition
+    this._saveToStorage(this._storageKeys.definitions, this.definitions)
     console.log(`Tracked definition change for PGN ID ${definition.Id}. Total tracked: ${Object.keys(this.definitions).length}`)
   },
 
@@ -77,14 +139,17 @@ export const changedDefinitionsTracker = {
 
   clearDefinition(pgnId: string) {
     delete this.definitions[pgnId]
+    this._saveToStorage(this._storageKeys.definitions, this.definitions)
     console.log(`Removed tracking for PGN ID ${pgnId}. Remaining: ${Object.keys(this.definitions).length}`)
   },
 
   addLookup(enumeration: EnumBase) {
     if ((enumeration as Enumeration).EnumValues) {
       this.lookups[enumeration.Name] = enumeration as Enumeration
+      this._saveToStorage(this._storageKeys.lookups, this.lookups)
     } else {
       this.bitLookups[enumeration.Name] = enumeration as BitEnumeration
+      this._saveToStorage(this._storageKeys.bitLookups, this.bitLookups)
     }
     console.log(`Tracked change for ${enumeration.Name}`)
   },
@@ -110,21 +175,32 @@ export const changedDefinitionsTracker = {
   clearLookup(enumName: string, type: 'lookup' | 'bitlookup') {
     if (type === 'lookup') {
       delete this.lookups[enumName]
+      this._saveToStorage(this._storageKeys.lookups, this.lookups)
     } else {
-      this.bitLookups[enumName]
+      delete this.bitLookups[enumName]
+      this._saveToStorage(this._storageKeys.bitLookups, this.bitLookups)
     }
   },
 
   clearAll() {
-    this.definitions = {}
-    this.lookups = {}
-    this.bitLookups = {}
+    // Clear in-memory cache
+    this._cache.definitions = {}
+    this._cache.lookups = {}
+    this._cache.bitLookups = {}
+    
+    // Clear local storage
+    this._saveToStorage(this._storageKeys.definitions, {})
+    this._saveToStorage(this._storageKeys.lookups, {})
+    this._saveToStorage(this._storageKeys.bitLookups, {})
+    
     console.log('Cleared all tracked changes')
   },
 }
 
 export const saveDefinition = (updatedDefinition: Definition, pgnData: PGN) => {
   let definition = pgnData.getDefinition()
+
+  ; (updatedDefinition as any).sampleData = pgnData.input
 
   if (changedDefinitionsTracker.hasDefinition(definition.Id)) {
     if (definition.Id !== updatedDefinition.Id) {
@@ -135,8 +211,6 @@ export const saveDefinition = (updatedDefinition: Definition, pgnData: PGN) => {
   } else {
     changedDefinitionsTracker.addDefinition(updatedDefinition)
   }
-
-  ; (updatedDefinition as any).sampleData = pgnData.input
 
   updatePGN(updatedDefinition)
 }
@@ -163,6 +237,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
   const [selectedPgn] = useState(new ReplaySubject<PGN>())
   const [selectedPgnWithHistory] = useState(new ReplaySubject<{ current: PGN; history: PGN[] } | null>())
   const [selectedDefinitionId, setSelectedDefinitionId] = useState<string | null>(null)
+  const [trackerVersion, setTrackerVersion] = useState(0) // Force re-renders when tracker changes
   
   // Get the current PGN value for PgnDefinitionTab
   const currentPgn = useObservableState<PGN | undefined>(selectedPgn, undefined)
@@ -193,12 +268,28 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
 
   const handleDefinitionSave = (definition: Definition) => {
     saveDefinition(definition, currentPgn!)
+    setTrackerVersion(v => v + 1) // Force re-render when adding/updating definitions
     handleDefinitionSelect(definition.Id, definition)
   }
 
   const clearDefinitionSelection = () => {
     setSelectedDefinitionId(null)
     selectedPgnWithHistory.next(null)
+  }
+
+  // Helper functions that update the tracker and force re-renders
+  const clearAllDefinitions = () => {
+    changedDefinitionsTracker.clearAll()
+    setTrackerVersion(v => v + 1)
+    clearDefinitionSelection()
+  }
+
+  const clearSingleDefinition = (id: string) => {
+    changedDefinitionsTracker.clearDefinition(id)
+    setTrackerVersion(v => v + 1)
+    if (selectedDefinitionId === id) {
+      clearDefinitionSelection()
+    }
   }
 
   return (
@@ -255,7 +346,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                         <Button 
                           color="secondary" 
                           size="sm" 
-                          onClick={() => changedDefinitionsTracker.clearAll()}
+                          onClick={clearAllDefinitions}
                           disabled={Object.keys(changedDefinitionsTracker.definitions).length === 0}
                         >
                           Clear All
@@ -312,10 +403,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                                           outline
                                           onClick={(e: React.MouseEvent) => {
                                             e.stopPropagation()
-                                            changedDefinitionsTracker.clearDefinition(id)
-                                            if (selectedDefinitionId === id) {
-                                              clearDefinitionSelection()
-                                            }
+                                            clearSingleDefinition(id)
                                           }}
                                           title="Remove from changed list"
                                           style={{ lineHeight: 1, padding: '0.125rem 0.375rem' }}
