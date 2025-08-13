@@ -798,12 +798,6 @@ export const PgnDefinitionTab = ({
                   Drag cards by the grip icon to reorder fields
                 </small>
               )}
-              {isEditing && (
-                <Button color="success" size="sm" onClick={addField}>
-                  <i className="fa fa-plus me-2" />
-                  Add Field
-                </Button>
-              )}
             </div>
           </div>
           {!isEditing ? (
@@ -1286,6 +1280,14 @@ export const PgnDefinitionTab = ({
                 <div className="text-muted text-center py-3">
                   <i className="fa fa-inbox fa-2x mb-2" />
                   <div>No fields defined yet. Click "Add Field" to get started.</div>
+                </div>
+              )}
+              {isEditing && (
+                <div className="d-flex justify-content-center mt-3">
+                  <Button color="success" size="sm" onClick={addField}>
+                    <i className="fa fa-plus me-2" />
+                    Add Field
+                  </Button>
                 </div>
               )}
             </div>
