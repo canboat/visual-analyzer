@@ -26,8 +26,8 @@ import {
   updateLookup,
   updateBitLookup,
   removePGN,
-  createPGN,
-  Line,
+  removeLookup,
+  removeBitLookup,
 } from '@canboat/ts-pgns'
 import { FromPgn } from '@canboat/canboatjs'
 import { SentencePanel } from './SentencePanel'
@@ -138,6 +138,11 @@ export const changedDefinitionsTracker = {
   },
 
   clearDefinition(pgnId: string) {
+    if (!this.hasDefinition(pgnId)) {
+      console.warn(`Attempted to clear non-existent PGN ID ${pgnId}`)
+      return
+    }
+    removePGN(this.definitions[pgnId])
     delete this.definitions[pgnId]
     this._saveToStorage(this._storageKeys.definitions, this.definitions)
     console.log(`Removed tracking for PGN ID ${pgnId}. Remaining: ${Object.keys(this.definitions).length}`)
@@ -174,9 +179,18 @@ export const changedDefinitionsTracker = {
 
   clearLookup(enumName: string, type: 'lookup' | 'bitlookup') {
     if (type === 'lookup') {
+      if (!this.lookups.hasOwnProperty(enumName)) {
+        console.warn(`Attempted to clear non-existent lookup ${enumName}`)
+        return
+      }
+      removeLookup(this.lookups[enumName])
       delete this.lookups[enumName]
       this._saveToStorage(this._storageKeys.lookups, this.lookups)
     } else {
+      if (!this.bitLookups.hasOwnProperty(enumName)) {
+        console.warn(`Attempted to clear non-existent bit lookup ${enumName}`)
+        return
+      }
       delete this.bitLookups[enumName]
       this._saveToStorage(this._storageKeys.bitLookups, this.bitLookups)
     }
