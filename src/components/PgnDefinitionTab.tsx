@@ -536,7 +536,7 @@ export const PgnDefinitionTab = ({
   }, [])
 
   return (
-    <div className="p-3">
+    <div className="p-3" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
       <style>
         {`
           .field-card.field-row-dragging {
@@ -921,7 +921,7 @@ export const PgnDefinitionTab = ({
             )
           ) : (
             // Card view for editing mode
-            <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+            <div>
               {editedDefinition.Fields && editedDefinition.Fields.length > 0 ? (
                 editedDefinition.Fields.map((field, index) => (
                   <div
