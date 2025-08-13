@@ -15,16 +15,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react'
-import {
-  Card,
-  CardBody,
-  Button,
-  Table,
-  Row,
-  Col,
-  Alert,
-  Input,
-} from 'reactstrap'
+import { Card, CardBody, Button, Table, Row, Col, Alert, Input } from 'reactstrap'
 import { BitEnumeration, getBitEnumerations, removeBitLookup } from '@canboat/ts-pgns'
 
 interface BitLookupEditorProps {
@@ -32,7 +23,11 @@ interface BitLookupEditorProps {
   onBitLookupChange: (enumeration: BitEnumeration) => void
   onBitLookupRemove: (enumName: string) => void
   onClearAll: () => void
-  onBitLookupEdit?: (enumName: string, type: 'lookup' | 'bitlookup', lookupValues: { key: string; value: string }[]) => void
+  onBitLookupEdit?: (
+    enumName: string,
+    type: 'lookup' | 'bitlookup',
+    lookupValues: { key: string; value: string }[],
+  ) => void
 }
 
 const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
@@ -48,7 +43,7 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
   const allBitLookups = useMemo(() => {
     // Get only changed bit lookups from the tracker
     const changedEnumerations = Object.values(changedBitLookups)
-    
+
     // Apply search filter
     return changedEnumerations.filter((lookup) => {
       if (searchTerm) {
@@ -58,18 +53,21 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
     })
   }, [searchTerm, changedBitLookups])
 
-  const editBitLookup = useCallback((enumeration: BitEnumeration) => {
-    if (!onBitLookupEdit) return
-    
-    // Convert BitEnumeration to the lookup values format expected by EditorTab
-    const lookupValues = enumeration.EnumBitValues.map((ebv) => ({
-      key: ebv.Bit.toString(),
-      value: ebv.Name,
-    }))
-    
-    // Call parent's bit lookup edit function
-    onBitLookupEdit(enumeration.Name, 'bitlookup', lookupValues)
-  }, [onBitLookupEdit])
+  const editBitLookup = useCallback(
+    (enumeration: BitEnumeration) => {
+      if (!onBitLookupEdit) return
+
+      // Convert BitEnumeration to the lookup values format expected by EditorTab
+      const lookupValues = enumeration.EnumBitValues.map((ebv) => ({
+        key: ebv.Bit.toString(),
+        value: ebv.Name,
+      }))
+
+      // Call parent's bit lookup edit function
+      onBitLookupEdit(enumeration.Name, 'bitlookup', lookupValues)
+    },
+    [onBitLookupEdit],
+  )
 
   const deleteBitLookup = useCallback(
     (enumName: string) => {
@@ -86,7 +84,7 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
         onBitLookupRemove(enumName)
       }
     },
-    [onBitLookupRemove, changedBitLookups]
+    [onBitLookupRemove, changedBitLookups],
   )
 
   return (
@@ -99,9 +97,9 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
               <small className="text-muted">Showing only bit lookups that have been modified</small>
             </div>
             <div className="d-flex gap-2">
-              <Button 
-                color="primary" 
-                size="sm" 
+              <Button
+                color="primary"
+                size="sm"
                 onClick={() => onBitLookupEdit?.('', 'bitlookup', [])}
                 disabled={!onBitLookupEdit}
               >
@@ -136,7 +134,11 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
             {allBitLookups.length === 0 ? (
               <div className="text-center text-muted p-4">
                 <p>No changed bit lookups found</p>
-                {searchTerm ? <small>Try adjusting your search term</small> : <small>Modified bit lookups will appear here</small>}
+                {searchTerm ? (
+                  <small>Try adjusting your search term</small>
+                ) : (
+                  <small>Modified bit lookups will appear here</small>
+                )}
               </div>
             ) : (
               <Table responsive bordered size="sm" style={{ marginBottom: 0 }}>
@@ -157,9 +159,7 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
                           backgroundColor: isEvenRow ? '#ffffff' : 'rgba(0,0,0,.05)',
                         }}
                       >
-                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-                          {lookup.Name}
-                        </td>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{lookup.Name}</td>
                         <td>{lookup.EnumBitValues.length}</td>
                         <td>
                           <div className="d-flex gap-1">
@@ -193,8 +193,8 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
 
           {Object.keys(changedBitLookups).length > 0 && (
             <Alert color="info" className="mt-3 mb-0">
-              <strong>{Object.keys(changedBitLookups).length}</strong> bit lookup(s) have been modified and will be saved
-              with your PGN definitions.
+              <strong>{Object.keys(changedBitLookups).length}</strong> bit lookup(s) have been modified and will be
+              saved with your PGN definitions.
             </Alert>
           )}
         </CardBody>

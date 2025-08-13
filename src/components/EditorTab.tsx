@@ -285,7 +285,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
   const [selectedPgnWithHistory] = useState(new ReplaySubject<{ current: PGN; history: PGN[] } | null>())
   const [selectedDefinitionId, setSelectedDefinitionId] = useState<string | null>(null)
   const [trackerVersion, setTrackerVersion] = useState(0) // Force re-renders when tracker changes
-  
+
   // Lookup editing state
   const [editingLookup, setEditingLookup] = useState<{ enumName: string; type: 'lookup' | 'bitlookup' } | null>(null)
   const [lookupValues, setLookupValues] = useState<{ key: string; value: string }[]>([])
@@ -368,7 +368,11 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
   }
 
   // Lookup editing functions (similar to PgnDefinitionTab)
-  const handleLookupEdit = (enumName: string, type: 'lookup' | 'bitlookup', lookupValues: { key: string; value: string }[]) => {
+  const handleLookupEdit = (
+    enumName: string,
+    type: 'lookup' | 'bitlookup',
+    lookupValues: { key: string; value: string }[],
+  ) => {
     if (!enumName && lookupValues.length === 0) {
       // This is a new lookup creation request without name, initialize with default values
       setLookupValues([
@@ -410,7 +414,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
 
     // Use the provided enumName or the entered newLookupName
     const enumName = newLookupName.trim()
-    
+
     if (!enumName) {
       alert('Please enter a name for the lookup')
       return
@@ -429,12 +433,14 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
       const newEnumeration: Enumeration = {
         Name: enumName,
         MaxValue: 255, // Default max value
-        EnumValues: lookupValues.map((item) => ({
-          Value: parseInt(item.key) || 0,
-          Name: item.value
-        })).sort((a, b) => a.Value - b.Value)
+        EnumValues: lookupValues
+          .map((item) => ({
+            Value: parseInt(item.key) || 0,
+            Name: item.value,
+          }))
+          .sort((a, b) => a.Value - b.Value),
       }
-      
+
       updateLookup(newEnumeration)
       handleLookupChange(newEnumeration)
     } else if (editingLookup.type === 'bitlookup') {
@@ -447,16 +453,18 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
       const newBitEnumeration: BitEnumeration = {
         Name: enumName,
         MaxValue: 255, // Default max value for bit enumerations
-        EnumBitValues: lookupValues.map((item) => ({
-          Bit: parseInt(item.key) || 0,
-          Name: item.value
-        })).sort((a, b) => a.Bit - b.Bit)
+        EnumBitValues: lookupValues
+          .map((item) => ({
+            Bit: parseInt(item.key) || 0,
+            Name: item.value,
+          }))
+          .sort((a, b) => a.Bit - b.Bit),
       }
-      
+
       updateBitLookup(newBitEnumeration)
       handleBitLookupChange(newBitEnumeration)
     }
-    
+
     closeLookupEditor()
   }
 
@@ -480,7 +488,11 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
   }
 
   // Handler for when PgnDefinitionTab saves a lookup
-  const handlePgnDefinitionLookupSave = (enumName: string, lookupType: 'lookup' | 'bitlookup', lookupValues: { key: string; value: string }[]) => {
+  const handlePgnDefinitionLookupSave = (
+    enumName: string,
+    lookupType: 'lookup' | 'bitlookup',
+    lookupValues: { key: string; value: string }[],
+  ) => {
     // This will be called when PgnDefinitionTab saves lookup changes
     // We need to update our tracker version to force re-render of the editors
     setTrackerVersion((v) => v + 1)
@@ -722,7 +734,8 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
       {/* Lookup Editor Modal */}
       <Modal isOpen={!!editingLookup} toggle={closeLookupEditor} size="lg">
         <ModalHeader toggle={closeLookupEditor}>
-          {editingLookup?.enumName ? 'Edit' : 'Create'} {editingLookup?.type === 'lookup' ? 'Lookup' : 'Bit Lookup'} Enumeration
+          {editingLookup?.enumName ? 'Edit' : 'Create'} {editingLookup?.type === 'lookup' ? 'Lookup' : 'Bit Lookup'}{' '}
+          Enumeration
           {editingLookup?.enumName && editingLookup.enumName === newLookupName && (
             <div className="small text-muted">Current lookup: {editingLookup.enumName}</div>
           )}
@@ -731,9 +744,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
           {/* Name input for all lookups */}
           {editingLookup && (
             <div className="mb-3">
-              <label className="form-label">
-                {editingLookup.type === 'lookup' ? 'Lookup' : 'Bit Lookup'} Name
-              </label>
+              <label className="form-label">{editingLookup.type === 'lookup' ? 'Lookup' : 'Bit Lookup'} Name</label>
               <Input
                 type="text"
                 placeholder={`Enter ${editingLookup.type === 'lookup' ? 'lookup' : 'bit lookup'} name`}
@@ -741,9 +752,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewLookupName(e.target.value)}
               />
               {editingLookup.enumName && editingLookup.enumName !== newLookupName && (
-                <div className="small text-muted mt-1">
-                  Original name: {editingLookup.enumName}
-                </div>
+                <div className="small text-muted mt-1">Original name: {editingLookup.enumName}</div>
               )}
             </div>
           )}
@@ -773,7 +782,9 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                         type={editingLookup?.type === 'bitlookup' ? 'text' : 'number'}
                         size="sm"
                         value={item.key}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateLookupValue(index, e.target.value, item.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          updateLookupValue(index, e.target.value, item.value)
+                        }
                         placeholder={editingLookup?.type === 'bitlookup' ? '0x01' : '0'}
                       />
                     </td>
@@ -782,7 +793,9 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                         type="text"
                         size="sm"
                         value={item.value}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateLookupValue(index, item.key, e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          updateLookupValue(index, item.key, e.target.value)
+                        }
                         placeholder="Value name"
                       />
                     </td>

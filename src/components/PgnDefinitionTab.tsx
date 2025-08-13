@@ -21,6 +21,8 @@ import {
   Field,
   getBitEnumeration,
   getEnumeration,
+  getEnumerations,
+  getBitEnumerations,
   generatePgnHeaderEntry,
   generateBitLookupHeaderEntry,
   generateLookupHeaderEntry,
@@ -34,11 +36,6 @@ interface PgnDefinitionTabProps {
   definition: Definition
   pgnData: PGN
   onSave?: (updatedDefinition: Definition) => void
-  onLookupSave?: (
-    enumName: string,
-    lookupType: 'lookup' | 'bitlookup',
-    lookupValues: { key: string; value: string }[],
-  ) => void
   hasBeenChanged?: boolean
   onExport?: (definition: Definition) => void
   changedLookups?: { lookups: Set<string>; bitLookups: Set<string> }
@@ -48,7 +45,6 @@ export const PgnDefinitionTab = ({
   definition,
   pgnData,
   onSave,
-  onLookupSave,
   hasBeenChanged,
   onExport,
   changedLookups,
@@ -57,8 +53,6 @@ export const PgnDefinitionTab = ({
   const [editedDefinition, setEditedDefinition] = useState<Definition>({ ...definition })
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
-  const [editingLookup, setEditingLookup] = useState<{ fieldIndex: number; type: 'lookup' | 'bitlookup' } | null>(null)
-  const [lookupValues, setLookupValues] = useState<{ key: string; value: string }[]>([])
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportedJson, setExportedJson] = useState('')
 
@@ -121,6 +115,26 @@ export const PgnDefinitionTab = ({
     }
     return ''
   }
+
+  // Helper function to get all available lookups
+  const getAvailableLookups = useCallback(() => {
+    return getEnumerations()
+      .map((enum_) => ({
+        value: enum_.Name,
+        label: enum_.Name,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [])
+
+  // Helper function to get all available bit lookups
+  const getAvailableBitLookups = useCallback(() => {
+    return getBitEnumerations()
+      .map((enum_) => ({
+        value: enum_.Name,
+        label: enum_.Name,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [])
 
   // Helper function to check if a field is part of a repeating set
   const isRepeatingField = (fieldIndex: number): { isRepeating: boolean; setNumber: number; fieldInSet: number } => {
@@ -269,91 +283,6 @@ export const PgnDefinitionTab = ({
     },
     [calculateBitOffsets],
   )
-
-  // Lookup editing functions
-  const openLookupEditor = useCallback(
-    (fieldIndex: number, type: 'lookup' | 'bitlookup') => {
-      if (!editedDefinition.Fields || fieldIndex >= editedDefinition.Fields.length) return
-      const field = editedDefinition.Fields[fieldIndex]
-      const enumName = type === 'lookup' ? field.LookupEnumeration : field.LookupBitEnumeration
-
-      let existingValues: { key: string; value: string }[] = []
-
-      // Load existing lookup values if enumName exists
-      if (enumName) {
-        try {
-          const enumeration = type === 'lookup' ? getEnumeration(enumName) : getBitEnumeration(enumName)
-          if (enumeration) {
-            if (type === 'lookup' && 'EnumValues' in enumeration) {
-              // Regular enumeration: EnumValues has { Name, Value }
-              existingValues = enumeration.EnumValues.map((ev) => ({
-                key: ev.Value.toString(),
-                value: ev.Name,
-              }))
-            } else if (type === 'bitlookup' && 'EnumBitValues' in enumeration) {
-              // Bit enumeration: EnumBitValues has { Name, Bit }
-              existingValues = enumeration.EnumBitValues.map((ebv) => ({
-                key: ebv.Bit.toString(),
-                value: ebv.Name,
-              }))
-            }
-          }
-        } catch (error) {
-          console.warn(`Failed to load enumeration "${enumName}":`, error)
-        }
-      }
-
-      // Initialize with existing values or default empty values for new lookup
-      if (existingValues.length > 0) {
-        setLookupValues(existingValues)
-      } else {
-        setLookupValues([
-          { key: '0', value: 'Unknown' },
-          { key: '1', value: 'Value1' },
-          { key: '2', value: 'Value2' },
-        ])
-      }
-
-      setEditingLookup({ fieldIndex, type })
-    },
-    [editedDefinition.Fields],
-  )
-
-  const closeLookupEditor = useCallback(() => {
-    setEditingLookup(null)
-    setLookupValues([])
-  }, [])
-
-  const addLookupValue = useCallback(() => {
-    setLookupValues((prev) => [...prev, { key: prev.length.toString(), value: `Value${prev.length}` }])
-  }, [])
-
-  const removeLookupValue = useCallback((index: number) => {
-    setLookupValues((prev) => prev.filter((_, i) => i !== index))
-  }, [])
-
-  const updateLookupValue = useCallback((index: number, key: string, value: string) => {
-    setLookupValues((prev) => prev.map((item, i) => (i === index ? { key, value } : item)))
-  }, [])
-
-  const saveLookupValues = useCallback(() => {
-    if (!editingLookup || !onLookupSave) return
-    if (!editedDefinition.Fields || editingLookup.fieldIndex >= editedDefinition.Fields.length) return
-
-    const field = editedDefinition.Fields[editingLookup.fieldIndex]
-    const enumName = editingLookup.type === 'lookup' ? field.LookupEnumeration : field.LookupBitEnumeration
-
-    if (!enumName) {
-      console.warn('No enumeration name found for field')
-      closeLookupEditor()
-      return
-    }
-
-    // Call the parent's lookup save handler
-    onLookupSave(enumName, editingLookup.type, lookupValues)
-
-    closeLookupEditor()
-  }, [editingLookup, lookupValues, onLookupSave, closeLookupEditor, editedDefinition.Fields])
 
   // Drag and drop handlers
   const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
@@ -1144,25 +1073,21 @@ export const PgnDefinitionTab = ({
                         <div className="row g-3 mt-2">
                           <div className="col-md-6">
                             <label className="form-label small fw-bold">Lookup Enumeration</label>
-                            <div className="d-flex gap-2">
-                              <Input
-                                type="text"
-                                size="sm"
-                                value={field.LookupEnumeration || ''}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                  updateField(index, { LookupEnumeration: e.target.value || undefined })
-                                }
-                                placeholder="e.g. ENGINE_INSTANCE, OFF_ON"
-                              />
-                              <Button
-                                color="secondary"
-                                size="sm"
-                                onClick={() => openLookupEditor(index, 'lookup')}
-                                title="Edit lookup values"
-                              >
-                                <i className="fa fa-edit" />
-                              </Button>
-                            </div>
+                            <Input
+                              type="select"
+                              size="sm"
+                              value={field.LookupEnumeration || ''}
+                              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                updateField(index, { LookupEnumeration: e.target.value || undefined })
+                              }
+                            >
+                              <option value="">-- Select Lookup --</option>
+                              {getAvailableLookups().map((lookup) => (
+                                <option key={lookup.value} value={lookup.value}>
+                                  {lookup.label}
+                                </option>
+                              ))}
+                            </Input>
                           </div>
                           <div className="col-md-3">
                             <label className="form-label small fw-bold">Match</label>
@@ -1182,25 +1107,21 @@ export const PgnDefinitionTab = ({
                         <div className="row g-3 mt-2">
                           <div className="col-md-6">
                             <label className="form-label small fw-bold">Bit Lookup Enumeration</label>
-                            <div className="d-flex gap-2">
-                              <Input
-                                type="text"
-                                size="sm"
-                                value={field.LookupBitEnumeration || ''}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                  updateField(index, { LookupBitEnumeration: e.target.value || undefined })
-                                }
-                                placeholder="e.g. ENGINE_STATUS_1"
-                              />
-                              <Button
-                                color="secondary"
-                                size="sm"
-                                onClick={() => openLookupEditor(index, 'bitlookup')}
-                                title="Edit lookup values"
-                              >
-                                <i className="fa fa-edit" />
-                              </Button>
-                            </div>
+                            <Input
+                              type="select"
+                              size="sm"
+                              value={field.LookupBitEnumeration || ''}
+                              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                updateField(index, { LookupBitEnumeration: e.target.value || undefined })
+                              }
+                            >
+                              <option value="">-- Select Bit Lookup --</option>
+                              {getAvailableBitLookups().map((lookup) => (
+                                <option key={lookup.value} value={lookup.value}>
+                                  {lookup.label}
+                                </option>
+                              ))}
+                            </Input>
                           </div>
                           <div className="col-md-3">
                             <label className="form-label small fw-bold">Match</label>
@@ -1372,86 +1293,6 @@ export const PgnDefinitionTab = ({
           </dl>
         </div>
       )}
-
-      {/* Lookup Editor Modal */}
-      <Modal isOpen={!!editingLookup} toggle={closeLookupEditor} size="lg">
-        <ModalHeader toggle={closeLookupEditor}>
-          Edit {editingLookup?.type === 'lookup' ? 'Lookup' : 'Bit Lookup'} Enumeration
-          {editingLookup && (
-            <div className="small text-muted">Field: {editedDefinition.Fields[editingLookup.fieldIndex]?.Name}</div>
-          )}
-        </ModalHeader>
-        <ModalBody>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h6>Lookup Values</h6>
-            <Button color="success" size="sm" onClick={addLookupValue}>
-              <i className="fa fa-plus me-2" />
-              Add Value
-            </Button>
-          </div>
-
-          <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            <Table size="sm" bordered>
-              <thead>
-                <tr>
-                  <th style={{ width: '120px' }}>Key/Value</th>
-                  <th>Name/Description</th>
-                  <th style={{ width: '80px' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lookupValues.map((item, index) => (
-                  <tr key={index}>
-                    <td>
-                      <Input
-                        type={editingLookup?.type === 'bitlookup' ? 'text' : 'number'}
-                        size="sm"
-                        value={item.key}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                          updateLookupValue(index, e.target.value, item.value)
-                        }
-                        placeholder={editingLookup?.type === 'bitlookup' ? '0x01' : '0'}
-                      />
-                    </td>
-                    <td>
-                      <Input
-                        type="text"
-                        size="sm"
-                        value={item.value}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                          updateLookupValue(index, item.key, e.target.value)
-                        }
-                        placeholder="Value name"
-                      />
-                    </td>
-                    <td className="text-center">
-                      <Button color="danger" size="sm" onClick={() => removeLookupValue(index)} title="Remove value">
-                        <i className="fa fa-trash" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-
-          {lookupValues.length === 0 && (
-            <div className="text-center text-muted p-4">
-              <i className="fa fa-info-circle me-2" />
-              No lookup values defined. Click "Add Value" to start.
-            </div>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button color="primary" onClick={saveLookupValues}>
-            <i className="fa fa-save me-2" />
-            Save Lookup
-          </Button>
-          <Button color="secondary" onClick={closeLookupEditor}>
-            Cancel
-          </Button>
-        </ModalFooter>
-      </Modal>
 
       {/* Export Modal */}
       <Modal isOpen={showExportModal} toggle={closeExportModal} size="lg">

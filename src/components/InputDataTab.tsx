@@ -44,7 +44,7 @@ export const InputDataTab = ({ pgnData, onCopyInput, isEditing = false, onInputC
 
   const handleSave = useCallback(() => {
     if (onInputChange) {
-      const newInputLines = editingText.split('\n').filter(line => line.trim() !== '')
+      const newInputLines = editingText.split('\n').filter((line) => line.trim() !== '')
       onInputChange(newInputLines)
       setHasChanges(false)
     }
@@ -91,11 +91,11 @@ export const InputDataTab = ({ pgnData, onCopyInput, isEditing = false, onInputC
             type="textarea"
             value={editingText}
             onChange={handleTextChange}
-            style={{ 
-              fontFamily: 'monospace', 
+            style={{
+              fontFamily: 'monospace',
               minHeight: '300px',
               whiteSpace: 'pre',
-              wordBreak: 'break-all'
+              wordBreak: 'break-all',
             }}
             placeholder="Enter input data, one line per entry..."
           />

@@ -167,19 +167,22 @@ export const SentencePanel = (props: SentencePanelProps) => {
     }
   }
 
-  const handleInputDataChange = useCallback((newInput: string[]) => {
-    if (pgnData && props.definition) {
-      // Update the PGN data with new input
-      //pgnData.input = newInput
-      // Trigger any necessary updates
-      //props.selectedPgn.next(pgnData)
-      //(props.definition as any).sampleData = newInput
-      pgnData.input = newInput
-      if (props.onDefinitionSave) {
-        props.onDefinitionSave(props.definition)
+  const handleInputDataChange = useCallback(
+    (newInput: string[]) => {
+      if (pgnData && props.definition) {
+        // Update the PGN data with new input
+        //pgnData.input = newInput
+        // Trigger any necessary updates
+        //props.selectedPgn.next(pgnData)
+        //(props.definition as any).sampleData = newInput
+        pgnData.input = newInput
+        if (props.onDefinitionSave) {
+          props.onDefinitionSave(props.definition)
+        }
       }
-    }
-  }, [pgnData, props.selectedPgn])
+    },
+    [pgnData, props.selectedPgn],
+  )
 
   const handleLookupSave = useCallback(
     (enumName: string, lookupType: 'lookup' | 'bitlookup', lookupValues: { key: string; value: string }[]) => {
@@ -306,9 +309,9 @@ export const SentencePanel = (props: SentencePanelProps) => {
         <TabPane tabId={INPUT_TAB_ID}>
           <Card>
             <CardBody style={{ padding: 0 }}>
-              <InputDataTab 
-                pgnData={pgnData} 
-                onCopyInput={copyInputData} 
+              <InputDataTab
+                pgnData={pgnData}
+                onCopyInput={copyInputData}
                 isEditing={props.inEditingTab}
                 onInputChange={handleInputDataChange}
               />

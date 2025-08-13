@@ -15,18 +15,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react'
-import {
-  Card,
-  CardBody,
-  Button,
-  Table,
-  Row,
-  Col,
-  Alert,
-  InputGroup,
-  InputGroupText,
-  Input,
-} from 'reactstrap'
+import { Card, CardBody, Button, Table, Row, Col, Alert, InputGroup, InputGroupText, Input } from 'reactstrap'
 import { Enumeration, getEnumerations, removeLookup } from '@canboat/ts-pgns'
 
 interface LookupEditorProps {
@@ -34,7 +23,11 @@ interface LookupEditorProps {
   onLookupChange: (enumeration: Enumeration) => void
   onLookupRemove: (enumName: string) => void
   onClearAll: () => void
-  onLookupEdit?: (enumName: string, type: 'lookup' | 'bitlookup', lookupValues: { key: string; value: string }[]) => void
+  onLookupEdit?: (
+    enumName: string,
+    type: 'lookup' | 'bitlookup',
+    lookupValues: { key: string; value: string }[],
+  ) => void
 }
 
 const LookupEditor: React.FC<LookupEditorProps> = ({
@@ -50,7 +43,7 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
   const allLookups = useMemo(() => {
     // Get only changed lookups from the tracker
     const changedEnumerations = Object.values(changedLookups)
-    
+
     // Apply search filter
     return changedEnumerations.filter((lookup) => {
       if (searchTerm) {
@@ -60,18 +53,21 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
     })
   }, [searchTerm, changedLookups])
 
-  const editLookup = useCallback((enumeration: Enumeration) => {
-    if (!onLookupEdit) return
-    
-    // Convert Enumeration to the lookup values format expected by PgnDefinitionTab
-    const lookupValues = enumeration.EnumValues.map((ev) => ({
-      key: ev.Value.toString(),
-      value: ev.Name,
-    }))
-    
-    // Call parent's lookup edit function
-    onLookupEdit(enumeration.Name, 'lookup', lookupValues)
-  }, [onLookupEdit])
+  const editLookup = useCallback(
+    (enumeration: Enumeration) => {
+      if (!onLookupEdit) return
+
+      // Convert Enumeration to the lookup values format expected by PgnDefinitionTab
+      const lookupValues = enumeration.EnumValues.map((ev) => ({
+        key: ev.Value.toString(),
+        value: ev.Name,
+      }))
+
+      // Call parent's lookup edit function
+      onLookupEdit(enumeration.Name, 'lookup', lookupValues)
+    },
+    [onLookupEdit],
+  )
 
   const deleteLookup = useCallback(
     (enumName: string) => {
@@ -88,7 +84,7 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
         onLookupRemove(enumName)
       }
     },
-    [onLookupRemove, changedLookups]
+    [onLookupRemove, changedLookups],
   )
 
   return (
@@ -101,9 +97,9 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
               <small className="text-muted">Showing only lookups that have been modified</small>
             </div>
             <div className="d-flex gap-2">
-              <Button 
-                color="primary" 
-                size="sm" 
+              <Button
+                color="primary"
+                size="sm"
                 onClick={() => onLookupEdit && onLookupEdit('', 'lookup', [])}
                 disabled={!onLookupEdit}
               >
@@ -140,7 +136,11 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
             {allLookups.length === 0 ? (
               <div className="text-center text-muted p-4">
                 <p>No changed lookups found</p>
-                {searchTerm ? <small>Try adjusting your search term</small> : <small>Modified lookups will appear here</small>}
+                {searchTerm ? (
+                  <small>Try adjusting your search term</small>
+                ) : (
+                  <small>Modified lookups will appear here</small>
+                )}
               </div>
             ) : (
               <Table responsive bordered size="sm" style={{ marginBottom: 0 }}>
@@ -162,9 +162,7 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
                           backgroundColor: isEvenRow ? '#ffffff' : 'rgba(0,0,0,.05)',
                         }}
                       >
-                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-                          {lookup.Name}
-                        </td>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{lookup.Name}</td>
                         <td>{lookup.MaxValue}</td>
                         <td>{lookup.EnumValues.length}</td>
                         <td>
@@ -199,8 +197,8 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
 
           {Object.keys(changedLookups).length > 0 && (
             <Alert color="info" className="mt-3 mb-0">
-              <strong>{Object.keys(changedLookups).length}</strong> lookup(s) have been modified and will be saved
-              with your PGN definitions.
+              <strong>{Object.keys(changedLookups).length}</strong> lookup(s) have been modified and will be saved with
+              your PGN definitions.
             </Alert>
           )}
         </CardBody>
