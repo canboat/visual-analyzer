@@ -180,10 +180,27 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
 
       let parsedValue = 'N/A'
       let rawValue = 'N/A'
+      let fieldParsedValue = 'N/A'
 
       if (mapping) {
         parsedValue = typeof mapping.value !== 'string' ? JSON.stringify(mapping.value) : mapping.value
         rawValue = mapping.bytes.map((b: number) => `${b.toString(16).padStart(2, '0').toUpperCase()}`).join(' ')
+      }
+
+      // Get the parsed value from pgnData.fields
+      if (repetitionIndex !== undefined) {
+        // For repeating fields, get value from the list array
+        const listData = (pgnData.fields as any).list
+        if (listData && listData[repetitionIndex] && listData[repetitionIndex][field.Id] !== undefined) {
+          const value = listData[repetitionIndex][field.Id]
+          fieldParsedValue = typeof value !== 'string' ? JSON.stringify(value) : value
+        }
+      } else {
+        // For non-repeating fields, get value directly from fields
+        if ((pgnData.fields as any)[field.Id] !== undefined) {
+          const value = (pgnData.fields as any)[field.Id]
+          fieldParsedValue = typeof value !== 'string' ? JSON.stringify(value) : value
+        }
       }
 
       const baseFieldIndex =
@@ -236,6 +253,7 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
           </td>
           <td style={{ padding: '8px', border: '1px solid #dee2e6', fontFamily: 'monospace' }}>{rawValue}</td>
           <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>{parsedValue}</td>
+          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>{fieldParsedValue}</td>
         </tr>
       )
     }
@@ -398,6 +416,7 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
                 <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>Byte Range</th>
                 <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>Bytes</th>
                 <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>Value</th>
+                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>Parsed</th>
               </tr>
             </thead>
             <tbody>
@@ -443,7 +462,7 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
                         rows.push(
                           <tr key={`separator-${repIndex}`} style={{ height: '8px' }}>
                             <td
-                              colSpan={5}
+                              colSpan={6}
                               style={{
                                 padding: '4px',
                                 border: 'none',
