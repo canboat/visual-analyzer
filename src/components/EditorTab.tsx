@@ -220,8 +220,8 @@ export const saveDefinition = (updatedDefinition: Definition, pgnData: PGN) => {
     if (definition.Id !== updatedDefinition.Id) {
       changedDefinitionsTracker.clearDefinition(definition.Id)
       removePGN(definition)
-      changedDefinitionsTracker.addDefinition(updatedDefinition)
     }
+    changedDefinitionsTracker.addDefinition(updatedDefinition)
   } else {
     changedDefinitionsTracker.addDefinition(updatedDefinition)
   }

@@ -203,6 +203,15 @@ export const PgnDefinitionTab = ({
     [calculateBitOffsets],
   )
 
+  // Special handler for field name changes that also updates the field ID
+  const handleFieldNameChange = useCallback((index: number, newName: string) => {
+    const camelCaseId = toCamelCase(newName)
+    updateField(index, { 
+      Name: newName,
+      Id: camelCaseId
+    })
+  }, [updateField])
+
   // Add a new field
   const addField = useCallback(() => {
     const currentFields = editedDefinition.Fields || []
@@ -948,7 +957,7 @@ export const PgnDefinitionTab = ({
                                   size="sm"
                                   value={field.Name}
                                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                    updateField(index, { Name: e.target.value })
+                                    handleFieldNameChange(index, e.target.value)
                                   }
                                   style={{ display: 'inline-block', width: 'auto', minWidth: '200px' }}
                                 />
