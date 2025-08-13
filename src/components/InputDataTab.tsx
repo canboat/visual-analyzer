@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { PGN } from '@canboat/ts-pgns'
 import { Button, CardHeader, Input } from 'reactstrap'
 
@@ -28,6 +28,13 @@ interface InputDataTabProps {
 export const InputDataTab = ({ pgnData, onCopyInput, isEditing = false, onInputChange }: InputDataTabProps) => {
   const [editingText, setEditingText] = useState<string>(() => (pgnData.input || []).join('\n'))
   const [hasChanges, setHasChanges] = useState(false)
+
+  // Update editingText when pgnData changes (i.e., when a different PGN is selected)
+  useEffect(() => {
+    const newText = (pgnData.input || []).join('\n')
+    setEditingText(newText)
+    setHasChanges(false)
+  }, [pgnData.input])
 
   const handleTextChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const newText = event.target.value
