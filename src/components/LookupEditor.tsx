@@ -15,7 +15,20 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Card, CardBody, Button, Table, Row, Col, Alert, InputGroup, InputGroupText, Input } from 'reactstrap'
+import {
+  Card,
+  CardBody,
+  Button,
+  Table,
+  Row,
+  Col,
+  Alert,
+  InputGroup,
+  InputGroupText,
+  Input,
+  FormGroup,
+  Label,
+} from 'reactstrap'
 import { Enumeration, getEnumerations, removeLookup } from '@canboat/ts-pgns'
 
 interface LookupEditorProps {
@@ -38,20 +51,28 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
   onLookupEdit,
 }) => {
   const [searchTerm, setSearchTerm] = useState('')
+  const [showOnlyChanged, setShowOnlyChanged] = useState(true)
 
-  // Get only changed lookups from the tracker
+  // Get lookups based on filter setting
   const allLookups = useMemo(() => {
-    // Get only changed lookups from the tracker
-    const changedEnumerations = Object.values(changedLookups)
+    let lookups: Enumeration[]
+
+    if (showOnlyChanged) {
+      // Get only changed lookups from the tracker
+      lookups = Object.values(changedLookups)
+    } else {
+      // Get all available lookups from ts-pgns
+      lookups = getEnumerations()
+    }
 
     // Apply search filter
-    return changedEnumerations.filter((lookup) => {
+    return lookups.filter((lookup) => {
       if (searchTerm) {
         return lookup.Name.toLowerCase().includes(searchTerm.toLowerCase())
       }
       return true
     })
-  }, [searchTerm, changedLookups])
+  }, [searchTerm, changedLookups, showOnlyChanged])
 
   const editLookup = useCallback(
     (enumeration: Enumeration) => {
@@ -71,13 +92,13 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
 
   const deleteLookup = useCallback(
     (enumName: string) => {
+      // Only allow deletion if the lookup is in the changed lookups
+      if (!changedLookups[enumName]) {
+        return // Do nothing if it's not a changed lookup
+      }
+
       if (window.confirm(`Are you sure you want to delete the lookup "${enumName}"?`)) {
-        // First try to find it in the changed lookups
-        let enumeration: Enumeration | undefined = changedLookups[enumName]
-        if (!enumeration) {
-          // If not found in changed lookups, find it in the original enumerations
-          enumeration = getEnumerations().find((e) => e.Name === enumName)
-        }
+        const enumeration: Enumeration = changedLookups[enumName]
         if (enumeration) {
           removeLookup(enumeration)
         }
@@ -93,8 +114,10 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
         <CardBody>
           <div className="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <h5 className="mb-0">Changed Lookups Management</h5>
-              <small className="text-muted">Showing only lookups that have been modified</small>
+              <h5 className="mb-0">Lookups Management</h5>
+              <small className="text-muted">
+                {showOnlyChanged ? 'Showing only lookups that have been modified' : 'Showing all available lookups'}
+              </small>
             </div>
             <div className="d-flex gap-2">
               <Button
@@ -118,16 +141,29 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
 
           {/* Filters */}
           <Row className="mb-3">
-            <Col md="12">
+            <Col md="8">
               <InputGroup size="sm">
                 <InputGroupText>🔍</InputGroupText>
                 <Input
                   type="text"
-                  placeholder="Search changed lookups by name..."
+                  placeholder="Search lookups by name..."
                   value={searchTerm}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                 />
               </InputGroup>
+            </Col>
+            <Col md="4">
+              <FormGroup check size="sm">
+                <Input
+                  type="checkbox"
+                  id="showOnlyChanged"
+                  checked={showOnlyChanged}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setShowOnlyChanged(e.target.checked)}
+                />
+                <Label check for="showOnlyChanged" className="text-muted">
+                  Show only changed lookups
+                </Label>
+              </FormGroup>
             </Col>
           </Row>
 
@@ -135,11 +171,13 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
           <div style={{ height: '500px', overflow: 'auto' }}>
             {allLookups.length === 0 ? (
               <div className="text-center text-muted p-4">
-                <p>No changed lookups found</p>
+                <p>No lookups found</p>
                 {searchTerm ? (
                   <small>Try adjusting your search term</small>
+                ) : showOnlyChanged ? (
+                  <small>No modified lookups yet</small>
                 ) : (
-                  <small>Modified lookups will appear here</small>
+                  <small>No lookups available</small>
                 )}
               </div>
             ) : (
@@ -162,7 +200,14 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
                           backgroundColor: isEvenRow ? '#ffffff' : 'rgba(0,0,0,.05)',
                         }}
                       >
-                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{lookup.Name}</td>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                          {lookup.Name}
+                          {!showOnlyChanged && changedLookups[lookup.Name] && (
+                            <span className="badge badge-warning ms-2" title="Modified">
+                              ●
+                            </span>
+                          )}
+                        </td>
                         <td>{lookup.MaxValue}</td>
                         <td>{lookup.EnumValues.length}</td>
                         <td>
@@ -176,15 +221,17 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
                             >
                               ✏️
                             </Button>
-                            <Button
-                              color="danger"
-                              size="sm"
-                              outline
-                              onClick={() => deleteLookup(lookup.Name)}
-                              title="Remove changes"
-                            >
-                              ✗
-                            </Button>
+                            {changedLookups[lookup.Name] && (
+                              <Button
+                                color="danger"
+                                size="sm"
+                                outline
+                                onClick={() => deleteLookup(lookup.Name)}
+                                title="Remove changes"
+                              >
+                                ✗
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -195,10 +242,23 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
             )}
           </div>
 
-          {Object.keys(changedLookups).length > 0 && (
+          {(showOnlyChanged ? Object.keys(changedLookups).length > 0 : true) && (
             <Alert color="info" className="mt-3 mb-0">
-              <strong>{Object.keys(changedLookups).length}</strong> lookup(s) have been modified and will be saved with
-              your PGN definitions.
+              {showOnlyChanged ? (
+                <>
+                  <strong>{Object.keys(changedLookups).length}</strong> lookup(s) have been modified and will be saved
+                  with your PGN definitions.
+                </>
+              ) : (
+                <>
+                  Showing <strong>{allLookups.length}</strong> lookup(s).{' '}
+                  {Object.keys(changedLookups).length > 0 && (
+                    <>
+                      <strong>{Object.keys(changedLookups).length}</strong> have been modified.
+                    </>
+                  )}
+                </>
+              )}
             </Alert>
           )}
         </CardBody>

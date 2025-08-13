@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Card, CardBody, Button, Table, Row, Col, Alert, Input } from 'reactstrap'
+import { Card, CardBody, Button, Table, Row, Col, Alert, Input, FormGroup, Label } from 'reactstrap'
 import { BitEnumeration, getBitEnumerations, removeBitLookup } from '@canboat/ts-pgns'
 
 interface BitLookupEditorProps {
@@ -38,20 +38,28 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
   onBitLookupEdit,
 }) => {
   const [searchTerm, setSearchTerm] = useState('')
+  const [showOnlyChanged, setShowOnlyChanged] = useState(true)
 
-  // Get only changed bit lookups from the tracker
+  // Get bit lookups based on filter setting
   const allBitLookups = useMemo(() => {
-    // Get only changed bit lookups from the tracker
-    const changedEnumerations = Object.values(changedBitLookups)
+    let bitLookups: BitEnumeration[]
+
+    if (showOnlyChanged) {
+      // Get only changed bit lookups from the tracker
+      bitLookups = Object.values(changedBitLookups)
+    } else {
+      // Get all available bit lookups from ts-pgns
+      bitLookups = getBitEnumerations()
+    }
 
     // Apply search filter
-    return changedEnumerations.filter((lookup) => {
+    return bitLookups.filter((lookup) => {
       if (searchTerm) {
         return lookup.Name.toLowerCase().includes(searchTerm.toLowerCase())
       }
       return true
     })
-  }, [searchTerm, changedBitLookups])
+  }, [searchTerm, changedBitLookups, showOnlyChanged])
 
   const editBitLookup = useCallback(
     (enumeration: BitEnumeration) => {
@@ -71,13 +79,13 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
 
   const deleteBitLookup = useCallback(
     (enumName: string) => {
+      // Only allow deletion if the bit lookup is in the changed bit lookups
+      if (!changedBitLookups[enumName]) {
+        return // Do nothing if it's not a changed bit lookup
+      }
+
       if (window.confirm(`Are you sure you want to delete the bit lookup "${enumName}"?`)) {
-        // First try to find it in the changed bit lookups
-        let enumeration: BitEnumeration | undefined = changedBitLookups[enumName]
-        if (!enumeration) {
-          // If not found in changed bit lookups, find it in the original enumerations
-          enumeration = getBitEnumerations().find((e) => e.Name === enumName)
-        }
+        const enumeration: BitEnumeration = changedBitLookups[enumName]
         if (enumeration) {
           removeBitLookup(enumeration)
         }
@@ -93,8 +101,12 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
         <CardBody>
           <div className="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <h5 className="mb-0">Changed Bit Lookups Management</h5>
-              <small className="text-muted">Showing only bit lookups that have been modified</small>
+              <h5 className="mb-0">Bit Lookups Management</h5>
+              <small className="text-muted">
+                {showOnlyChanged
+                  ? 'Showing only bit lookups that have been modified'
+                  : 'Showing all available bit lookups'}
+              </small>
             </div>
             <div className="d-flex gap-2">
               <Button
@@ -118,14 +130,27 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
 
           {/* Filters */}
           <Row className="mb-3">
-            <Col md="12">
+            <Col md="8">
               <Input
                 size="sm"
                 type="text"
-                placeholder="🔍 Search changed bit lookups by name..."
+                placeholder="🔍 Search bit lookups by name..."
                 value={searchTerm}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
               />
+            </Col>
+            <Col md="4">
+              <FormGroup check size="sm">
+                <Input
+                  type="checkbox"
+                  id="showOnlyChangedBit"
+                  checked={showOnlyChanged}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setShowOnlyChanged(e.target.checked)}
+                />
+                <Label check for="showOnlyChangedBit" className="text-muted">
+                  Show only changed bit lookups
+                </Label>
+              </FormGroup>
             </Col>
           </Row>
 
@@ -133,11 +158,13 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
           <div style={{ height: '500px', overflow: 'auto' }}>
             {allBitLookups.length === 0 ? (
               <div className="text-center text-muted p-4">
-                <p>No changed bit lookups found</p>
+                <p>No bit lookups found</p>
                 {searchTerm ? (
                   <small>Try adjusting your search term</small>
+                ) : showOnlyChanged ? (
+                  <small>No modified bit lookups yet</small>
                 ) : (
-                  <small>Modified bit lookups will appear here</small>
+                  <small>No bit lookups available</small>
                 )}
               </div>
             ) : (
@@ -159,7 +186,14 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
                           backgroundColor: isEvenRow ? '#ffffff' : 'rgba(0,0,0,.05)',
                         }}
                       >
-                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{lookup.Name}</td>
+                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                          {lookup.Name}
+                          {!showOnlyChanged && changedBitLookups[lookup.Name] && (
+                            <span className="badge badge-warning ms-2" title="Modified">
+                              ●
+                            </span>
+                          )}
+                        </td>
                         <td>{lookup.EnumBitValues.length}</td>
                         <td>
                           <div className="d-flex gap-1">
@@ -172,15 +206,17 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
                             >
                               ✏️
                             </Button>
-                            <Button
-                              color="danger"
-                              size="sm"
-                              outline
-                              onClick={() => deleteBitLookup(lookup.Name)}
-                              title="Remove changes"
-                            >
-                              ✗
-                            </Button>
+                            {changedBitLookups[lookup.Name] && (
+                              <Button
+                                color="danger"
+                                size="sm"
+                                outline
+                                onClick={() => deleteBitLookup(lookup.Name)}
+                                title="Remove changes"
+                              >
+                                ✗
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -191,10 +227,23 @@ const BitLookupEditor: React.FC<BitLookupEditorProps> = ({
             )}
           </div>
 
-          {Object.keys(changedBitLookups).length > 0 && (
+          {(showOnlyChanged ? Object.keys(changedBitLookups).length > 0 : true) && (
             <Alert color="info" className="mt-3 mb-0">
-              <strong>{Object.keys(changedBitLookups).length}</strong> bit lookup(s) have been modified and will be
-              saved with your PGN definitions.
+              {showOnlyChanged ? (
+                <>
+                  <strong>{Object.keys(changedBitLookups).length}</strong> bit lookup(s) have been modified and will be
+                  saved with your PGN definitions.
+                </>
+              ) : (
+                <>
+                  Showing <strong>{allBitLookups.length}</strong> bit lookup(s).{' '}
+                  {Object.keys(changedBitLookups).length > 0 && (
+                    <>
+                      <strong>{Object.keys(changedBitLookups).length}</strong> have been modified.
+                    </>
+                  )}
+                </>
+              )}
             </Alert>
           )}
         </CardBody>
