@@ -227,6 +227,27 @@ export const changedDefinitionsTracker = {
     }
   },
 
+  clearAllDefinitions() {
+    // Clear only definitions
+    this._cache.definitions = {}
+    this._saveToStorage(this._storageKeys.definitions, {})
+    console.log('Cleared all tracked definition changes')
+  },
+
+  clearAllLookups() {
+    // Clear only lookups
+    this._cache.lookups = {}
+    this._saveToStorage(this._storageKeys.lookups, {})
+    console.log('Cleared all tracked lookup changes')
+  },
+
+  clearAllBitLookups() {
+    // Clear only bit lookups
+    this._cache.bitLookups = {}
+    this._saveToStorage(this._storageKeys.bitLookups, {})
+    console.log('Cleared all tracked bit lookup changes')
+  },
+
   clearAll() {
     // Clear in-memory cache
     this._cache.definitions = {}
@@ -335,7 +356,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
 
   // Helper functions that update the tracker and force re-renders
   const clearAllDefinitions = () => {
-    changedDefinitionsTracker.clearAll()
+    changedDefinitionsTracker.clearAllDefinitions()
     setTrackerVersion((v) => v + 1)
     clearDefinitionSelection()
   }
@@ -361,9 +382,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
 
   const clearAllLookups = () => {
     // Clear only lookups, not definitions or bit lookups
-    Object.keys(changedDefinitionsTracker.lookups).forEach((enumName) => {
-      changedDefinitionsTracker.clearLookup(enumName, 'lookup')
-    })
+    changedDefinitionsTracker.clearAllLookups()
     setTrackerVersion((v) => v + 1)
   }
 
@@ -481,9 +500,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
 
   const clearAllBitLookups = () => {
     // Clear only bit lookups, not definitions or lookups
-    Object.keys(changedDefinitionsTracker.bitLookups).forEach((enumName) => {
-      changedDefinitionsTracker.clearLookup(enumName, 'bitlookup')
-    })
+    changedDefinitionsTracker.clearAllBitLookups()
     setTrackerVersion((v) => v + 1)
   }
 
