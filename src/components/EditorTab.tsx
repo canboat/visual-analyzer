@@ -28,6 +28,11 @@ import {
   Col,
   Button,
   Table,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Input,
 } from 'reactstrap'
 import {
   PGN,
@@ -45,6 +50,8 @@ import {
 import { FromPgn } from '@canboat/canboatjs'
 import { SentencePanel } from './SentencePanel'
 import { PgnDefinitionTab } from './PgnDefinitionTab'
+import LookupEditor from './LookupEditor'
+import BitLookupEditor from './BitLookupEditor'
 import { ReplaySubject } from 'rxjs'
 import { DeviceMap } from '../types'
 import { useObservableState } from 'observable-hooks'
@@ -167,11 +174,20 @@ export const changedDefinitionsTracker = {
     if ((enumeration as Enumeration).EnumValues) {
       this.lookups[enumeration.Name] = enumeration as Enumeration
       this._saveToStorage(this._storageKeys.lookups, this.lookups)
+      console.log(`Tracked change for lookup ${enumeration.Name}`)
     } else {
       this.bitLookups[enumeration.Name] = enumeration as BitEnumeration
       this._saveToStorage(this._storageKeys.bitLookups, this.bitLookups)
+      console.log(`Tracked change for bit lookup ${enumeration.Name}`)
     }
-    console.log(`Tracked change for ${enumeration.Name}`)
+  },
+
+  hasLookup(enumName: string): boolean {
+    return this.lookups.hasOwnProperty(enumName)
+  },
+
+  getLookup(enumName: string): Enumeration | undefined {
+    return this.lookups[enumName]
   },
 
   getChangedDefinitions(): Set<string> {
@@ -269,6 +285,11 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
   const [selectedPgnWithHistory] = useState(new ReplaySubject<{ current: PGN; history: PGN[] } | null>())
   const [selectedDefinitionId, setSelectedDefinitionId] = useState<string | null>(null)
   const [trackerVersion, setTrackerVersion] = useState(0) // Force re-renders when tracker changes
+  
+  // Lookup editing state
+  const [editingLookup, setEditingLookup] = useState<{ enumName: string; type: 'lookup' | 'bitlookup' } | null>(null)
+  const [lookupValues, setLookupValues] = useState<{ key: string; value: string }[]>([])
+  const [newLookupName, setNewLookupName] = useState('')
 
   // Get the current PGN value for PgnDefinitionTab
   const currentPgn = useObservableState<PGN | undefined>(selectedPgn, undefined)
@@ -325,6 +346,144 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
     if (selectedDefinitionId === id) {
       clearDefinitionSelection()
     }
+  }
+
+  // Handler functions for lookups
+  const handleLookupChange = (enumeration: Enumeration) => {
+    changedDefinitionsTracker.addLookup(enumeration)
+    setTrackerVersion((v) => v + 1) // Force re-render
+  }
+
+  const handleLookupRemove = (enumName: string) => {
+    changedDefinitionsTracker.clearLookup(enumName, 'lookup')
+    setTrackerVersion((v) => v + 1) // Force re-render
+  }
+
+  const clearAllLookups = () => {
+    // Clear only lookups, not definitions or bit lookups
+    Object.keys(changedDefinitionsTracker.lookups).forEach((enumName) => {
+      changedDefinitionsTracker.clearLookup(enumName, 'lookup')
+    })
+    setTrackerVersion((v) => v + 1)
+  }
+
+  // Lookup editing functions (similar to PgnDefinitionTab)
+  const handleLookupEdit = (enumName: string, type: 'lookup' | 'bitlookup', lookupValues: { key: string; value: string }[]) => {
+    if (!enumName && lookupValues.length === 0) {
+      // This is a new lookup creation request without name, initialize with default values
+      setLookupValues([
+        { key: '0', value: 'Unknown' },
+        { key: '1', value: 'Value1' },
+        { key: '2', value: 'Value2' },
+      ])
+      setNewLookupName('')
+      setEditingLookup({ enumName: '', type })
+      return
+    }
+
+    // Load existing lookup values or use provided ones
+    setLookupValues(lookupValues)
+    setNewLookupName(enumName || '') // Set the existing name for editing
+    setEditingLookup({ enumName, type })
+  }
+
+  const closeLookupEditor = () => {
+    setEditingLookup(null)
+    setLookupValues([])
+    setNewLookupName('')
+  }
+
+  const addLookupValue = () => {
+    setLookupValues((prev) => [...prev, { key: prev.length.toString(), value: `Value${prev.length}` }])
+  }
+
+  const removeLookupValue = (index: number) => {
+    setLookupValues((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const updateLookupValue = (index: number, key: string, value: string) => {
+    setLookupValues((prev) => prev.map((item, i) => (i === index ? { key, value } : item)))
+  }
+
+  const saveLookupValues = () => {
+    if (!editingLookup) return
+
+    // Use the provided enumName or the entered newLookupName
+    const enumName = newLookupName.trim()
+    
+    if (!enumName) {
+      alert('Please enter a name for the lookup')
+      return
+    }
+
+    // If this is a rename operation (original name exists and is different from new name)
+    const isRename = editingLookup.enumName && editingLookup.enumName !== enumName
+
+    if (editingLookup.type === 'lookup') {
+      // If renaming, first remove the old lookup
+      if (isRename) {
+        changedDefinitionsTracker.clearLookup(editingLookup.enumName!, 'lookup')
+      }
+
+      // Create new enumeration
+      const newEnumeration: Enumeration = {
+        Name: enumName,
+        MaxValue: 255, // Default max value
+        EnumValues: lookupValues.map((item) => ({
+          Value: parseInt(item.key) || 0,
+          Name: item.value
+        })).sort((a, b) => a.Value - b.Value)
+      }
+      
+      updateLookup(newEnumeration)
+      handleLookupChange(newEnumeration)
+    } else if (editingLookup.type === 'bitlookup') {
+      // If renaming, first remove the old bit lookup
+      if (isRename) {
+        changedDefinitionsTracker.clearLookup(editingLookup.enumName!, 'bitlookup')
+      }
+
+      // Create new bit enumeration
+      const newBitEnumeration: BitEnumeration = {
+        Name: enumName,
+        MaxValue: 255, // Default max value for bit enumerations
+        EnumBitValues: lookupValues.map((item) => ({
+          Bit: parseInt(item.key) || 0,
+          Name: item.value
+        })).sort((a, b) => a.Bit - b.Bit)
+      }
+      
+      updateBitLookup(newBitEnumeration)
+      handleBitLookupChange(newBitEnumeration)
+    }
+    
+    closeLookupEditor()
+  }
+
+  // Handler functions for bit lookups
+  const handleBitLookupChange = (enumeration: BitEnumeration) => {
+    changedDefinitionsTracker.addLookup(enumeration)
+    setTrackerVersion((v) => v + 1) // Force re-render when adding/updating bit lookups
+  }
+
+  const handleBitLookupRemove = (enumName: string) => {
+    changedDefinitionsTracker.clearLookup(enumName, 'bitlookup')
+    setTrackerVersion((v) => v + 1)
+  }
+
+  const clearAllBitLookups = () => {
+    // Clear only bit lookups, not definitions or lookups
+    Object.keys(changedDefinitionsTracker.bitLookups).forEach((enumName) => {
+      changedDefinitionsTracker.clearLookup(enumName, 'bitlookup')
+    })
+    setTrackerVersion((v) => v + 1)
+  }
+
+  // Handler for when PgnDefinitionTab saves a lookup
+  const handlePgnDefinitionLookupSave = (enumName: string, lookupType: 'lookup' | 'bitlookup', lookupValues: { key: string; value: string }[]) => {
+    // This will be called when PgnDefinitionTab saves lookup changes
+    // We need to update our tracker version to force re-render of the editors
+    setTrackerVersion((v) => v + 1)
   }
 
   return (
@@ -470,7 +629,9 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                           definition={changedDefinitionsTracker.getDefinition(selectedDefinitionId)!}
                           pgnData={currentPgn}
                           onSave={handleDefinitionSave}
+                          onLookupSave={handlePgnDefinitionLookupSave}
                           hasBeenChanged={true}
+                          changedLookups={changedDefinitionsTracker.getChangedLookups()}
                         />
                       ) : (
                         <div
@@ -534,64 +695,125 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
             </TabPane>
 
             <TabPane tabId={LOOKUPS_TAB}>
-              <Card>
-                <CardBody>
-                  <Row>
-                    <Col>
-                      <h5>Lookups</h5>
-                      <p className="text-muted">
-                        Manage lookup tables that map numeric values to human-readable descriptions for enumerated
-                        fields in PGN definitions.
-                      </p>
-                      <div className="alert alert-info">
-                        <h6>Features (Coming Soon):</h6>
-                        <ul className="mb-0">
-                          <li>Browse existing lookup tables</li>
-                          <li>Create new lookup tables</li>
-                          <li>Add, edit, and remove lookup entries</li>
-                          <li>Associate lookups with PGN fields</li>
-                          <li>Import/export lookup definitions</li>
-                          <li>Validate lookup completeness</li>
-                          <li>Preview lookup usage in PGN data</li>
-                        </ul>
-                      </div>
-                    </Col>
-                  </Row>
-                </CardBody>
-              </Card>
+              <LookupEditor
+                key={`lookups-${trackerVersion}`}
+                changedLookups={changedDefinitionsTracker.lookups}
+                onLookupChange={handleLookupChange}
+                onLookupRemove={handleLookupRemove}
+                onClearAll={clearAllLookups}
+                onLookupEdit={handleLookupEdit}
+              />
             </TabPane>
 
             <TabPane tabId={BIT_LOOKUPS_TAB}>
-              <Card>
-                <CardBody>
-                  <Row>
-                    <Col>
-                      <h5>Bit Lookups</h5>
-                      <p className="text-muted">
-                        Define and manage bit field lookups for interpreting individual bits or bit ranges within larger
-                        data fields.
-                      </p>
-                      <div className="alert alert-info">
-                        <h6>Features (Coming Soon):</h6>
-                        <ul className="mb-0">
-                          <li>Browse existing bit lookup definitions</li>
-                          <li>Create new bit field mappings</li>
-                          <li>Define bit positions and meanings</li>
-                          <li>Set bit field names and descriptions</li>
-                          <li>Handle bit masks and ranges</li>
-                          <li>Associate bit lookups with PGN fields</li>
-                          <li>Validate bit field definitions</li>
-                          <li>Test bit field interpretations</li>
-                        </ul>
-                      </div>
-                    </Col>
-                  </Row>
-                </CardBody>
-              </Card>
+              <BitLookupEditor
+                key={`bitlookups-${trackerVersion}`}
+                changedBitLookups={changedDefinitionsTracker.bitLookups}
+                onBitLookupChange={handleBitLookupChange}
+                onBitLookupRemove={handleBitLookupRemove}
+                onClearAll={clearAllBitLookups}
+                onBitLookupEdit={handleLookupEdit}
+              />
             </TabPane>
           </TabContent>
         </CardBody>
       </Card>
+
+      {/* Lookup Editor Modal */}
+      <Modal isOpen={!!editingLookup} toggle={closeLookupEditor} size="lg">
+        <ModalHeader toggle={closeLookupEditor}>
+          {editingLookup?.enumName ? 'Edit' : 'Create'} {editingLookup?.type === 'lookup' ? 'Lookup' : 'Bit Lookup'} Enumeration
+          {editingLookup?.enumName && editingLookup.enumName === newLookupName && (
+            <div className="small text-muted">Current lookup: {editingLookup.enumName}</div>
+          )}
+        </ModalHeader>
+        <ModalBody>
+          {/* Name input for all lookups */}
+          {editingLookup && (
+            <div className="mb-3">
+              <label className="form-label">
+                {editingLookup.type === 'lookup' ? 'Lookup' : 'Bit Lookup'} Name
+              </label>
+              <Input
+                type="text"
+                placeholder={`Enter ${editingLookup.type === 'lookup' ? 'lookup' : 'bit lookup'} name`}
+                value={newLookupName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewLookupName(e.target.value)}
+              />
+              {editingLookup.enumName && editingLookup.enumName !== newLookupName && (
+                <div className="small text-muted mt-1">
+                  Original name: {editingLookup.enumName}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h6>Lookup Values</h6>
+            <Button color="success" size="sm" onClick={addLookupValue}>
+              <i className="fa fa-plus me-2" />
+              Add Value
+            </Button>
+          </div>
+
+          <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            <Table size="sm" bordered>
+              <thead>
+                <tr>
+                  <th style={{ width: '120px' }}>Key/Value</th>
+                  <th>Name/Description</th>
+                  <th style={{ width: '80px' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lookupValues.map((item, index) => (
+                  <tr key={index}>
+                    <td>
+                      <Input
+                        type={editingLookup?.type === 'bitlookup' ? 'text' : 'number'}
+                        size="sm"
+                        value={item.key}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateLookupValue(index, e.target.value, item.value)}
+                        placeholder={editingLookup?.type === 'bitlookup' ? '0x01' : '0'}
+                      />
+                    </td>
+                    <td>
+                      <Input
+                        type="text"
+                        size="sm"
+                        value={item.value}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateLookupValue(index, item.key, e.target.value)}
+                        placeholder="Value name"
+                      />
+                    </td>
+                    <td className="text-center">
+                      <Button color="danger" size="sm" onClick={() => removeLookupValue(index)} title="Remove value">
+                        <i className="fa fa-trash" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+
+          {lookupValues.length === 0 && (
+            <div className="text-center text-muted p-4">
+              <i className="fa fa-info-circle me-2" />
+              No lookup values defined. Click "Add Value" to start.
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button color="primary" onClick={saveLookupValues}>
+            <i className="fa fa-save me-2" />
+            Save Lookup
+          </Button>
+          <Button color="secondary" onClick={closeLookupEditor}>
+            Cancel
+          </Button>
+        </ModalFooter>
+      </Modal>
     </Container>
   )
 }
