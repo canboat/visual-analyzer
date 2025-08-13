@@ -48,6 +48,7 @@ type PGNDataEntry = {
 interface SentencePanelProps {
   selectedPgn: Subject<PGN>
   selectedPgnWithHistory?: Subject<PGNDataEntry | null>
+  definition?: Definition
   info: Subject<DeviceMap>
   onDefinitionsChanged?: (changedDefinitions: Set<string>) => void
 }
@@ -220,7 +221,8 @@ export const SentencePanel = (props: SentencePanelProps) => {
     return <div>Select a PGN to view its data</div>
   }
 
-  let definition: Definition = pgnData.getDefinition()
+  //let definition: Definition = pgnData.getDefinition()
+  let definition = props.definition || pgnData.getDefinition()
   //console.debug('pgnData', pgnData)
   return (
     <div

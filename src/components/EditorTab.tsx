@@ -69,6 +69,10 @@ export const changedDefinitionsTracker = {
     return this.definitions.hasOwnProperty(pgnId)
   },
 
+  getDefinition(pgnId: string): Definition | undefined {
+    return this.definitions[pgnId]
+  },
+
   clearDefinition(pgnId: string) {
     delete this.definitions[pgnId]
     console.log(`Removed tracking for PGN ID ${pgnId}. Remaining: ${Object.keys(this.definitions).length}`)
@@ -306,6 +310,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                     <SentencePanel
                       selectedPgn={selectedPgn}
                       selectedPgnWithHistory={selectedPgnWithHistory}
+                      definition={changedDefinitionsTracker.getDefinition(selectedDefinitionId)}
                       info={deviceInfo || new ReplaySubject<DeviceMap>()}
                     />
                   ) : (

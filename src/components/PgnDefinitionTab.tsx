@@ -26,6 +26,7 @@ import {
   generateLookupHeaderEntry,
   ManufacturerCodeValues,
   IndustryCodeValues,
+  getPGNWithId,
 } from '@canboat/ts-pgns'
 import { Table, Badge, Row, Col, Button, Input, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
 
@@ -390,7 +391,7 @@ export const PgnDefinitionTab = ({
 
   const handleEdit = useCallback(() => {
     const newDef = {
-      ...definition,
+      ...JSON.parse(JSON.stringify(definition)),
       PGN: pgnData.pgn,
       Fallback: false,
     }
@@ -405,6 +406,31 @@ export const PgnDefinitionTab = ({
       }
       if (newDef.Fields.length > 2 && newDef.Fields[2].Id === 'industryCode') {
         newDef.Fields[2].Match = IndustryCodeValues[(pgnData.fields as any).industryCode] || undefined
+      }
+
+      const partialMatch = (pgnData as any).partialMatch as string
+      if ( partialMatch ) {
+        const partial = getPGNWithId(partialMatch)!
+        const hasDataField = definition.Fields[definition.Fields.length-1].Id === 'data' 
+        const start = hasDataField ? definition.Fields.length - 1 : definition.Fields.length 
+
+        if ( hasDataField ) {
+          newDef.Fields = newDef.Fields.slice(0, start)
+        }
+
+        for ( let i = start; i < partial.Fields.length; i++) {
+          const field = partial.Fields[i]
+          
+          const val = (pgnData.fields as any)[field.Id]
+          
+          if (val !== undefined) {
+            const newField = {...field}
+            if ( field.Match !== undefined ) {
+               newField.Match = typeof val === 'string' ? field.Match : val
+            }
+            newDef.Fields.push(newField)
+          }
+        }
       }
     }
 
