@@ -123,6 +123,24 @@ export const changedDefinitionsTracker = {
   },
 }
 
+export const saveDefinition = (updatedDefinition: Definition, pgnData: PGN) => {
+  let definition = pgnData.getDefinition()
+
+  if (changedDefinitionsTracker.hasDefinition(definition.Id)) {
+    if (definition.Id !== updatedDefinition.Id) {
+      changedDefinitionsTracker.clearDefinition(definition.Id)
+      removePGN(definition)
+      changedDefinitionsTracker.addDefinition(updatedDefinition)
+    }
+  } else {
+    changedDefinitionsTracker.addDefinition(updatedDefinition)
+  }
+
+  ; (updatedDefinition as any).sampleData = pgnData.input
+
+  updatePGN(updatedDefinition)
+}
+
 const parser = new FromPgn({
   returnNulls: true,
   checkForInvalidFields: true,
@@ -173,9 +191,10 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
     }
   }
 
-    const handleDefinitionSave = (definition: Definition) => {
-      handleDefinitionSelect(definition.Id, definition)
-    }
+  const handleDefinitionSave = (definition: Definition) => {
+    saveDefinition(definition, currentPgn!)
+    handleDefinitionSelect(definition.Id, definition)
+  }
 
   const clearDefinitionSelection = () => {
     setSelectedDefinitionId(null)
@@ -358,6 +377,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                       definition={changedDefinitionsTracker.getDefinition(selectedDefinitionId)}
                       onDefinitionSave={handleDefinitionSave}
                       info={deviceInfo || new ReplaySubject<DeviceMap>()}
+                      hideDefinitionTab={true}
                     />
                   ) : (
                     <Card>

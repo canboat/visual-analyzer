@@ -29,7 +29,7 @@ import {
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
 import { DeviceMap } from '../types'
-import { changedDefinitionsTracker } from './EditorTab'
+import { changedDefinitionsTracker, saveDefinition } from './EditorTab'
 import { Nav, NavItem, NavLink, TabContent, TabPane, Card, CardBody, CardHeader } from 'reactstrap'
 
 // Import the separated tab components
@@ -52,6 +52,7 @@ interface SentencePanelProps {
   info: Subject<DeviceMap>
   onDefinitionsChanged?: (changedDefinitions: Set<string>) => void
   onDefinitionSave?: (definition: Definition) => void
+  hideDefinitionTab?: boolean
 }
 
 const DATA_TAB_ID = 'data'
@@ -109,24 +110,10 @@ export const SentencePanel = (props: SentencePanelProps) => {
       if ( !pgnData ) {
         return
       }
-
-      let definition = pgnData.getDefinition()
-
-      if (changedDefinitionsTracker.hasDefinition(definition.Id)) {
-        if (definition.Id !== updatedDefinition.Id) {
-          changedDefinitionsTracker.clearDefinition(definition.Id)
-          removePGN(definition)
-          changedDefinitionsTracker.addDefinition(updatedDefinition)
-        }
-      } else {
-        changedDefinitionsTracker.addDefinition(updatedDefinition)
-      }
+      
+      saveDefinition(updatedDefinition, pgnData)
 
       notifyDefinitionsChanged()
-
-      updatePGN(updatedDefinition)
-
-      ;(updatedDefinition as any).sampleData = pgnData.input
 
       if ( props.onDefinitionSave ) {
         props.onDefinitionSave(updatedDefinition)
@@ -270,11 +257,13 @@ export const SentencePanel = (props: SentencePanelProps) => {
             </NavLink>
           </NavItem>
         )}
-        <NavItem>
-          <NavLink className={activeTab === PGNDEF_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(PGNDEF_TAB_ID)}>
-            Definition
-          </NavLink>
-        </NavItem>
+        {!props.hideDefinitionTab && (
+          <NavItem>
+            <NavLink className={activeTab === PGNDEF_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(PGNDEF_TAB_ID)}>
+              Definition
+            </NavLink>
+          </NavItem>
+        )}
         <NavItem>
           <NavLink
             className={activeTab === MAPPING_TAB_ID ? 'active ' : ''}
@@ -308,7 +297,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
             </Card>
           </TabPane>
         )}
-        {definition !== undefined && (
+        {definition !== undefined && !props.hideDefinitionTab && (
           <TabPane tabId={PGNDEF_TAB_ID}>
             <Card>
               <CardBody style={{ padding: 0 }}>
