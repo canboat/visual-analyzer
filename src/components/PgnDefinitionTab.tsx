@@ -68,20 +68,15 @@ export const PgnDefinitionTab = ({
     const currentPgn = editedDefinition.Id
     const newPgn = pgnData.getDefinition().Id
 
-    // Always update if PGN changed (user selected different PGN) or if not currently editing
-    if (!isEditing ) { //|| currentPgn !== newPgn) {
+    if (!isEditing ) {
+      /*
       const newDef = {
         ...JSON.parse(JSON.stringify(definition)),
         PGN: pgnData.pgn,
-        Fallback: false,
-      }
+        //Fallback: false,
+      }*/
 
-      setEditedDefinition(newDef)
-      // Reset editing mode when PGN changes
-      if (currentPgn !== newPgn) {
-        setIsEditing(false)
-        setEditingLookup(null)
-      }
+      setEditedDefinition(definition)
     }
   }, [definition, pgnData, isEditing, editedDefinition.PGN])
 
@@ -397,8 +392,8 @@ export const PgnDefinitionTab = ({
     }
 
     if (definition.Fallback) {
-      newDef.Description = `new${pgnData.pgn}`
-      newDef.Id = `new${pgnData.pgn}`
+      newDef.Description = `My ${pgnData.pgn}`
+      newDef.Id = `my${pgnData.pgn}`
       newDef.Explanation = undefined
 
       if (newDef.Fields.length > 0 && newDef.Fields[0].Id === 'manufacturerCode') {
@@ -608,7 +603,7 @@ export const PgnDefinitionTab = ({
       </Row>
 
       <Row>
-        <Col md={8}>
+        <Col>
           <h6>PGN Details</h6>
           <dl className="row" style={{ marginBottom: '0.5rem', lineHeight: '1.2' }}>
             <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
@@ -631,7 +626,7 @@ export const PgnDefinitionTab = ({
                 <Input
                   type="textarea"
                   size="sm"
-                  rows="2"
+                  rows="1"
                   value={editedDefinition.Description}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => handleDescriptionChange(e.target.value)}
                 />
