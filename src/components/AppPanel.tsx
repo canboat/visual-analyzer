@@ -563,6 +563,7 @@ const AppPanelInner = (props: any) => {
         }
         if (pgn !== undefined) {
           //console.log('pgn', pgn)
+          pgn.timestamp = new Date().toISOString()
           if (infoPGNS.indexOf(pgn!.pgn) === -1 || filterOptionsRef.current?.showInfoPgns) {
             setList((prev: any) => {
               const rowKey = getRowKey(pgn!, filterOptionsRef.current || undefined)

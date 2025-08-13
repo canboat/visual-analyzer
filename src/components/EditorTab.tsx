@@ -168,6 +168,10 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
     }
   }
 
+    const handleDefinitionSave = (definition: Definition) => {
+      handleDefinitionSelect(definition.Id, definition)
+    }
+
   const clearDefinitionSelection = () => {
     setSelectedDefinitionId(null)
     selectedPgnWithHistory.next(null)
@@ -311,6 +315,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                       selectedPgn={selectedPgn}
                       selectedPgnWithHistory={selectedPgnWithHistory}
                       definition={changedDefinitionsTracker.getDefinition(selectedDefinitionId)}
+                      onDefinitionSave={handleDefinitionSave}
                       info={deviceInfo || new ReplaySubject<DeviceMap>()}
                     />
                   ) : (

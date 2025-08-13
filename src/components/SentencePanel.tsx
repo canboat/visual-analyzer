@@ -51,6 +51,7 @@ interface SentencePanelProps {
   definition?: Definition
   info: Subject<DeviceMap>
   onDefinitionsChanged?: (changedDefinitions: Set<string>) => void
+  onDefinitionSave?: (definition: Definition) => void
 }
 
 const DATA_TAB_ID = 'data'
@@ -126,6 +127,10 @@ export const SentencePanel = (props: SentencePanelProps) => {
       updatePGN(updatedDefinition)
 
       ;(updatedDefinition as any).sampleData = pgnData.input
+
+      if ( props.onDefinitionSave ) {
+        props.onDefinitionSave(updatedDefinition)
+      }
     } catch (err) {
       console.error('Failed to save definition:', err)
     }
