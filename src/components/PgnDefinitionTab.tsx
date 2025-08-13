@@ -65,13 +65,13 @@ export const PgnDefinitionTab = ({
   // Update editedDefinition when the definition prop changes (when user selects different PGN)
   // Don't update if currently editing unless the PGN number changed (different PGN selected)
   useEffect(() => {
-    const currentPgn = editedDefinition.PGN
-    const newPgn = pgnData.pgn
+    const currentPgn = editedDefinition.Id
+    const newPgn = pgnData.getDefinition().Id
 
     // Always update if PGN changed (user selected different PGN) or if not currently editing
-    if (!isEditing || currentPgn !== newPgn) {
+    if (!isEditing ) { //|| currentPgn !== newPgn) {
       const newDef = {
-        ...definition,
+        ...JSON.parse(JSON.stringify(definition)),
         PGN: pgnData.pgn,
         Fallback: false,
       }
@@ -615,35 +615,13 @@ export const PgnDefinitionTab = ({
               ID:
             </dt>
             <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
-              {isEditing ? (
-                <Input
-                  type="text"
-                  size="sm"
-                  value={editedDefinition.Id}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => updateDefinition({ Id: e.target.value })}
-                  readOnly={true}
-                  title="ID field is read-only"
-                />
-              ) : (
-                <code>{editedDefinition.Id}</code>
-              )}
+              {editedDefinition.Id}
             </dd>
             <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
               PGN:
             </dt>
             <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
-              {isEditing ? (
-                <Input
-                  type="number"
-                  size="sm"
-                  value={editedDefinition.PGN}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    updateDefinition({ PGN: parseInt(e.target.value) || 0 })
-                  }
-                />
-              ) : (
-                <code>{editedDefinition.PGN}</code>
-              )}
+                {editedDefinition.PGN}
             </dd>
             <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
               Description:
