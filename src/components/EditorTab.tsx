@@ -31,8 +31,10 @@ import {
 } from '@canboat/ts-pgns'
 import { FromPgn } from '@canboat/canboatjs'
 import { SentencePanel } from './SentencePanel'
+import { PgnDefinitionTab } from './PgnDefinitionTab'
 import { ReplaySubject } from 'rxjs'
 import { DeviceMap } from '../types'
+import { useObservableState } from 'observable-hooks'
 
 const PGN_DEFINITIONS_TAB = 'pgn-definitions'
 const LOOKUPS_TAB = 'lookups'
@@ -143,6 +145,9 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
   const [selectedPgn] = useState(new ReplaySubject<PGN>())
   const [selectedPgnWithHistory] = useState(new ReplaySubject<{ current: PGN; history: PGN[] } | null>())
   const [selectedDefinitionId, setSelectedDefinitionId] = useState<string | null>(null)
+  
+  // Get the current PGN value for PgnDefinitionTab
+  const currentPgn = useObservableState<PGN | undefined>(selectedPgn, undefined)
 
   const handleSubTabChange = (tabId: string) => {
     setActiveSubTab(tabId)
@@ -221,8 +226,9 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
 
           <TabContent activeTab={activeSubTab}>
             <TabPane tabId={PGN_DEFINITIONS_TAB}>
-              <Row>
-                <Col md="4">
+              {/* Top Section - Changed PGN Definitions List */}
+              <Row className="mb-3">
+                <Col md="12">
                   <Card>
                     <CardBody>
                       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -246,7 +252,7 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                         <div
                           style={{
                             width: '100%',
-                            height: '400px',
+                            height: '200px',
                             overflow: 'auto',
                             display: 'flex',
                             flexDirection: 'column',
@@ -309,7 +315,42 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                     </CardBody>
                   </Card>
                 </Col>
-                <Col md="8">
+              </Row>
+
+              {/* Bottom Section - Two Columns */}
+              <Row>
+                {/* Left Column - PGN Definition Tab */}
+                <Col md="6">
+                  {selectedDefinitionId && currentPgn ? (
+                    <PgnDefinitionTab
+                      definition={changedDefinitionsTracker.getDefinition(selectedDefinitionId)!}
+                      pgnData={currentPgn}
+                      onSave={handleDefinitionSave}
+                      hasBeenChanged={true}
+                    />
+                  ) : (
+                    <Card>
+                      <CardBody>
+                        <div className="text-center text-muted p-4">
+                          <h5>PGN Definition Structure</h5>
+                          <p>Select a PGN definition from the list above to view its field structure and properties here.</p>
+                          <div className="text-start">
+                            <h6>This panel will show:</h6>
+                            <ul className="list-unstyled">
+                              <li>✓ Field definitions and properties</li>
+                              <li>✓ Data types and units</li>
+                              <li>✓ Enumeration mappings</li>
+                              <li>✓ Field editing capabilities</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </CardBody>
+                    </Card>
+                  )}
+                </Col>
+                
+                {/* Right Column - Sentence Panel */}
+                <Col md="6">
                   {selectedDefinitionId ? (
                     <SentencePanel
                       selectedPgn={selectedPgn}
@@ -322,16 +363,15 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                     <Card>
                       <CardBody>
                         <div className="text-center text-muted p-4">
-                          <h5>PGN Definition Details</h5>
-                          <p>Select a changed PGN definition from the list to view its details here.</p>
-                          <hr />
+                          <h5>PGN Data Analysis</h5>
+                          <p>Select a PGN definition from the list above to view parsed data and analysis here.</p>
                           <div className="text-start">
-                            <h6>Features Available:</h6>
+                            <h6>This panel will show:</h6>
                             <ul className="list-unstyled">
-                              <li>✓ View PGN structure and field definitions</li>
-                              <li>✓ Examine field types, units, and scaling</li>
-                              <li>✓ Browse enumeration values and lookups</li>
-                              <li>✓ Track changes to definitions</li>
+                              <li>✓ Parsed PGN data values</li>
+                              <li>✓ Raw data interpretation</li>
+                              <li>✓ Field-by-field analysis</li>
+                              <li>✓ Data validation results</li>
                             </ul>
                           </div>
                         </div>
