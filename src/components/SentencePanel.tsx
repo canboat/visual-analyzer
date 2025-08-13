@@ -327,7 +327,6 @@ export const SentencePanel = (props: SentencePanelProps) => {
                   definition={definition}
                   pgnData={pgnData}
                   onSave={handleDefinitionSave}
-                  onLookupSave={handleLookupSave}
                   hasBeenChanged={changedDefinitionsTracker.hasDefinition(definition.Id)}
                   onExport={handleDefinitionExport}
                   changedLookups={changedDefinitionsTracker.getChangedLookups()}

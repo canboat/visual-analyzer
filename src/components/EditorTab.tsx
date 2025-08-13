@@ -194,6 +194,14 @@ export const changedDefinitionsTracker = {
     return new Set(Object.keys(this.definitions))
   },
 
+  getLookups(): Enumeration[] {
+    return Object.values(this.lookups)
+  },
+
+  getBitLookups(): BitEnumeration[] {
+    return Object.values(this.bitLookups)
+  },
+
   getChangedLookups(): { lookups: Set<string>; bitLookups: Set<string> } {
     return {
       lookups: new Set(Object.keys(this.lookups)),
@@ -658,7 +666,6 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                           definition={changedDefinitionsTracker.getDefinition(selectedDefinitionId)!}
                           pgnData={currentPgn}
                           onSave={handleDefinitionSave}
-                          onLookupSave={handlePgnDefinitionLookupSave}
                           hasBeenChanged={true}
                           changedLookups={changedDefinitionsTracker.getChangedLookups()}
                         />

@@ -31,6 +31,7 @@ import {
   getPGNWithId,
 } from '@canboat/ts-pgns'
 import { Table, Badge, Row, Col, Button, Input, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
+import { changedDefinitionsTracker } from './EditorTab'
 
 interface PgnDefinitionTabProps {
   definition: Definition
