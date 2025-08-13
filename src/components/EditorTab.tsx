@@ -340,17 +340,17 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
               <Row>
                 {/* Left Column - PGN Definition Tab */}
                 <Col md="6">
-                  {selectedDefinitionId && currentPgn ? (
-                    <PgnDefinitionTab
-                      definition={changedDefinitionsTracker.getDefinition(selectedDefinitionId)!}
-                      pgnData={currentPgn}
-                      onSave={handleDefinitionSave}
-                      hasBeenChanged={true}
-                    />
-                  ) : (
-                    <Card>
-                      <CardBody>
-                        <div className="text-center text-muted p-4">
+                  <Card style={{ height: 'calc(100vh - 400px)', minHeight: '800px' }}>
+                    <CardBody style={{ height: '100%', overflow: 'hidden', padding: 0 }}>
+                      {selectedDefinitionId && currentPgn ? (
+                        <PgnDefinitionTab
+                          definition={changedDefinitionsTracker.getDefinition(selectedDefinitionId)!}
+                          pgnData={currentPgn}
+                          onSave={handleDefinitionSave}
+                          hasBeenChanged={true}
+                        />
+                      ) : (
+                        <div className="text-center text-muted p-4" style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                           <h5>PGN Definition Structure</h5>
                           <p>Select a PGN definition from the list above to view its field structure and properties here.</p>
                           <div className="text-start">
@@ -363,26 +363,26 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                             </ul>
                           </div>
                         </div>
-                      </CardBody>
-                    </Card>
-                  )}
+                      )}
+                    </CardBody>
+                  </Card>
                 </Col>
                 
                 {/* Right Column - Sentence Panel */}
                 <Col md="6">
-                  {selectedDefinitionId ? (
-                    <SentencePanel
-                      selectedPgn={selectedPgn}
-                      selectedPgnWithHistory={selectedPgnWithHistory}
-                      definition={changedDefinitionsTracker.getDefinition(selectedDefinitionId)}
-                      onDefinitionSave={handleDefinitionSave}
-                      info={deviceInfo || new ReplaySubject<DeviceMap>()}
-                      hideDefinitionTab={true}
-                    />
-                  ) : (
-                    <Card>
-                      <CardBody>
-                        <div className="text-center text-muted p-4">
+                  <Card style={{ height: 'calc(100vh - 400px)', minHeight: '800px' }}>
+                    <CardBody style={{ height: '100%', overflow: 'hidden', padding: 0 }}>
+                      {selectedDefinitionId ? (
+                        <SentencePanel
+                          selectedPgn={selectedPgn}
+                          selectedPgnWithHistory={selectedPgnWithHistory}
+                          definition={changedDefinitionsTracker.getDefinition(selectedDefinitionId)}
+                          onDefinitionSave={handleDefinitionSave}
+                          info={deviceInfo || new ReplaySubject<DeviceMap>()}
+                          hideDefinitionTab={true}
+                        />
+                      ) : (
+                        <div className="text-center text-muted p-4" style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                           <h5>PGN Data Analysis</h5>
                           <p>Select a PGN definition from the list above to view parsed data and analysis here.</p>
                           <div className="text-start">
@@ -395,9 +395,9 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                             </ul>
                           </div>
                         </div>
-                      </CardBody>
-                    </Card>
-                  )}
+                      )}
+                    </CardBody>
+                  </Card>
                 </Col>
               </Row>
             </TabPane>
