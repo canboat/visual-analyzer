@@ -80,6 +80,13 @@ export const PgnDefinitionTab = ({
     }
   }, [definition, pgnData, isEditing, editedDefinition.PGN])
 
+  useEffect(() => {
+    if (onSave && isEditing ) { 
+      //console.log('Definition changed:', editedDefinition.Id)
+      onSave(editedDefinition)
+    }
+  }, [editedDefinition])
+
   // Helper function to format field types
   const formatFieldType = (fieldType?: string) => {
     if (!fieldType) return 'Unknown'
@@ -380,7 +387,7 @@ export const PgnDefinitionTab = ({
 
   // Handle cancel
   const handleCancel = useCallback(() => {
-    setEditedDefinition({ ...definition })
+    //setEditedDefinition({ ...definition })
     setIsEditing(false)
   }, [definition])
 
@@ -589,13 +596,9 @@ export const PgnDefinitionTab = ({
             </div>
           ) : (
             <div className="d-flex gap-2">
-              <Button color="success" size="sm" onClick={handleSave}>
-                <i className="fa fa-save me-2" />
-                Save Changes
-              </Button>
               <Button color="secondary" size="sm" onClick={handleCancel}>
                 <i className="fa fa-times me-2" />
-                Cancel
+                Done
               </Button>
             </div>
           )}
