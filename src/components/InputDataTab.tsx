@@ -14,16 +14,39 @@
  * limitations under the License.
  */
 
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import { PGN } from '@canboat/ts-pgns'
-import { Button, CardHeader } from 'reactstrap'
+import { Button, CardHeader, Input } from 'reactstrap'
 
 interface InputDataTabProps {
   pgnData: PGN
   onCopyInput: () => Promise<void>
+  isEditing?: boolean
+  onInputChange?: (newInput: string[]) => void
 }
 
-export const InputDataTab = ({ pgnData, onCopyInput }: InputDataTabProps) => {
+export const InputDataTab = ({ pgnData, onCopyInput, isEditing = false, onInputChange }: InputDataTabProps) => {
+  const [editingText, setEditingText] = useState<string>(() => (pgnData.input || []).join('\n'))
+  const [hasChanges, setHasChanges] = useState(false)
+
+  const handleTextChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const newText = event.target.value
+    setEditingText(newText)
+    setHasChanges(true)
+  }, [])
+
+  const handleSave = useCallback(() => {
+    if (onInputChange) {
+      const newInputLines = editingText.split('\n').filter(line => line.trim() !== '')
+      onInputChange(newInputLines)
+      setHasChanges(false)
+    }
+  }, [editingText, onInputChange])
+
+  const handleCancel = useCallback(() => {
+    setEditingText((pgnData.input || []).join('\n'))
+    setHasChanges(false)
+  }, [pgnData.input])
   const tabHeader = () => {
     return (
       <small>
@@ -39,18 +62,45 @@ export const InputDataTab = ({ pgnData, onCopyInput }: InputDataTabProps) => {
     <>
       <CardHeader className="d-flex justify-content-between align-items-center">
         {tabHeader()}
-        <Button size="sm" color="secondary" onClick={onCopyInput} title="Copy input data to clipboard">
-          Copy
-        </Button>
+        <div>
+          {isEditing && hasChanges && (
+            <>
+              <Button size="sm" color="success" onClick={handleSave} title="Save changes" className="me-2">
+                Save
+              </Button>
+              <Button size="sm" color="secondary" onClick={handleCancel} title="Cancel changes" className="me-2">
+                Cancel
+              </Button>
+            </>
+          )}
+          <Button size="sm" color="secondary" onClick={onCopyInput} title="Copy input data to clipboard">
+            Copy
+          </Button>
+        </div>
       </CardHeader>
       <div className="p-3">
-        <div style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-          {(pgnData.input || []).map((input, index) => (
-            <div key={index} style={{ marginBottom: '1px' }}>
-              {input}
-            </div>
-          ))}
-        </div>
+        {isEditing ? (
+          <Input
+            type="textarea"
+            value={editingText}
+            onChange={handleTextChange}
+            style={{ 
+              fontFamily: 'monospace', 
+              minHeight: '300px',
+              whiteSpace: 'pre',
+              wordBreak: 'break-all'
+            }}
+            placeholder="Enter input data, one line per entry..."
+          />
+        ) : (
+          <div style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+            {(pgnData.input || []).map((input, index) => (
+              <div key={index} style={{ marginBottom: '1px' }}>
+                {input}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </>
   )
