@@ -33,6 +33,7 @@ import { PGN } from '@canboat/ts-pgns'
 import { BehaviorSubject } from 'rxjs'
 import { SentencePanel } from './SentencePanel'
 import { DeviceMap } from '../types'
+import { transformTabStorage } from '../utils/localStorage'
 
 interface MessageHistory {
   message: string
@@ -78,42 +79,26 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   }, [])
   // Load initial values from localStorage
   const [inputValue, setInputValue] = useState<string>(() => {
-    try {
-      return localStorage.getItem('transformTab-inputValue') || ''
-    } catch {
-      return ''
-    }
+    return transformTabStorage.getInputValue()
   })
   const [parsedResult, setParsedResult] = useState<PGN | null>(null)
   const [parseError, setParseError] = useState<string | null>(null)
   const [signalKResult, setSignalKResult] = useState<string | null>(null)
   const [signalKLoading, setSignalKLoading] = useState<boolean>(false)
   const [outputFormat, setOutputFormat] = useState<string>(() => {
-    try {
-      return localStorage.getItem('transformTab-outputFormat') || 'canboat-json'
-    } catch {
-      return 'canboat-json'
-    }
+    return transformTabStorage.getOutputFormat()
   })
   const [messageHistory, setMessageHistory] = useState<MessageHistory[]>([])
   const [showHistoryDropdown, setShowHistoryDropdown] = useState<boolean>(false)
 
   // Save inputValue to localStorage whenever it changes
   useEffect(() => {
-    try {
-      localStorage.setItem('transformTab-inputValue', inputValue)
-    } catch (error) {
-      console.warn('Failed to save input value to localStorage:', error)
-    }
+    transformTabStorage.setInputValue(inputValue)
   }, [inputValue])
 
   // Save outputFormat to localStorage whenever it changes
   useEffect(() => {
-    try {
-      localStorage.setItem('transformTab-outputFormat', outputFormat)
-    } catch (error) {
-      console.warn('Failed to save output format to localStorage:', error)
-    }
+    transformTabStorage.setOutputFormat(outputFormat)
   }, [outputFormat])
 
   // Reset output format if signalk is selected but we're in embedded mode
@@ -125,19 +110,19 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
 
   // Load message history from localStorage on component mount
   useEffect(() => {
-    const savedHistory = localStorage.getItem('transformTab-messageHistory')
-    if (savedHistory) {
-      try {
-        setMessageHistory(JSON.parse(savedHistory))
-      } catch (error) {
-        console.warn('Failed to parse message history from localStorage:', error)
-      }
-    }
+    const savedHistory = transformTabStorage.getMessageHistory()
+    // Convert MessageHistoryItem[] to MessageHistory[] (ensure format is string)
+    const convertedHistory: MessageHistory[] = savedHistory.map(item => ({
+      message: item.message,
+      timestamp: item.timestamp,
+      format: item.format || 'unknown'
+    }))
+    setMessageHistory(convertedHistory)
   }, [])
 
   // Save message history to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('transformTab-messageHistory', JSON.stringify(messageHistory))
+    transformTabStorage.setMessageHistory(messageHistory)
   }, [messageHistory])
 
   // Function to detect message format
