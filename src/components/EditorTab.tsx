@@ -46,12 +46,17 @@ import {
   removePGN,
   removeLookup,
   removeBitLookup,
+  ManufacturerCodeValues,
+  IndustryCodeValues,
+  getPGNWithId,
+  getEnumerationValue
 } from '@canboat/ts-pgns'
 import { FromPgn } from '@canboat/canboatjs'
 import { SentencePanel } from './SentencePanel'
 import { PgnDefinitionTab } from './PgnDefinitionTab'
 import LookupEditor from './LookupEditor'
 import BitLookupEditor from './BitLookupEditor'
+import { toCamelCase } from './PgnDefinitionTab'
 import { ReplaySubject } from 'rxjs'
 import { DeviceMap } from '../types'
 import { useObservableState } from 'observable-hooks'
@@ -230,6 +235,7 @@ export const changedDefinitionsTracker = {
         console.warn(`Attempted to clear non-existent bit lookup ${enumName}`)
         return
       }
+      removeBitLookup(this.bitLookups[enumName])
       delete this.bitLookups[enumName]
       this._saveToStorage(this._storageKeys.bitLookups, this.bitLookups)
     }
@@ -271,6 +277,59 @@ export const changedDefinitionsTracker = {
   },
 }
 
+const fixupFallbackPGN = (newDef: Definition, pgnData?: PGN) => {
+  if (newDef.Fallback) {
+    const pgnNumber = pgnData?.pgn || newDef.PGN
+    newDef.Fallback = false
+    newDef.Description = `My ${pgnNumber}`
+    newDef.Id = `my${pgnNumber}`
+    newDef.Explanation = undefined
+
+    if ( pgnData ) {
+      if (newDef.Fields.length > 0 && newDef.Fields[0].Id === 'manufacturerCode') {
+        newDef.Fields[0].Match = ManufacturerCodeValues[(pgnData.fields as any).manufacturerCode] || undefined
+        newDef.Description = `${(pgnData.fields as any).manufacturerCode}: ${pgnNumber}`
+        newDef.Id= toCamelCase(newDef.Description)
+      }
+      if (newDef.Fields.length > 2 && newDef.Fields[2].Id === 'industryCode') {
+        newDef.Fields[2].Match = IndustryCodeValues[(pgnData.fields as any).industryCode] || undefined
+      }
+
+
+      const partialMatch = (pgnData as any).partialMatch as string
+      if (partialMatch) {
+        const partial = getPGNWithId(partialMatch)!
+        const hasDataField = newDef.Fields[newDef.Fields.length - 1].Id === 'data'
+        const start = hasDataField ? newDef.Fields.length - 1 : newDef.Fields.length
+
+        if (hasDataField) {
+          newDef.Fields = newDef.Fields.slice(0, start)
+        }
+
+        for (let i = start; i < partial.Fields.length; i++) {
+          const field = partial.Fields[i]
+
+          const val = (pgnData.fields as any)[field.Id]
+
+          if (val !== undefined) {
+            const newField = { ...field }
+            if (field.Match !== undefined) {
+              if (field.LookupEnumeration) {
+                if (typeof val === 'string') {
+                  newField.Match = getEnumerationValue(field.LookupEnumeration, val)
+                } else {
+                  newField.Match = val
+                }
+              }
+            }
+            newDef.Fields.push(newField)
+          }
+        }
+      }
+    }
+  }
+}
+
 export const saveDefinition = (updatedDefinition: Definition, pgnData?: PGN) => {
   let definition = pgnData?.getDefinition()
 
@@ -285,10 +344,17 @@ export const saveDefinition = (updatedDefinition: Definition, pgnData?: PGN) => 
     }
     changedDefinitionsTracker.addDefinition(updatedDefinition)
   } else {
-    changedDefinitionsTracker.addDefinition(updatedDefinition)
+    const newDef = {
+      ...JSON.parse(JSON.stringify(updatedDefinition)),
+      PGN: updatedDefinition.PGN
+    }
+    fixupFallbackPGN(newDef, pgnData)
+    changedDefinitionsTracker.addDefinition(newDef)
+    updatedDefinition = newDef
   }
 
   updatePGN(updatedDefinition)
+  return updatedDefinition
 }
 
 const parser = new FromPgn({

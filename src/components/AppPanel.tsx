@@ -282,9 +282,9 @@ const AppPanelInner = (props: any) => {
   }
 
   // Handler for editing PGN from PgnBrowser
-  const handleEditPgn = (definition: Definition) => {
+  const handleEditPgn = (definition: Definition, pgnData?: PGN) => {
     // Save the definition for editing
-    saveDefinition(definition)
+    saveDefinition(definition, pgnData)
 
     // Switch to the Editing tab
     handleTabChange(EDITING_TAB_ID)
@@ -960,13 +960,6 @@ const AppPanelInner = (props: any) => {
 
         {/* Small connection status indicator */}
         <div className="d-flex align-items-center gap-2">
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            onClick={handleDataListToggle}
-            title={showDataList ? 'Hide DataList' : 'Show DataList'}
-          >
-            {showDataList ? '👁️ Hide List' : '👁️‍🗨️ Show List'}
-          </button>
           <span
             className={`badge ${connectionStatus.isConnected ? 'bg-success' : 'bg-danger'}`}
             title={connectionStatus.error || 'Connection status'}
@@ -1024,6 +1017,8 @@ const AppPanelInner = (props: any) => {
                     <SentencePanel
                       selectedPgn={selectedPgn}
                       selectedPgnWithHistory={selectedPgnWithHistory}
+                      onEditPgn={handleEditPgn}
+                      inEditingTab={false}
                       info={deviceInfo}
                     ></SentencePanel>
                   </Col>

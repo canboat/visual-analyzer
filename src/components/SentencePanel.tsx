@@ -52,7 +52,8 @@ interface SentencePanelProps {
   info: Subject<DeviceMap>
   onDefinitionsChanged?: (changedDefinitions: Set<string>) => void
   onDefinitionSave?: (definition: Definition) => void
-  inEditingTab?: boolean
+  inEditingTab: boolean
+  onEditPgn?: (definition: Definition, pgnData?: PGN) => void
 }
 
 const DATA_TAB_ID = 'data'
@@ -329,6 +330,7 @@ export const SentencePanel = (props: SentencePanelProps) => {
                   onSave={handleDefinitionSave}
                   hasBeenChanged={changedDefinitionsTracker.hasDefinition(definition.Id)}
                   onExport={handleDefinitionExport}
+                  onEditPgn={props.inEditingTab === false ? props.onEditPgn : undefined}
                   changedLookups={changedDefinitionsTracker.getChangedLookups()}
                 />
               </CardBody>

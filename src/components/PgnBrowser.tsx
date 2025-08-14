@@ -37,10 +37,10 @@ import {
   InputGroup,
   InputGroupText,
 } from 'reactstrap'
-import { getAllPGNs, Definition, getEnumeration, getBitEnumeration, getFieldTypeEnumeration } from '@canboat/ts-pgns'
+import { PGN, getAllPGNs, Definition, getEnumeration, getBitEnumeration, getFieldTypeEnumeration } from '@canboat/ts-pgns'
 
 interface PgnBrowserProps {
-  onEditPgn?: (definition: Definition) => void
+  onEditPgn?: (definition: Definition, pgnData?: PGN) => void
 }
 
 // Debounce hook for search performance
@@ -81,7 +81,7 @@ const PgnRow = React.memo(
     getFieldSize: (field: any) => string
     hasLookupValues: (field: any) => boolean
     showLookupPopup: (field: any) => void
-    onEditPgn?: (definition: Definition) => void
+    onEditPgn?: (definition: Definition, pgnData?: PGN) => void
   }) => (
     <React.Fragment>
       <tr style={{ cursor: 'pointer' }} onClick={() => onToggle(pgn.Id)} data-pgn-id={pgn.Id}>
@@ -353,7 +353,7 @@ const PgnRow = React.memo(
 )
 
 interface PgnBrowserProps {
-  onEditPgn?: (definition: Definition) => void
+  onEditPgn?: (definition: Definition, pgnData?: PGN) => void
 }
 
 export const PgnBrowser: React.FC<PgnBrowserProps> = ({ onEditPgn }) => {
