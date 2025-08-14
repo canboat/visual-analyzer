@@ -157,7 +157,7 @@ export const changedDefinitionsTracker = {
   addDefinition(definition: Definition) {
     if (!this.hasDefinition(definition.Id)) {
       const existing = getPGNWithId(definition.Id)
-      if ( existing ) {
+      if (existing) {
         this._originals.definitions[definition.Id] = existing
       }
     }
@@ -200,7 +200,7 @@ export const changedDefinitionsTracker = {
     if ((enumeration as Enumeration).EnumValues) {
       if (!this.hasLookup(enumeration.Name)) {
         const existing = this.getLookup(enumeration.Name)
-        if ( existing ) {
+        if (existing) {
           this._originals.lookups[enumeration.Name] = existing
         }
       }
@@ -212,7 +212,7 @@ export const changedDefinitionsTracker = {
     } else {
       if (!this.hasBitLookup(enumeration.Name)) {
         const existing = this.getBitLookup(enumeration.Name)
-        if ( existing ) {
+        if (existing) {
           this._originals.bitLookups[enumeration.Name] = existing
         }
       }
