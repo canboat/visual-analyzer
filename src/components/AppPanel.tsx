@@ -36,6 +36,7 @@ import EditorTab, { saveDefinition } from './EditorTab'
 import { RecordingProvider, useRecording } from '../contexts/RecordingContext'
 import { FromPgn } from '@canboat/canboatjs'
 import { Field, PGN, PGN_59904, Definition } from '@canboat/ts-pgns'
+import { storageOperations, tabStorage, dataListStorage } from '../utils/localStorage'
 
 interface LoginStatus {
   status: string
@@ -46,102 +47,6 @@ interface LoginStatus {
   userLevel: string
   username: string
   securityWasEnabled: boolean
-}
-
-const LOCALSTORAGE_KEY = 'visual_analyzer_settings'
-const ACTIVE_TAB_KEY = 'visual_analyzer_active_tab'
-const DATALIST_VISIBILITY_KEY = 'visual_analyzer_datalist_visible'
-
-const saveFilterSettings = (
-  filter: Filter,
-  doFiltering: boolean,
-  filterOptions: FilterOptions,
-  showDataList?: boolean,
-) => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const settings = {
-        filter,
-        doFiltering,
-        filterOptions,
-        showDataList,
-        lastSaved: new Date().toISOString(),
-      }
-      window.localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(settings))
-    }
-  } catch (e) {
-    console.warn('Failed to save filter settings to localStorage:', e)
-  }
-}
-
-const saveDataListVisibility = (visible: boolean) => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(DATALIST_VISIBILITY_KEY, JSON.stringify(visible))
-    }
-  } catch (e) {
-    console.warn('Failed to save DataList visibility to localStorage:', e)
-  }
-}
-
-const saveActiveTab = (tabId: string) => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(ACTIVE_TAB_KEY, tabId)
-    }
-  } catch (e) {
-    console.warn('Failed to save active tab to localStorage:', e)
-  }
-}
-
-const loadActiveTab = (): string | null => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage.getItem(ACTIVE_TAB_KEY)
-    }
-  } catch (e) {
-    console.warn('Failed to load active tab from localStorage:', e)
-  }
-  return null
-}
-
-const loadDataListVisibility = (): boolean => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const saved = window.localStorage.getItem(DATALIST_VISIBILITY_KEY)
-      if (saved !== null) {
-        return JSON.parse(saved)
-      }
-    }
-  } catch (e) {
-    console.warn('Failed to load DataList visibility from localStorage:', e)
-  }
-  return true // Default to visible
-}
-
-const loadFilterSettings = (): { filter: Filter; doFiltering: boolean; filterOptions: FilterOptions } | null => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const saved = window.localStorage.getItem(LOCALSTORAGE_KEY)
-      if (saved) {
-        const settings = JSON.parse(saved)
-        return {
-          filter: settings.filter || {},
-          doFiltering: settings.doFiltering || false,
-          filterOptions: {
-            useCamelCase: true,
-            showUnknownProprietaryPGNsOnSeparateLines: false,
-            showPgn126208OnSeparateLines: false,
-            maxHistorySize: 10,
-            ...settings.filterOptions,
-          },
-        }
-      }
-    }
-  } catch (e) {
-    console.warn('Failed to load filter settings from localStorage:', e)
-  }
-  return null
 }
 
 export const getRowKey = (pgn: PGN, options: FilterOptions | undefined): string => {
@@ -210,7 +115,7 @@ const AppPanelInner = (props: any) => {
   const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
 
   const [activeTab, setActiveTab] = useState(() => {
-    const savedTab = loadActiveTab()
+    const savedTab = tabStorage.getActiveTab()
     // Validate the saved tab - if in embedded mode, don't allow connections tab
     if (savedTab && (savedTab !== CONNECTIONS_TAB_ID || !isEmbedded)) {
       const validTabs = [
@@ -265,7 +170,7 @@ const AppPanelInner = (props: any) => {
   const sentInfoReq: number[] = []
   const [outAvailable, setOutAvailable] = useState(false)
   const outAvailableRef = useRef(false)
-  const [showDataList, setShowDataList] = useState(() => loadDataListVisibility())
+  const [showDataList, setShowDataList] = useState(() => dataListStorage.getVisibility())
   let sentReqAll = false
 
   // Add throttling for data processing to prevent event loop blocking
@@ -360,14 +265,14 @@ const AppPanelInner = (props: any) => {
   // Handler for tab changes with persistence
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId)
-    saveActiveTab(tabId)
+    tabStorage.setActiveTab(tabId)
   }
 
   // Handler for DataList visibility toggle
   const handleDataListToggle = () => {
     const newVisibility = !showDataList
     setShowDataList(newVisibility)
-    saveDataListVisibility(newVisibility)
+    dataListStorage.setVisibility(newVisibility)
   }
 
   // Handler for editing PGN from PgnBrowser
@@ -820,7 +725,7 @@ const AppPanelInner = (props: any) => {
 
   // Initialize filter settings from localStorage on component mount
   useEffect(() => {
-    const savedSettings = loadFilterSettings()
+    const savedSettings = storageOperations.loadFilterSettings()
     if (savedSettings) {
       filter.next(savedSettings.filter)
       doFiltering.next(savedSettings.doFiltering)
@@ -843,7 +748,11 @@ const AppPanelInner = (props: any) => {
   useEffect(() => {
     const subscription = combineLatest([filter, doFiltering, filterOptions]).subscribe(
       ([filterValue, doFilteringValue, filterOptionsValue]) => {
-        saveFilterSettings(filterValue, doFilteringValue, filterOptionsValue)
+        storageOperations.saveFilterSettings({
+          filter: filterValue,
+          doFiltering: doFilteringValue,
+          filterOptions: filterOptionsValue,
+        })
       },
     )
 

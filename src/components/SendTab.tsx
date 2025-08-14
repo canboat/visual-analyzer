@@ -17,6 +17,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardBody } from 'reactstrap'
 import { FromPgn } from '@canboat/canboatjs'
+import { sendTabStorage } from '../utils/localStorage'
 
 interface SendStatus {
   sending: boolean
@@ -41,19 +42,19 @@ export const SendTab: React.FC = () => {
 
   // Load message history from localStorage on component mount
   useEffect(() => {
-    const savedHistory = localStorage.getItem('nmea2000MessageHistory')
-    if (savedHistory) {
-      try {
-        setMessageHistory(JSON.parse(savedHistory))
-      } catch (error) {
-        console.warn('Failed to parse message history from localStorage:', error)
-      }
-    }
+    const savedHistory = sendTabStorage.getMessageHistory()
+    // Convert MessageHistoryItem[] to MessageHistory[] (ensure format is string)
+    const convertedHistory: MessageHistory[] = savedHistory.map(item => ({
+      message: item.message,
+      timestamp: item.timestamp,
+      format: item.format || 'unknown'
+    }))
+    setMessageHistory(convertedHistory)
   }, [])
 
   // Save message history to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('nmea2000MessageHistory', JSON.stringify(messageHistory))
+    sendTabStorage.setMessageHistory(messageHistory)
   }, [messageHistory])
 
   // Function to detect message format

@@ -17,6 +17,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardBody, Button, Alert, Badge, Row, Col, Input, FormGroup, Label, Table } from 'reactstrap'
 import { useRecording } from '../contexts/RecordingContext'
+import { recordingStorage } from '../utils/localStorage'
 
 interface RecordingStatus {
   isRecording: boolean
@@ -47,7 +48,7 @@ const RecordingTab: React.FC = () => {
   const [autoGenerateFileName, setAutoGenerateFileName] = useState(true)
   const [recordingFormat, setRecordingFormat] = useState(() => {
     // Load last selected format from localStorage, default to 'passthrough'
-    return localStorage.getItem('visual-analyzer-recording-format') || 'passthrough'
+    return recordingStorage.getFormat()
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -137,7 +138,7 @@ const RecordingTab: React.FC = () => {
   const handleFormatChange = (newFormat: string) => {
     setRecordingFormat(newFormat)
     // Save to localStorage to remember for next session
-    localStorage.setItem('visual-analyzer-recording-format', newFormat)
+    recordingStorage.setFormat(newFormat)
   }
 
   const startRecording = async () => {
