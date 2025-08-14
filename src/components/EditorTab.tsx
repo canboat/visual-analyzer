@@ -83,6 +83,12 @@ type BitEnumerationMap = {
 }
 
 export const changedDefinitionsTracker = {
+  _originals: {
+    definitions: {} as DefinitionMap,
+    lookups: {} as EnumerationMap,
+    bitLookups: {} as BitEnumerationMap,
+  },
+
   // Local storage keys
   _storageKeys: {
     definitions: 'changedDefinitionsTracker_definitions',
@@ -149,8 +155,16 @@ export const changedDefinitionsTracker = {
   },
 
   addDefinition(definition: Definition) {
+    if (!this.hasDefinition(definition.Id)) {
+      const existing = getPGNWithId(definition.Id)
+      if (existing) {
+        this._originals.definitions[definition.Id] = existing
+      }
+    }
+
     this.definitions[definition.Id] = definition
     this._saveToStorage(this._storageKeys.definitions, this.definitions)
+    updatePGN(definition)
     console.log(
       `Tracked definition change for PGN ID ${definition.Id}. Total tracked: ${Object.keys(this.definitions).length}`,
     )
@@ -169,20 +183,43 @@ export const changedDefinitionsTracker = {
       console.warn(`Attempted to clear non-existent PGN ID ${pgnId}`)
       return
     }
-    removePGN(this.definitions[pgnId])
     delete this.definitions[pgnId]
     this._saveToStorage(this._storageKeys.definitions, this.definitions)
+
+    if (this._originals.definitions[pgnId]) {
+      // Restore original definition if it exists
+      updatePGN(this._originals.definitions[pgnId])
+    } else {
+      removePGN(this.definitions[pgnId])
+    }
+
     console.log(`Removed tracking for PGN ID ${pgnId}. Remaining: ${Object.keys(this.definitions).length}`)
   },
 
   addLookup(enumeration: EnumBase) {
     if ((enumeration as Enumeration).EnumValues) {
+      if (!this.hasLookup(enumeration.Name)) {
+        const existing = this.getLookup(enumeration.Name)
+        if (existing) {
+          this._originals.lookups[enumeration.Name] = existing
+        }
+      }
+
       this.lookups[enumeration.Name] = enumeration as Enumeration
       this._saveToStorage(this._storageKeys.lookups, this.lookups)
+      updateLookup(enumeration as Enumeration)
       console.log(`Tracked change for lookup ${enumeration.Name}`)
     } else {
+      if (!this.hasBitLookup(enumeration.Name)) {
+        const existing = this.getBitLookup(enumeration.Name)
+        if (existing) {
+          this._originals.bitLookups[enumeration.Name] = existing
+        }
+      }
+
       this.bitLookups[enumeration.Name] = enumeration as BitEnumeration
       this._saveToStorage(this._storageKeys.bitLookups, this.bitLookups)
+      updateBitLookup(enumeration as BitEnumeration)
       console.log(`Tracked change for bit lookup ${enumeration.Name}`)
     }
   },
@@ -191,8 +228,16 @@ export const changedDefinitionsTracker = {
     return this.lookups.hasOwnProperty(enumName)
   },
 
+  hasBitLookup(enumName: string): boolean {
+    return this.bitLookups.hasOwnProperty(enumName)
+  },
+
   getLookup(enumName: string): Enumeration | undefined {
     return this.lookups[enumName]
+  },
+
+  getBitLookup(enumName: string): BitEnumeration | undefined {
+    return this.bitLookups[enumName]
   },
 
   getChangedDefinitions(): Set<string> {
@@ -230,6 +275,11 @@ export const changedDefinitionsTracker = {
       removeLookup(this.lookups[enumName])
       delete this.lookups[enumName]
       this._saveToStorage(this._storageKeys.lookups, this.lookups)
+
+      if (this._originals.lookups[enumName]) {
+        // Restore original lookup if it exists
+        updateLookup(this._originals.lookups[enumName])
+      }
     } else {
       if (!this.bitLookups.hasOwnProperty(enumName)) {
         console.warn(`Attempted to clear non-existent bit lookup ${enumName}`)
@@ -238,6 +288,11 @@ export const changedDefinitionsTracker = {
       removeBitLookup(this.bitLookups[enumName])
       delete this.bitLookups[enumName]
       this._saveToStorage(this._storageKeys.bitLookups, this.bitLookups)
+
+      if (this._originals.bitLookups[enumName]) {
+        // Restore original bit lookup if it exists
+        updateBitLookup(this._originals.bitLookups[enumName])
+      }
     }
   },
 
@@ -352,7 +407,6 @@ export const saveDefinition = (updatedDefinition: Definition, pgnData?: PGN) => 
     updatedDefinition = newDef
   }
 
-  updatePGN(updatedDefinition)
   return updatedDefinition
 }
 
@@ -533,7 +587,6 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
           .sort((a, b) => a.Value - b.Value),
       }
 
-      updateLookup(newEnumeration)
       handleLookupChange(newEnumeration)
     } else if (editingLookup.type === 'bitlookup') {
       // If renaming, first remove the old bit lookup
@@ -553,7 +606,6 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
           .sort((a, b) => a.Bit - b.Bit),
       }
 
-      updateBitLookup(newBitEnumeration)
       handleBitLookupChange(newBitEnumeration)
     }
 
