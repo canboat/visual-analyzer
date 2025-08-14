@@ -49,7 +49,7 @@ import {
   ManufacturerCodeValues,
   IndustryCodeValues,
   getPGNWithId,
-  getEnumerationValue
+  getEnumerationValue,
 } from '@canboat/ts-pgns'
 import { FromPgn } from '@canboat/canboatjs'
 import { SentencePanel } from './SentencePanel'
@@ -285,16 +285,15 @@ const fixupFallbackPGN = (newDef: Definition, pgnData?: PGN) => {
     newDef.Id = `my${pgnNumber}`
     newDef.Explanation = undefined
 
-    if ( pgnData ) {
+    if (pgnData) {
       if (newDef.Fields.length > 0 && newDef.Fields[0].Id === 'manufacturerCode') {
         newDef.Fields[0].Match = ManufacturerCodeValues[(pgnData.fields as any).manufacturerCode] || undefined
         newDef.Description = `${(pgnData.fields as any).manufacturerCode}: ${pgnNumber}`
-        newDef.Id= toCamelCase(newDef.Description)
+        newDef.Id = toCamelCase(newDef.Description)
       }
       if (newDef.Fields.length > 2 && newDef.Fields[2].Id === 'industryCode') {
         newDef.Fields[2].Match = IndustryCodeValues[(pgnData.fields as any).industryCode] || undefined
       }
-
 
       const partialMatch = (pgnData as any).partialMatch as string
       if (partialMatch) {
@@ -346,7 +345,7 @@ export const saveDefinition = (updatedDefinition: Definition, pgnData?: PGN) => 
   } else {
     const newDef = {
       ...JSON.parse(JSON.stringify(updatedDefinition)),
-      PGN: updatedDefinition.PGN
+      PGN: updatedDefinition.PGN,
     }
     fixupFallbackPGN(newDef, pgnData)
     changedDefinitionsTracker.addDefinition(newDef)

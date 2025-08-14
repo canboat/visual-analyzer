@@ -37,7 +37,14 @@ import {
   InputGroup,
   InputGroupText,
 } from 'reactstrap'
-import { PGN, getAllPGNs, Definition, getEnumeration, getBitEnumeration, getFieldTypeEnumeration } from '@canboat/ts-pgns'
+import {
+  PGN,
+  getAllPGNs,
+  Definition,
+  getEnumeration,
+  getBitEnumeration,
+  getFieldTypeEnumeration,
+} from '@canboat/ts-pgns'
 
 interface PgnBrowserProps {
   onEditPgn?: (definition: Definition, pgnData?: PGN) => void

@@ -29,7 +29,7 @@ import {
   ManufacturerCodeValues,
   IndustryCodeValues,
   getPGNWithId,
-  getEnumerationValue
+  getEnumerationValue,
 } from '@canboat/ts-pgns'
 import { Table, Badge, Row, Col, Button, Input, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
 import { changedDefinitionsTracker, saveDefinition } from './EditorTab'
@@ -491,7 +491,11 @@ export const PgnDefinitionTab = ({
                   </Button>
                 </div>
               )}
-              <Button color="primary" size="sm" onClick={() => onEditPgn ? onEditPgn(definition, pgnData) : handleEdit()}>
+              <Button
+                color="primary"
+                size="sm"
+                onClick={() => (onEditPgn ? onEditPgn(definition, pgnData) : handleEdit())}
+              >
                 <i className="fa fa-edit me-2" />
                 Edit Definition
               </Button>
