@@ -21,7 +21,6 @@ import {
   Definition,
   Enumeration,
   BitEnumeration,
-  updatePGN,
   updateLookup,
   updateBitLookup,
   removePGN,
