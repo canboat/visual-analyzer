@@ -760,9 +760,9 @@ export const PgnDefinitionTab = ({
                         <th>Name</th>
                         <th>Type</th>
                         <th>Size</th>
-                        <th>Offset</th>
                         <th>Unit</th>
-                        <th>Resolution</th>
+                        <th>Res</th>
+                        <th>Match</th>
                         <th>Key</th>
                       </tr>
                     </thead>
@@ -798,13 +798,9 @@ export const PgnDefinitionTab = ({
                             </td>
                             <td>{field.FieldType || ''}</td>
                             <td>{field.BitLength || ''}</td>
-                            <td>
-                              <span title={`Bit offset: ${field.BitOffset} bits`} style={{ fontSize: '0.9em' }}>
-                                {field.BitOffset}
-                              </span>
-                            </td>
                             <td>{field.Unit || ''}</td>
                             <td>{field.Resolution || ''}</td>
+                            <td>{field.Match || ''}</td>
                             <td>{field.PartOfPrimaryKey ? 'Yes' : ''}</td>
                           </tr>
                         )
