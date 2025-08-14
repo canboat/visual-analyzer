@@ -58,6 +58,7 @@ import LookupEditor from './LookupEditor'
 import BitLookupEditor from './BitLookupEditor'
 import { toCamelCase } from './PgnDefinitionTab'
 import { ReplaySubject } from 'rxjs'
+import { localStorage } from '../utils/localStorage'
 import { DeviceMap } from '../types'
 import { useObservableState } from 'observable-hooks'
 
@@ -105,22 +106,12 @@ export const changedDefinitionsTracker = {
 
   // Load from local storage with error handling
   _loadFromStorage<T>(key: string, defaultValue: T): T {
-    try {
-      const stored = localStorage.getItem(key)
-      return stored ? JSON.parse(stored) : defaultValue
-    } catch (error) {
-      console.warn(`Failed to load ${key} from local storage:`, error)
-      return defaultValue
-    }
+    return localStorage.getItem(key, defaultValue)
   },
 
   // Save to local storage with error handling
   _saveToStorage(key: string, value: any): void {
-    try {
-      localStorage.setItem(key, JSON.stringify(value))
-    } catch (error) {
-      console.warn(`Failed to save ${key} to local storage:`, error)
-    }
+    localStorage.setItem(key, value)
   },
 
   // Lazy getters with caching
