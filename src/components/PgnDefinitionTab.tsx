@@ -29,9 +29,26 @@ import {
   ManufacturerCodeValues,
   IndustryCodeValues,
   getPGNWithId,
+  getEnumerationValue,
 } from '@canboat/ts-pgns'
 import { Table, Badge, Row, Col, Button, Input, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
-import { changedDefinitionsTracker } from './EditorTab'
+import { changedDefinitionsTracker, saveDefinition } from './EditorTab'
+
+// Helper function to convert text to camelCase
+export const toCamelCase = (text: string) => {
+  return text
+    .trim()
+    .replace(/[^\w\s]/g, '') // Remove non-word characters except spaces
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .split(' ')
+    .map((word, index) => {
+      if (index === 0) {
+        return word.toLowerCase()
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    })
+    .join('')
+}
 
 interface PgnDefinitionTabProps {
   definition: Definition
@@ -40,6 +57,7 @@ interface PgnDefinitionTabProps {
   hasBeenChanged?: boolean
   onExport?: (definition: Definition) => void
   changedLookups?: { lookups: Set<string>; bitLookups: Set<string> }
+  onEditPgn?: (definition: Definition, pgnData?: PGN) => void
 }
 
 export const PgnDefinitionTab = ({
@@ -49,6 +67,7 @@ export const PgnDefinitionTab = ({
   hasBeenChanged,
   onExport,
   changedLookups,
+  onEditPgn,
 }: PgnDefinitionTabProps) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editedDefinition, setEditedDefinition] = useState<Definition>({ ...definition })
@@ -89,22 +108,6 @@ export const PgnDefinitionTab = ({
       .replace(/_/g, ' ')
       .toLowerCase()
       .replace(/\b\w/g, (l) => l.toUpperCase())
-  }
-
-  // Helper function to convert text to camelCase
-  const toCamelCase = (text: string) => {
-    return text
-      .trim()
-      .replace(/[^\w\s]/g, '') // Remove non-word characters except spaces
-      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-      .split(' ')
-      .map((word, index) => {
-        if (index === 0) {
-          return word.toLowerCase()
-        }
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      })
-      .join('')
   }
 
   // Helper function to get field size
@@ -334,51 +337,8 @@ export const PgnDefinitionTab = ({
   }, [definition])
 
   const handleEdit = useCallback(() => {
-    const newDef = {
-      ...JSON.parse(JSON.stringify(definition)),
-      PGN: pgnData.pgn,
-      Fallback: false,
-    }
+    const newDef = saveDefinition(definition, pgnData)
 
-    if (definition.Fallback) {
-      newDef.Description = `My ${pgnData.pgn}`
-      newDef.Id = `my${pgnData.pgn}`
-      newDef.Explanation = undefined
-
-      if (newDef.Fields.length > 0 && newDef.Fields[0].Id === 'manufacturerCode') {
-        newDef.Fields[0].Match = ManufacturerCodeValues[(pgnData.fields as any).manufacturerCode] || undefined
-      }
-      if (newDef.Fields.length > 2 && newDef.Fields[2].Id === 'industryCode') {
-        newDef.Fields[2].Match = IndustryCodeValues[(pgnData.fields as any).industryCode] || undefined
-      }
-
-      const partialMatch = (pgnData as any).partialMatch as string
-      if (partialMatch) {
-        const partial = getPGNWithId(partialMatch)!
-        const hasDataField = definition.Fields[definition.Fields.length - 1].Id === 'data'
-        const start = hasDataField ? definition.Fields.length - 1 : definition.Fields.length
-
-        if (hasDataField) {
-          newDef.Fields = newDef.Fields.slice(0, start)
-        }
-
-        for (let i = start; i < partial.Fields.length; i++) {
-          const field = partial.Fields[i]
-
-          const val = (pgnData.fields as any)[field.Id]
-
-          if (val !== undefined) {
-            const newField = { ...field }
-            if (field.Match !== undefined) {
-              newField.Match = typeof val === 'string' ? field.Match : val
-            }
-            newDef.Fields.push(newField)
-          }
-        }
-      }
-    }
-
-    // Ensure BitOffsets are calculated for existing fields
     if (newDef.Fields && newDef.Fields.length > 0) {
       newDef.Fields = calculateBitOffsets(newDef.Fields)
     }
@@ -531,7 +491,11 @@ export const PgnDefinitionTab = ({
                   </Button>
                 </div>
               )}
-              <Button color="primary" size="sm" onClick={handleEdit}>
+              <Button
+                color="primary"
+                size="sm"
+                onClick={() => (onEditPgn ? onEditPgn(definition, pgnData) : handleEdit())}
+              >
                 <i className="fa fa-edit me-2" />
                 Edit Definition
               </Button>
