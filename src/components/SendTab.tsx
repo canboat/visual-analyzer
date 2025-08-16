@@ -18,6 +18,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardBody } from 'reactstrap'
 import { FromPgn } from '@canboat/canboatjs'
 import { sendTabStorage } from '../utils/localStorage'
+import { server } from '../services'
 
 interface SendStatus {
   sending: boolean
@@ -44,10 +45,10 @@ export const SendTab: React.FC = () => {
   useEffect(() => {
     const savedHistory = sendTabStorage.getMessageHistory()
     // Convert MessageHistoryItem[] to MessageHistory[] (ensure format is string)
-    const convertedHistory: MessageHistory[] = savedHistory.map(item => ({
+    const convertedHistory: MessageHistory[] = savedHistory.map((item) => ({
       message: item.message,
       timestamp: item.timestamp,
-      format: item.format || 'unknown'
+      format: item.format || 'unknown',
     }))
     setMessageHistory(convertedHistory)
   }, [])
@@ -232,55 +233,8 @@ export const SendTab: React.FC = () => {
     try {
       const input = textarea.value.trim()
 
-      // Basic validation - just ensure there's content
-      if (!input) {
-        throw new Error('No message content provided')
-      }
-
-      // For JSON format, validate the structure
-      if ((input.startsWith('{') && input.endsWith('}')) || (input.startsWith('[') && input.endsWith(']'))) {
-        try {
-          const parsedJson = JSON.parse(input)
-
-          if (Array.isArray(parsedJson)) {
-            // JSON array format - validate each message has required fields
-            for (const message of parsedJson) {
-              if (!message.pgn || !message.src) {
-                throw new Error('Each JSON message in array must contain at least pgn and src fields')
-              }
-            }
-          } else {
-            // Single JSON object - validate required fields
-            if (!parsedJson.pgn || !parsedJson.src) {
-              throw new Error('JSON message must contain at least pgn and src fields')
-            }
-          }
-        } catch (parseError) {
-          throw new Error(`Invalid JSON format: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`)
-        }
-      }
-      // For other formats (Actisense, YDRAW, etc.), let canboatjs handle the parsing
-
-      // Send the entire input to the endpoint
-      const messageData = { value: input, sendToN2K: true }
-      const response = await fetch('/skServer/inputTest', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messageData),
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Send failed (${response.status}): ${errorText}`)
-      }
-
-      const result = await response.json()
-      if (result.error) {
-        throw new Error(result.error)
-      }
+      // Use the centralized service to send the message
+      await server.send({ type: 'send-n2k', values: [input] })
 
       setSendStatus({
         sending: false,

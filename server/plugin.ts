@@ -1,11 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { ServerAPI, Plugin, Delta, Path } from '@signalk/server-api'
+import { 
+  //ServerAPI, 
+  Plugin, 
+  //Delta,
+  //Path
+ } from '@signalk/server-api'
 
 const PLUGIN_ID = 'canboat-visual-analyzer'
 const PLUGIN_NAME = 'Canboat Visual Analyzer'
 
-module.exports = function (app: ServerAPI) {
+module.exports = function (
+  //app: ServerAPI
+) {
   let onStop: any[] = []
   //let dbusSetValue: any
 
@@ -42,7 +49,15 @@ module.exports = function (app: ServerAPI) {
     },
 
     start: (options: any) => {
+    },
+
+    registerWithRouter: (router:any) => {
+      router.post('/api/send-n2k', (req: any, res: any) => {
+        console.log('got /api/send-n2k')
+        res.send('Executed command for plugin ' + plugin.id)
+      })
     }
+
   }
 
   return plugin

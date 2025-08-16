@@ -33,7 +33,6 @@ import {
   ConfigurationResponse,
   ConnectionProfile,
   ConnectionsConfig,
-  InputTestRequest,
   INMEAProvider,
 } from './types'
 
@@ -332,29 +331,22 @@ class VisualAnalyzerServer {
     })
 
     // SignalK-compatible input test endpoint for sending NMEA 2000 messages
-    this.app.post('/skServer/inputTest', (req: Request, res: Response) => {
+    this.app.post('/api/send-n2k', (req: Request, res: Response) => {
       try {
-        const { value, sendToN2K }: InputTestRequest = req.body
+        const values = req.body.values
 
-        if (!value) {
+        if (!values) {
           return res.status(400).json({
             success: false,
-            error: 'Missing required field: value',
+            error: 'Missing required field: values',
           } as ApiResponse)
         }
 
         let pgnDataArray: any[] = []
 
-        // Check if input is a string (NMEA 2000 format) or JSON
-        if (typeof value === 'string') {
-          // Try to parse as JSON first
-          try {
-            const jsonParsed = JSON.parse(value)
-            pgnDataArray = [jsonParsed]
-            //console.log('Parsed as JSON from string value')
-          } catch (jsonParseError) {
-            // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
-            // Split by newlines to handle multiple lines
+        for (const value of values) {
+          // Check if input is a string (NMEA 2000 format) or JSON
+          if (typeof value === 'string') {
             const lines = value.split(/\r?\n/).filter((line) => line.trim())
 
             if (lines.length === 0) {
@@ -398,16 +390,15 @@ class VisualAnalyzerServer {
                 error: 'Error parsing NMEA 2000 strings: ' + errorMessage,
               } as ApiResponse)
             }
+          } else if (typeof value === 'object') {
+            // Value is already a JSON object
+            pgnDataArray.push(value)
+          } else {
+            return res.status(400).json({
+              success: false,
+              error: 'Value must be a string (JSON or NMEA 2000 format) or object',
+            } as ApiResponse)
           }
-        } else if (typeof value === 'object') {
-          // Value is already a JSON object
-          pgnDataArray = [value]
-          console.log('Using direct JSON object value')
-        } else {
-          return res.status(400).json({
-            success: false,
-            error: 'Value must be a string (JSON or NMEA 2000 format) or object',
-          } as ApiResponse)
         }
 
         // Process each parsed message
@@ -415,12 +406,11 @@ class VisualAnalyzerServer {
         for (const pgnData of pgnDataArray) {
           console.log('Processing NMEA 2000 message for transmission:', {
             pgn: pgnData.pgn,
-            sendToN2K: sendToN2K,
             data: pgnData,
           })
 
           // If we have an active NMEA provider, attempt to send the message
-          if (this.nmeaProvider && sendToN2K) {
+          if (this.nmeaProvider) {
             try {
               // Convert PGN object to raw NMEA 2000 format if the provider supports it
               if (typeof this.nmeaProvider.sendMessage === 'function') {
@@ -450,6 +440,7 @@ class VisualAnalyzerServer {
                 parsedData: pgnData,
               })
             }
+            /*
           } else if (sendToN2K) {
             console.log('No active NMEA connection - message not transmitted')
             results.push({
@@ -458,6 +449,7 @@ class VisualAnalyzerServer {
               error: 'No active NMEA connection',
               parsedData: pgnData,
             })
+              */
           } else {
             results.push({
               pgn: pgnData.pgn,
@@ -472,7 +464,6 @@ class VisualAnalyzerServer {
           success: true,
           message: `${pgnDataArray.length} message(s) processed successfully`,
           messagesProcessed: pgnDataArray.length,
-          transmitted: sendToN2K && this.nmeaProvider ? results.filter((r) => r.transmitted).length : 0,
           results: results, // Include detailed results for each message
         } as ApiResponse)
       } catch (error) {
@@ -488,24 +479,20 @@ class VisualAnalyzerServer {
     // SignalK transformation endpoint
     this.app.post('/api/transform/signalk', (req: Request, res: Response) => {
       try {
-        const { data } = req.body
+        const values = req.body.values as any[]
 
-        if (!data) {
+        if (!values || values.length === 0) {
           return res.status(400).json({
             success: false,
-            error: 'Missing required field: data',
+            error: 'Missing required field: values',
           })
         }
 
         let nmea2000Data: any[]
 
+        let data = values[0]
         // Handle different input formats
         if (typeof data === 'string') {
-          // Try to parse as JSON first
-          try {
-            const jsonParsed = JSON.parse(data)
-            nmea2000Data = Array.isArray(jsonParsed) ? jsonParsed : [jsonParsed]
-          } catch (jsonParseError) {
             // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
             const lines = data.split(/\r?\n/).filter((line: string) => line.trim())
 
@@ -541,7 +528,7 @@ class VisualAnalyzerServer {
                 error: 'No valid NMEA 2000 messages could be parsed from input',
               })
             }
-          }
+
         } else if (Array.isArray(data)) {
           nmea2000Data = data
         } else if (typeof data === 'object') {

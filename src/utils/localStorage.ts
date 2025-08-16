@@ -10,15 +10,15 @@ export const STORAGE_KEYS = {
   ACTIVE_TAB: 'visual_analyzer_active_tab',
   DATALIST_VISIBILITY: 'visual_analyzer_datalist_visible',
   FILTER_PANEL_OPEN: 'visual_analyzer_filter_panel_open',
-  
+
   // Transform tab settings
   TRANSFORM_INPUT_VALUE: 'transformTab-inputValue',
   TRANSFORM_OUTPUT_FORMAT: 'transformTab-outputFormat',
   TRANSFORM_MESSAGE_HISTORY: 'transformTab-messageHistory',
-  
+
   // Send tab settings
   SEND_MESSAGE_HISTORY: 'nmea2000MessageHistory',
-  
+
   // Recording tab settings
   RECORDING_FORMAT: 'visual-analyzer-recording-format',
 } as const

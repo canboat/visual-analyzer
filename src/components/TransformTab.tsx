@@ -34,6 +34,7 @@ import { BehaviorSubject } from 'rxjs'
 import { SentencePanel } from './SentencePanel'
 import { DeviceMap } from '../types'
 import { transformTabStorage } from '../utils/localStorage'
+import { server } from '../services'
 
 interface MessageHistory {
   message: string
@@ -112,10 +113,10 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   useEffect(() => {
     const savedHistory = transformTabStorage.getMessageHistory()
     // Convert MessageHistoryItem[] to MessageHistory[] (ensure format is string)
-    const convertedHistory: MessageHistory[] = savedHistory.map(item => ({
+    const convertedHistory: MessageHistory[] = savedHistory.map((item) => ({
       message: item.message,
       timestamp: item.timestamp,
-      format: item.format || 'unknown'
+      format: item.format || 'unknown',
     }))
     setMessageHistory(convertedHistory)
   }, [])
@@ -214,25 +215,8 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   const transformToSignalK = async (pgn: PGN): Promise<string> => {
     try {
       setSignalKLoading(true)
-      const response = await fetch('/api/transform/signalk', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ data: pgn }),
-      })
+      const result = await server.send({ type: 'n2k-signalk', values: [pgn] })
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const result = await response.json()
-
-      if (!result.success) {
-        throw new Error(result.error || 'SignalK transformation failed')
-      }
-
-      // Format the SignalK deltas for display
       if (result.signalKDeltas && result.signalKDeltas.length > 0) {
         return JSON.stringify(result.signalKDeltas, null, 2)
       } else {

@@ -18,12 +18,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { Card, CardBody, Col, Row, Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
 import { ReplaySubject, combineLatest } from 'rxjs'
 // import * as pkg from '../../package.json'
-import { PGNDataMap, PgnNumber, DeviceMap } from '../types'
-
-type PGNDataEntry = {
-  current: PGN
-  history: PGN[]
-}
+import { PgnNumber, DeviceMap } from '../types'
 import { DataList } from './DataList'
 import { FilterPanel, Filter, FilterOptions } from './Filters'
 import { SentencePanel } from './SentencePanel'
@@ -37,6 +32,12 @@ import { RecordingProvider, useRecording } from '../contexts/RecordingContext'
 import { FromPgn } from '@canboat/canboatjs'
 import { Field, PGN, PGN_59904, Definition } from '@canboat/ts-pgns'
 import { storageOperations, tabStorage, dataListStorage } from '../utils/localStorage'
+import { server } from '../services'
+
+type PGNDataEntry = {
+  current: PGN
+  history: PGN[]
+}
 
 interface LoginStatus {
   status: string
@@ -1003,28 +1004,15 @@ const AppPanelInner = (props: any) => {
 
 function requestMetaData(dst: number) {
   console.log(`Requesting metadata for source ${dst}`)
-  infoPGNS.forEach((num) => {
-    const pgn = new PGN_59904({ pgn: num }, dst)
 
-    const body = { value: JSON.stringify(pgn), sendToN2K: true }
-    fetch(`/skServer/inputTest`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        //console.log(`Metadata for PGN ${num} received:`, data)
-        if (data.error) {
-          console.error(`Error requesting metadata for PGN ${num}:`, data.error)
-        }
-      })
-      .catch((error) => {
-        console.error(`Error requesting metadata for PGN ${num}:`, error)
-      })
+  const pgnDataList = infoPGNS.map((num) => {
+    const pgn = new PGN_59904({ pgn: num }, dst)
+    return pgn
+  })
+
+  // Use the centralized service to send multiple metadata requests
+  server.send({ type: 'send-n2k', values: pgnDataList }).catch((error) => {
+    console.error(`Failed to complete metadata requests for destination ${dst}:`, error)
   })
 }
 

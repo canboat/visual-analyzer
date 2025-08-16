@@ -2,7 +2,7 @@
   "name": "@canboat/visual-analyzer",
   "version": "1.17.3",
   "description": "NMEA 2000 data visualization utility (requires SK Server >= 2.15)",
-  "main": "plugin.js",
+  "main": "dist/plugin.js",
   "bin": {
     "visual-analyzer": "./bin/visual-analyzer"
   },
@@ -25,7 +25,9 @@
   },
   "keywords": [
     "signalk-embeddable-webapp",
-    "signalk-category-nmea-2000"
+    "signalk-category-nmea-2000",
+    "signalk-node-server-plugin",
+    "signalk-plugin-enabled-by-default"
   ],
   "signalk": {
     "appIcon": "images/canboat.png",
