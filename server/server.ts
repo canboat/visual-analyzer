@@ -79,7 +79,15 @@ class VisualAnalyzerServer {
     this.wss = new WebSocketServer({ server: this.server })
 
     // Initialize canboatjs parser for string input parsing
-    this.canboatParser = new FromPgn()
+    this.canboatParser = new FromPgn({
+        checkForInvalidFields: true,
+        useCamel: true, // Default value
+        useCamelCompat: false,
+        returnNonMatches: true,
+        createPGNObjects: true,
+        includeInputData: true,
+        includeRawData: true,
+        includeByteMapping: true})
 
     // Initialize N2kMapper for SignalK transformation
     this.n2kMapper = new N2kMapper({})
@@ -342,7 +350,7 @@ class VisualAnalyzerServer {
           } as ApiResponse)
         }
 
-        let pgnDataArray: any[] = []
+        const pgnDataArray: any[] = []
 
         for (const value of values) {
           // Check if input is a string (NMEA 2000 format) or JSON
@@ -489,7 +497,7 @@ class VisualAnalyzerServer {
 
         let nmea2000Data: any[]
 
-        let data = values[0]
+        const data = values[0]
         // Handle different input formats
         if (typeof data === 'string') {
             // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
