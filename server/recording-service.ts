@@ -67,7 +67,7 @@ export class RecordingService extends EventEmitter {
     super()
 
     // Create recordings directory
-    this.recordingsDir = path.join(configPath, '.visual-analyzer', 'recordings')
+    this.recordingsDir = path.join(configPath, 'recordings')
     this.ensureRecordingsDirectory()
   }
 
@@ -446,7 +446,7 @@ export class RecordingService extends EventEmitter {
       case 'candump3':
         return 'log'
       default:
-        return 'json' // Default to JSON format
+        return 'txt' // Default to JSON format
     }
   }
 

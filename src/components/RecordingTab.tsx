@@ -150,6 +150,7 @@ const RecordingTab: React.FC = () => {
         : customFileName ||
           `recording_${new Date().toISOString().replace(/[:.]/g, '-')}.${getFileExtension(recordingFormat)}`
 
+      console.log('Starting recording with fileName:', fileName, 'format:', recordingFormat)
       const response = await fetch('/api/recording/start', {
         method: 'POST',
         headers: {
@@ -157,6 +158,7 @@ const RecordingTab: React.FC = () => {
         },
         body: JSON.stringify({ fileName, format: recordingFormat }),
       })
+      console.log('Recording response:', response)
 
       if (response.ok) {
         const result = await response.json()

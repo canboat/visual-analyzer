@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { Card, CardBody, Col, Row, Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
 import { ReplaySubject, combineLatest } from 'rxjs'
 // import * as pkg from '../../package.json'
@@ -267,6 +267,95 @@ const AppPanelInner = (props: any) => {
   const outAvailableRef = useRef(false)
   const [showDataList, setShowDataList] = useState(() => loadDataListVisibility())
   let sentReqAll = false
+
+  // Add throttling for data processing to prevent event loop blocking
+  const pendingDataUpdates = useRef<PGN[]>([])
+  const dataUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const processPendingDataUpdates = useCallback(() => {
+    if (pendingDataUpdates.current.length === 0) {
+      return
+    }
+
+    const updates = [...pendingDataUpdates.current]
+    pendingDataUpdates.current = []
+
+    // Process all pending updates in a single batch
+    updates.forEach((pgn) => {
+      if (infoPGNS.indexOf(pgn!.pgn) === -1 || filterOptionsRef.current?.showInfoPgns) {
+        setList((prev: any) => {
+          const rowKey = getRowKey(pgn!, filterOptionsRef.current || undefined)
+          const maxHistorySize = filterOptionsRef.current?.maxHistorySize ?? 10
+
+          if (prev[rowKey]) {
+            // Move current to history and update current
+            let newHistory = [prev[rowKey].current, ...prev[rowKey].history]
+
+            // Limit history size if maxHistorySize > 0, otherwise disable history
+            if (maxHistorySize === 0) {
+              newHistory = []
+            } else if (newHistory.length > maxHistorySize) {
+              newHistory = newHistory.slice(0, maxHistorySize)
+            }
+
+            prev[rowKey] = {
+              current: pgn,
+              history: newHistory,
+            }
+          } else {
+            // New entry
+            prev[rowKey] = {
+              current: pgn,
+              history: [],
+            }
+          }
+
+          // Check if this update corresponds to the currently selected PGN
+          if (selectedPgnKeyRef.current === rowKey) {
+            selectedPgn.next(pgn!)
+            selectedPgnWithHistory.next({
+              current: pgn!,
+              history: prev[rowKey].history,
+            })
+          }
+
+          return prev
+        })
+      }
+
+      if (currentSrcs.indexOf(pgn!.src!) === -1) {
+        setCurrentSrcs((prev) => {
+          prev.push(pgn!.src!)
+          availableSrcs.next([...prev.sort((a, b) => a - b)])
+          return prev
+        })
+      }
+
+      if (infoPGNS.indexOf(pgn!.pgn) !== -1) {
+        setCurrentInfo((prev) => {
+          prev[pgn!.src!] = prev[pgn!.src!] || { src: pgn!.src!, info: {} }
+          prev[pgn!.src!].info[pgn!.pgn! as PgnNumber] = pgn
+          deviceInfo.next({ ...prev })
+          return prev
+        })
+      }
+
+      if (sentInfoReq.indexOf(pgn!.src!) === -1) {
+        if (outAvailableRef.current) {
+          sentInfoReq.push(pgn!.src!)
+          // NMEA output is available, can request metadata immediately
+          requestMetaData(pgn!.src!)
+        }
+        // If outAvailable is false, we simply don't request metadata yet
+      }
+    })
+
+    // Trigger data update after processing all items
+    setList((prev: any) => {
+      data.next({ ...prev })
+      return prev
+    })
+  }, [])
 
   // Handler for tab changes with persistence
   const handleTabChange = (tabId: string) => {
@@ -580,73 +669,19 @@ const AppPanelInner = (props: any) => {
         if (pgn !== undefined) {
           //console.log('pgn', pgn)
           pgn.timestamp = new Date().toISOString()
-          if (infoPGNS.indexOf(pgn!.pgn) === -1 || filterOptionsRef.current?.showInfoPgns) {
-            setList((prev: any) => {
-              const rowKey = getRowKey(pgn!, filterOptionsRef.current || undefined)
-              const maxHistorySize = filterOptionsRef.current?.maxHistorySize ?? 10
 
-              if (prev[rowKey]) {
-                // Move current to history and update current
-                let newHistory = [prev[rowKey].current, ...prev[rowKey].history]
+          // Add to pending updates instead of processing immediately
+          pendingDataUpdates.current.push(pgn)
 
-                // Limit history size if maxHistorySize > 0, otherwise disable history
-                if (maxHistorySize === 0) {
-                  newHistory = []
-                } else if (newHistory.length > maxHistorySize) {
-                  newHistory = newHistory.slice(0, maxHistorySize)
-                }
-
-                prev[rowKey] = {
-                  current: pgn,
-                  history: newHistory,
-                }
-              } else {
-                // New entry
-                prev[rowKey] = {
-                  current: pgn,
-                  history: [],
-                }
-              }
-
-              // Check if this update corresponds to the currently selected PGN
-              if (selectedPgnKeyRef.current === rowKey) {
-                selectedPgn.next(pgn!)
-                selectedPgnWithHistory.next({
-                  current: pgn!,
-                  history: prev[rowKey].history,
-                })
-              }
-
-              data.next({ ...prev })
-              return prev
-            })
+          // Throttle updates to prevent event loop blocking
+          if (dataUpdateTimeoutRef.current) {
+            clearTimeout(dataUpdateTimeoutRef.current)
           }
 
-          if (currentSrcs.indexOf(pgn!.src!) === -1) {
-            setCurrentSrcs((prev) => {
-              prev.push(pgn!.src!)
-              availableSrcs.next([...prev.sort((a, b) => a - b)])
-              return prev
-            })
-          }
-
-          if (infoPGNS.indexOf(pgn!.pgn) !== -1) {
-            setCurrentInfo((prev) => {
-              prev[pgn!.src!] = prev[pgn!.src!] || { src: pgn!.src!, info: {} }
-              prev[pgn!.src!].info[pgn!.pgn! as PgnNumber] = pgn
-              deviceInfo.next({ ...prev })
-              return prev
-            })
-          }
-
-          if (sentInfoReq.indexOf(pgn!.src!) === -1) {
-            if (outAvailableRef.current) {
-              sentInfoReq.push(pgn!.src!)
-              // NMEA output is available, can request metadata immediately
-              requestMetaData(pgn!.src!)
-            }
-            // If outAvailable is false, we simply don't request metadata yet
-          }
+          // Process updates after a short delay to batch them
+          dataUpdateTimeoutRef.current = setTimeout(() => {
+            processPendingDataUpdates()
+          }, 16) // ~60fps update rate
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error)
@@ -764,6 +799,9 @@ const AppPanelInner = (props: any) => {
     return () => {
       if (reconnectTimeout) {
         clearTimeout(reconnectTimeout)
+      }
+      if (dataUpdateTimeoutRef.current) {
+        clearTimeout(dataUpdateTimeoutRef.current)
       }
       if (webSocket) {
         if (isEmbedded) {
