@@ -28,15 +28,17 @@ describe('Visual Analyzer Server', function () {
     describe('JSON input handling', function () {
       it('should handle direct JSON object input', function (done) {
         const testData = {
-          values: [{
-            pgn: 127245,
-            src: 204,
-            dst: 255,
-            timestamp: '2024-01-01T00:00:00.000Z',
-            fields: {
-              Rudder: 0.5,
+          values: [
+            {
+              pgn: 127245,
+              src: 204,
+              dst: 255,
+              timestamp: '2024-01-01T00:00:00.000Z',
+              fields: {
+                Rudder: 0.5,
+              },
             },
-          }],
+          ],
           sendToN2K: false,
         }
 
@@ -53,7 +55,6 @@ describe('Visual Analyzer Server', function () {
           done()
         })
       })
-
     })
 
     describe('NMEA 2000 string input handling', function () {
@@ -79,9 +80,11 @@ describe('Visual Analyzer Server', function () {
 
       it('should handle multiple lines of NMEA 2000 strings', function (done) {
         const testData = {
-          values: [`2024-01-01T00:00:00.000Z,2,127245,204,255,8,fc,f8,ff,7f,ff,7f,ff,ff
+          values: [
+            `2024-01-01T00:00:00.000Z,2,127245,204,255,8,fc,f8,ff,7f,ff,7f,ff,ff
 2024-01-01T00:00:01.000Z,2,127250,204,255,8,00,fc,ff,ff,ff,ff,ff,ff
-2024-01-01T00:00:02.000Z,2,129026,204,255,8,ff,ff,00,00,ff,7f,ff,ff`],
+2024-01-01T00:00:02.000Z,2,129026,204,255,8,ff,ff,00,00,ff,7f,ff,ff`,
+          ],
           sendToN2K: false,
         }
 
@@ -106,13 +109,15 @@ describe('Visual Analyzer Server', function () {
 
       it('should handle multiline input with whitespace and empty lines', function (done) {
         const testData = {
-          values: [`
+          values: [
+            `
 2024-01-01T00:00:00.000Z,2,127245,204,255,8,fc,f8,ff,7f,ff,7f,ff,ff
 
 2024-01-01T00:00:01.000Z,2,127250,204,255,8,00,fc,ff,ff,ff,ff,ff,ff
    
 2024-01-01T00:00:02.000Z,2,129026,204,255,8,ff,ff,00,00,ff,7f,ff,ff
-`],
+`,
+          ],
           sendToN2K: false,
         }
 
@@ -133,12 +138,14 @@ describe('Visual Analyzer Server', function () {
 
       it('should gracefully handle mixed valid and invalid lines', function (done) {
         const testData = {
-          values: [`2024-01-01T00:00:00.000Z,2,127245,204,255,8,fc,f8,ff,7f,ff,7f,ff,ff
+          values: [
+            `2024-01-01T00:00:00.000Z,2,127245,204,255,8,fc,f8,ff,7f,ff,7f,ff,ff
 invalid line that should be skipped
 another invalid line
 2024-01-01T00:00:01.000Z,2,127250,204,255,8,00,fc,ff,ff,ff,ff,ff,ff
 # comment line
-2024-01-01T00:00:02.000Z,2,129026,204,255,8,ff,ff,00,00,ff,7f,ff,ff`],
+2024-01-01T00:00:02.000Z,2,129026,204,255,8,ff,ff,00,00,ff,7f,ff,ff`,
+          ],
           sendToN2K: false,
         }
 
@@ -194,9 +201,11 @@ another invalid line
 
       it('should return error when no valid lines can be parsed', function (done) {
         const testData = {
-          values: [`invalid line 1
+          values: [
+            `invalid line 1
 invalid line 2
-# comment only`],
+# comment only`,
+          ],
           sendToN2K: false,
         }
 
@@ -213,10 +222,12 @@ invalid line 2
 
       it('should return error for empty input after filtering', function (done) {
         const testData = {
-          values: [`
+          values: [
+            `
    
 \t\t
-`],
+`,
+          ],
           sendToN2K: false,
         }
 
@@ -258,8 +269,10 @@ invalid line 2
     describe('Response format validation', function () {
       it('should return correctly structured response', function (done) {
         const testData = {
-          values: [`2024-01-01T00:00:00.000Z,2,127245,204,255,8,fc,f8,ff,7f,ff,7f,ff,ff
-2024-01-01T00:00:01.000Z,2,127250,204,255,8,00,fc,ff,ff,ff,ff,ff,ff`],
+          values: [
+            `2024-01-01T00:00:00.000Z,2,127245,204,255,8,fc,f8,ff,7f,ff,7f,ff,ff
+2024-01-01T00:00:01.000Z,2,127250,204,255,8,00,fc,ff,ff,ff,ff,ff,ff`,
+          ],
           sendToN2K: false,
         }
 

@@ -80,14 +80,15 @@ class VisualAnalyzerServer {
 
     // Initialize canboatjs parser for string input parsing
     this.canboatParser = new FromPgn({
-        checkForInvalidFields: true,
-        useCamel: true, // Default value
-        useCamelCompat: false,
-        returnNonMatches: true,
-        createPGNObjects: true,
-        includeInputData: true,
-        includeRawData: true,
-        includeByteMapping: true})
+      checkForInvalidFields: true,
+      useCamel: true, // Default value
+      useCamelCompat: false,
+      returnNonMatches: true,
+      createPGNObjects: true,
+      includeInputData: true,
+      includeRawData: true,
+      includeByteMapping: true,
+    })
 
     // Initialize N2kMapper for SignalK transformation
     this.n2kMapper = new N2kMapper({})
@@ -448,7 +449,7 @@ class VisualAnalyzerServer {
                 parsedData: pgnData,
               })
             }
-          } else  {
+          } else {
             console.log('No active NMEA connection - message not transmitted')
             results.push({
               pgn: pgnData.pgn,
@@ -456,7 +457,6 @@ class VisualAnalyzerServer {
               error: 'No active NMEA connection',
               parsedData: pgnData,
             })
-             
           } /*else {
             results.push({
               pgn: pgnData.pgn,
@@ -500,42 +500,41 @@ class VisualAnalyzerServer {
         const data = values[0]
         // Handle different input formats
         if (typeof data === 'string') {
-            // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
-            const lines = data.split(/\r?\n/).filter((line: string) => line.trim())
+          // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
+          const lines = data.split(/\r?\n/).filter((line: string) => line.trim())
 
-            if (lines.length === 0) {
-              return res.status(400).json({
-                success: false,
-                error: 'No valid lines found in input',
-              })
-            }
+          if (lines.length === 0) {
+            return res.status(400).json({
+              success: false,
+              error: 'No valid lines found in input',
+            })
+          }
 
-            nmea2000Data = []
-            for (const line of lines) {
-              const trimmedLine = line.trim()
-              if (trimmedLine) {
-                try {
-                  const parsed = this.canboatParser.parseString(trimmedLine)
-                  if (parsed) {
-                    nmea2000Data.push(parsed)
-                  } else {
-                    console.warn(`Unable to parse line: ${trimmedLine}`)
-                  }
-                } catch (lineParseError) {
-                  const errorMessage = lineParseError instanceof Error ? lineParseError.message : 'Unknown error'
-                  console.warn(`Error parsing line "${trimmedLine}": ${errorMessage}`)
-                  // Continue processing other lines instead of failing
+          nmea2000Data = []
+          for (const line of lines) {
+            const trimmedLine = line.trim()
+            if (trimmedLine) {
+              try {
+                const parsed = this.canboatParser.parseString(trimmedLine)
+                if (parsed) {
+                  nmea2000Data.push(parsed)
+                } else {
+                  console.warn(`Unable to parse line: ${trimmedLine}`)
                 }
+              } catch (lineParseError) {
+                const errorMessage = lineParseError instanceof Error ? lineParseError.message : 'Unknown error'
+                console.warn(`Error parsing line "${trimmedLine}": ${errorMessage}`)
+                // Continue processing other lines instead of failing
               }
             }
+          }
 
-            if (nmea2000Data.length === 0) {
-              return res.status(400).json({
-                success: false,
-                error: 'No valid NMEA 2000 messages could be parsed from input',
-              })
-            }
-
+          if (nmea2000Data.length === 0) {
+            return res.status(400).json({
+              success: false,
+              error: 'No valid NMEA 2000 messages could be parsed from input',
+            })
+          }
         } else if (Array.isArray(data)) {
           nmea2000Data = data
         } else if (typeof data === 'object') {
