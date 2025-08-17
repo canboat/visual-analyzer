@@ -271,7 +271,7 @@ const AppPanelInner = (props: any) => {
   // Add throttling for data processing to prevent event loop blocking
   const pendingDataUpdates = useRef<PGN[]>([])
   const dataUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
+
   const processPendingDataUpdates = useCallback(() => {
     if (pendingDataUpdates.current.length === 0) {
       return
@@ -279,7 +279,7 @@ const AppPanelInner = (props: any) => {
 
     const updates = [...pendingDataUpdates.current]
     pendingDataUpdates.current = []
-    
+
     // Process all pending updates in a single batch
     updates.forEach((pgn) => {
       if (infoPGNS.indexOf(pgn!.pgn) === -1 || filterOptionsRef.current?.showInfoPgns) {
@@ -349,7 +349,7 @@ const AppPanelInner = (props: any) => {
         // If outAvailable is false, we simply don't request metadata yet
       }
     })
-    
+
     // Trigger data update after processing all items
     setList((prev: any) => {
       data.next({ ...prev })
@@ -669,15 +669,15 @@ const AppPanelInner = (props: any) => {
         if (pgn !== undefined) {
           //console.log('pgn', pgn)
           pgn.timestamp = new Date().toISOString()
-          
+
           // Add to pending updates instead of processing immediately
           pendingDataUpdates.current.push(pgn)
-          
+
           // Throttle updates to prevent event loop blocking
           if (dataUpdateTimeoutRef.current) {
             clearTimeout(dataUpdateTimeoutRef.current)
           }
-          
+
           // Process updates after a short delay to batch them
           dataUpdateTimeoutRef.current = setTimeout(() => {
             processPendingDataUpdates()
