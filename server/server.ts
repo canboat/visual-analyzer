@@ -440,8 +440,7 @@ class VisualAnalyzerServer {
                 parsedData: pgnData,
               })
             }
-            /*
-          } else if (sendToN2K) {
+          } else  {
             console.log('No active NMEA connection - message not transmitted')
             results.push({
               pgn: pgnData.pgn,
@@ -449,14 +448,14 @@ class VisualAnalyzerServer {
               error: 'No active NMEA connection',
               parsedData: pgnData,
             })
-              */
-          } else {
+             
+          } /*else {
             results.push({
               pgn: pgnData.pgn,
               transmitted: false,
               parsedData: pgnData,
             })
-          }
+          }*/
         }
 
         // Return success response in SignalK format
