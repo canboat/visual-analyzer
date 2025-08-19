@@ -26,9 +26,9 @@
   "keywords": [
     "signalk-embeddable-webapp",
     "signalk-category-nmea-2000",
-    "signalk-node-server-plugin",
-    "signalk-plugin-enabled-by-default"
+    "signalk-node-server-plugin"
   ],
+  "signalk-plugin-enabled-by-default": true,
   "signalk": {
     "appIcon": "images/canboat.png",
     "displayName": "Canboat Visual Analyzer"

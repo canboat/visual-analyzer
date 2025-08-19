@@ -32,19 +32,6 @@ module.exports = function (app: ServerAPI) {
         title: PLUGIN_NAME,
         type: 'object',
         properties: {
-          installType: {
-            type: 'string',
-            title: 'How to connect to Venus D-Bus',
-            enum: ['mqtt', 'mqtts', 'local', 'remote', 'vrm'],
-            enumNames: [
-              'Connect to remote Venus installation via MQTT (Plain text)',
-              'Connect to remote Venus installation via MQTT (SSL)',
-              'Connect to localhost via dbus (signalk-server is running on a Venus device)',
-              'Connect to remote Venus installation via dbus',
-              'Connect to remote Venus installation via VRM',
-            ],
-            default: 'mqtt',
-          },
         },
       }
     },
