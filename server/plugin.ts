@@ -31,8 +31,7 @@ module.exports = function (app: ServerAPI) {
       return {
         title: PLUGIN_NAME,
         type: 'object',
-        properties: {
-        },
+        properties: {},
       }
     },
 
