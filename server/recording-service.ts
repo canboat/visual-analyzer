@@ -446,7 +446,7 @@ export class RecordingService extends EventEmitter {
       case 'candump3':
         return 'log'
       default:
-        return 'txt' // Default to JSON format
+        return 'txt'
     }
   }
 
@@ -469,7 +469,7 @@ export class RecordingService extends EventEmitter {
       case 'log':
         return 'candump1'
       default:
-        return 'canboat-json' // Default to JSON format
+        return 'unknown'
     }
   }
 

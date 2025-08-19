@@ -234,7 +234,7 @@ export const SendTab: React.FC = () => {
       const input = textarea.value.trim()
 
       // Use the centralized service to send the message
-      await server.send({ type: 'send-n2k', values: [input] })
+      await server.post({ type: 'send-n2k', values: [input] })
 
       setSendStatus({
         sending: false,

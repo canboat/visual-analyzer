@@ -99,7 +99,7 @@ module.exports = function (app: ServerAPI) {
         })
       })
 
-      anyapp.on('canboatjs:rawoutput', (output:any) => {
+      anyapp.on('canboatjs:rawoutput', (output: any) => {
         if (recordingService.getStatus().isRecording) {
           if (recordingService.getStatus().format === 'passthrough') {
             recordingService.recordMessage(output, undefined)
@@ -117,7 +117,6 @@ module.exports = function (app: ServerAPI) {
           }
         }
       })
-
     },
 
     registerWithRouter: (router: any) => {
@@ -238,7 +237,11 @@ module.exports = function (app: ServerAPI) {
         try {
           const { fileName, format } = req.body
           const result = recordingService.startRecording({ fileName, format })
-          res.json({ success: true, fileName: result.fileName, message: 'Recording started successfully' } as ApiResponse)
+          res.json({
+            success: true,
+            fileName: result.fileName,
+            message: 'Recording started successfully',
+          } as ApiResponse)
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error'
           res.status(400).json({ success: false, error: errorMessage } as ApiResponse)
@@ -294,7 +297,6 @@ module.exports = function (app: ServerAPI) {
           res.status(404).json({ success: false, error: errorMessage })
         }
       })
-      
     },
   }
 

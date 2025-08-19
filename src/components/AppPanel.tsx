@@ -542,7 +542,7 @@ const AppPanelInner = (props: any) => {
 
         if (parsed.event === 'recording:progress') {
           // Recording progress event
-          console.log('Recording progress:', parsed.data)
+          //console.log('Recording progress:', parsed.data)
           dispatch({ type: 'RECORDING_PROGRESS', payload: parsed.data })
           return
         }
@@ -600,7 +600,7 @@ const AppPanelInner = (props: any) => {
           // Use SignalK admin UI WebSocket in embedded mode
           webSocket = props.adminUI.openWebsocket({
             subscribe: 'none',
-            events: 'canboatjs:rawoutput',
+            events: 'canboatjs:rawoutput,recording:started,recording:stopped,recording:progress,recording:error',
           })
 
           // Set connection status for embedded mode - assume connected if websocket was created
@@ -882,17 +882,15 @@ const AppPanelInner = (props: any) => {
               Editing
             </NavLink>
           </NavItem>
-          {!isEmbedded && (
-            <NavItem>
-              <NavLink
-                className={activeTab === RECORDING_TAB_ID ? 'active' : ''}
-                onClick={() => handleTabChange(RECORDING_TAB_ID)}
-                style={{ cursor: 'pointer' }}
-              >
-                Recording
-              </NavLink>
-            </NavItem>
-          )}
+          <NavItem>
+            <NavLink
+              className={activeTab === RECORDING_TAB_ID ? 'active' : ''}
+              onClick={() => handleTabChange(RECORDING_TAB_ID)}
+              style={{ cursor: 'pointer' }}
+            >
+              Recording
+            </NavLink>
+          </NavItem>
           {!isEmbedded && (
             <NavItem>
               <NavLink
@@ -987,11 +985,9 @@ const AppPanelInner = (props: any) => {
         <TabPane tabId={EDITING_TAB_ID}>
           <EditorTab isEmbedded={isEmbedded} deviceInfo={deviceInfo} />
         </TabPane>
-        {!isEmbedded && (
-          <TabPane tabId={RECORDING_TAB_ID}>
-            <RecordingTab />
-          </TabPane>
-        )}
+        <TabPane tabId={RECORDING_TAB_ID}>
+          <RecordingTab />
+        </TabPane>
         {!isEmbedded && (
           <TabPane tabId={CONNECTIONS_TAB_ID}>
             <ConnectionManagerPanel connectionStatus={connectionStatus} onStatusUpdate={setConnectionStatus} />
@@ -1011,7 +1007,7 @@ function requestMetaData(dst: number) {
   })
 
   // Use the centralized service to send multiple metadata requests
-  server.send({ type: 'send-n2k', values: pgnDataList }).catch((error) => {
+  server.post({ type: 'send-n2k', values: pgnDataList }).catch((error) => {
     console.error(`Failed to complete metadata requests for destination ${dst}:`, error)
   })
 }

@@ -4,8 +4,9 @@
  */
 
 export interface ServerRequest {
-  type: 'send-n2k' | 'n2k-signalk'
-  values: (string | object)[]
+  type: 'send-n2k' | 'n2k-signalk' | 'recording'
+  values?: (string | object)[]
+  value?: string | object
 }
 
 const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
@@ -15,6 +16,7 @@ const prefix = isEmbedded ? '/plugins/canboat-visual-analyzer' : ''
 const requestEndpoints = {
   'send-n2k': `${prefix}/api/send-n2k`,
   'n2k-signalk': `${prefix}/api/transform/signalk`,
+  recording: `${prefix}/api/recording`,
 }
 
 export interface ServerResponse {
@@ -35,13 +37,36 @@ class Server {
   private readonly defaultTimeout = 10000 // 10 seconds
   private readonly defaultRetries = 0
 
-  /**
-   * Send a message to the SignalK server input test endpoint
-   * @param data The message data to send
-   * @param options Optional configuration for the request
-   * @returns Promise that resolves to the server response
-   */
-  async send(data: ServerRequest, options: SendOptions = {}): Promise<ServerResponse> {
+  async get(
+    data: ServerRequest,
+    path: string | undefined = undefined,
+    options: SendOptions = {},
+  ): Promise<ServerResponse> {
+    return this.send(data, path, 'GET', options)
+  }
+
+  async post(
+    data: ServerRequest,
+    path: string | undefined = undefined,
+    options: SendOptions = {},
+  ): Promise<ServerResponse> {
+    return this.send(data, path, 'POST', options)
+  }
+
+  async delete(
+    data: ServerRequest,
+    path: string | undefined = undefined,
+    options: SendOptions = {},
+  ): Promise<ServerResponse> {
+    return this.send(data, path, 'DELETE', options)
+  }
+
+  private async send(
+    data: ServerRequest,
+    path: string = '',
+    method: string = 'GET',
+    options: SendOptions = {},
+  ): Promise<ServerResponse> {
     const { timeout = this.defaultTimeout, retries = this.defaultRetries, onProgress } = options
 
     let lastError: Error | null = null
@@ -60,13 +85,13 @@ class Server {
         const timeoutId = setTimeout(() => controller.abort(), timeout)
 
         try {
-          const response = await fetch(requestEndpoints[data.type], {
-            method: 'POST',
+          const response = await fetch(requestEndpoints[data.type] + path, {
+            method,
             credentials: 'include',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data),
+            body: method === 'POST' ? JSON.stringify(data) : undefined,
             signal: controller.signal,
           })
 

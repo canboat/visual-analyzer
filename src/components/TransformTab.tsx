@@ -102,13 +102,6 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
     transformTabStorage.setOutputFormat(outputFormat)
   }, [outputFormat])
 
-  // Reset output format if signalk is selected but we're in embedded mode
-  useEffect(() => {
-    if (isEmbedded && outputFormat === 'signalk') {
-      setOutputFormat('canboat-json')
-    }
-  }, [isEmbedded, outputFormat])
-
   // Load message history from localStorage on component mount
   useEffect(() => {
     const savedHistory = transformTabStorage.getMessageHistory()
@@ -215,7 +208,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   const transformToSignalK = async (pgn: PGN): Promise<string> => {
     try {
       setSignalKLoading(true)
-      const result = await server.send({ type: 'n2k-signalk', values: [pgn] })
+      const result = await server.post({ type: 'n2k-signalk', values: [pgn] })
 
       if (result.signalKDeltas && result.signalKDeltas.length > 0) {
         return JSON.stringify(result.signalKDeltas, null, 2)
@@ -320,7 +313,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
     { value: 'candump1', label: 'Linux CAN utils (Angstrom)' },
     { value: 'candump2', label: 'Linux CAN utils (Debian)' },
     { value: 'candump3', label: 'Linux CAN utils (log format)' },
-    ...(isEmbedded ? [] : [{ value: 'signalk', label: 'Signal K' }]),
+    { value: 'signalk', label: 'Signal K' },
   ]
 
   const formatOutput = (pgn: PGN, format: string): string => {
