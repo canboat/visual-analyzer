@@ -20,6 +20,9 @@ import { useRecording } from '../contexts/RecordingContext'
 import { recordingStorage } from '../utils/localStorage'
 import { server } from '../services'
 
+const isEmbedded = typeof window !== 'undefined' && window.location.href.includes('/admin/')
+const prefix = isEmbedded ? '/plugins/canboat-visual-analyzer' : ''
+
 interface RecordingStatus {
   isRecording: boolean
   fileName?: string
@@ -262,7 +265,7 @@ const RecordingTab: React.FC = () => {
   }
 
   const downloadFile = (fileName: string) => {
-    window.open(`/api/recording/files/${encodeURIComponent(fileName)}/download`, '_blank')
+    window.open(`${prefix}/api/recording/files/${encodeURIComponent(fileName)}/download`, '_blank')
   }
 
   const formatFileSize = (bytes: number): string => {
