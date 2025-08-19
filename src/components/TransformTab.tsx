@@ -33,6 +33,8 @@ import { PGN } from '@canboat/ts-pgns'
 import { BehaviorSubject } from 'rxjs'
 import { SentencePanel } from './SentencePanel'
 import { DeviceMap } from '../types'
+import { transformTabStorage } from '../utils/localStorage'
+import { server } from '../services'
 
 interface MessageHistory {
   message: string
@@ -78,66 +80,43 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   }, [])
   // Load initial values from localStorage
   const [inputValue, setInputValue] = useState<string>(() => {
-    try {
-      return localStorage.getItem('transformTab-inputValue') || ''
-    } catch {
-      return ''
-    }
+    return transformTabStorage.getInputValue()
   })
   const [parsedResult, setParsedResult] = useState<PGN | null>(null)
   const [parseError, setParseError] = useState<string | null>(null)
   const [signalKResult, setSignalKResult] = useState<string | null>(null)
   const [signalKLoading, setSignalKLoading] = useState<boolean>(false)
   const [outputFormat, setOutputFormat] = useState<string>(() => {
-    try {
-      return localStorage.getItem('transformTab-outputFormat') || 'canboat-json'
-    } catch {
-      return 'canboat-json'
-    }
+    return transformTabStorage.getOutputFormat()
   })
   const [messageHistory, setMessageHistory] = useState<MessageHistory[]>([])
   const [showHistoryDropdown, setShowHistoryDropdown] = useState<boolean>(false)
 
   // Save inputValue to localStorage whenever it changes
   useEffect(() => {
-    try {
-      localStorage.setItem('transformTab-inputValue', inputValue)
-    } catch (error) {
-      console.warn('Failed to save input value to localStorage:', error)
-    }
+    transformTabStorage.setInputValue(inputValue)
   }, [inputValue])
 
   // Save outputFormat to localStorage whenever it changes
   useEffect(() => {
-    try {
-      localStorage.setItem('transformTab-outputFormat', outputFormat)
-    } catch (error) {
-      console.warn('Failed to save output format to localStorage:', error)
-    }
+    transformTabStorage.setOutputFormat(outputFormat)
   }, [outputFormat])
-
-  // Reset output format if signalk is selected but we're in embedded mode
-  useEffect(() => {
-    if (isEmbedded && outputFormat === 'signalk') {
-      setOutputFormat('canboat-json')
-    }
-  }, [isEmbedded, outputFormat])
 
   // Load message history from localStorage on component mount
   useEffect(() => {
-    const savedHistory = localStorage.getItem('transformTab-messageHistory')
-    if (savedHistory) {
-      try {
-        setMessageHistory(JSON.parse(savedHistory))
-      } catch (error) {
-        console.warn('Failed to parse message history from localStorage:', error)
-      }
-    }
+    const savedHistory = transformTabStorage.getMessageHistory()
+    // Convert MessageHistoryItem[] to MessageHistory[] (ensure format is string)
+    const convertedHistory: MessageHistory[] = savedHistory.map((item) => ({
+      message: item.message,
+      timestamp: item.timestamp,
+      format: item.format || 'unknown',
+    }))
+    setMessageHistory(convertedHistory)
   }, [])
 
   // Save message history to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('transformTab-messageHistory', JSON.stringify(messageHistory))
+    transformTabStorage.setMessageHistory(messageHistory)
   }, [messageHistory])
 
   // Function to detect message format
@@ -229,25 +208,8 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   const transformToSignalK = async (pgn: PGN): Promise<string> => {
     try {
       setSignalKLoading(true)
-      const response = await fetch('/api/transform/signalk', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ data: pgn }),
-      })
+      const result = await server.post({ type: 'n2k-signalk', values: [pgn] })
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const result = await response.json()
-
-      if (!result.success) {
-        throw new Error(result.error || 'SignalK transformation failed')
-      }
-
-      // Format the SignalK deltas for display
       if (result.signalKDeltas && result.signalKDeltas.length > 0) {
         return JSON.stringify(result.signalKDeltas, null, 2)
       } else {
@@ -351,7 +313,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
     { value: 'candump1', label: 'Linux CAN utils (Angstrom)' },
     { value: 'candump2', label: 'Linux CAN utils (Debian)' },
     { value: 'candump3', label: 'Linux CAN utils (log format)' },
-    ...(isEmbedded ? [] : [{ value: 'signalk', label: 'Signal K' }]),
+    { value: 'signalk', label: 'Signal K' },
   ]
 
   const formatOutput = (pgn: PGN, format: string): string => {

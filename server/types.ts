@@ -131,10 +131,14 @@ export interface SignalKMessage {
   }
 }
 
-// Express Request Extensions
-export interface InputTestRequest {
-  value: string | object
-  sendToN2K?: boolean
+export interface ServerRequest {
+  type: 'send-n2k' | 'n2k-signalk'
+  values: string[]
+}
+
+export interface ServerResponse {
+  error?: string
+  [key: string]: any
 }
 
 // NMEA Provider Interface

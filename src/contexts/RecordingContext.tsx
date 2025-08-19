@@ -46,6 +46,7 @@ interface RecordingContextValue {
 const RecordingContext = createContext<RecordingContextValue | undefined>(undefined)
 
 const recordingReducer = (state: RecordingContextState, action: RecordingAction): RecordingContextState => {
+  console.log('RecordingReducer state:', state)
   switch (action.type) {
     case 'RECORDING_STARTED':
       return {

@@ -33,7 +33,6 @@ import {
   ConfigurationResponse,
   ConnectionProfile,
   ConnectionsConfig,
-  InputTestRequest,
   INMEAProvider,
 } from './types'
 
@@ -80,7 +79,16 @@ class VisualAnalyzerServer {
     this.wss = new WebSocketServer({ server: this.server })
 
     // Initialize canboatjs parser for string input parsing
-    this.canboatParser = new FromPgn()
+    this.canboatParser = new FromPgn({
+      checkForInvalidFields: true,
+      useCamel: true, // Default value
+      useCamelCompat: false,
+      returnNonMatches: true,
+      createPGNObjects: true,
+      includeInputData: true,
+      includeRawData: true,
+      includeByteMapping: true,
+    })
 
     // Initialize N2kMapper for SignalK transformation
     this.n2kMapper = new N2kMapper({})
@@ -266,7 +274,7 @@ class VisualAnalyzerServer {
     this.app.get('/api/recording/status', (req: Request, res: Response) => {
       try {
         const status = this.recordingService.getStatus()
-        res.json(status)
+        res.json({ success: true, result: status } as ApiResponse)
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         res.status(500).json({ success: false, error: errorMessage })
@@ -277,10 +285,10 @@ class VisualAnalyzerServer {
       try {
         const { fileName, format } = req.body
         const result = this.recordingService.startRecording({ fileName, format })
-        res.json({ success: true, fileName: result.fileName, message: 'Recording started successfully' })
+        res.json({ success: true, fileName: result.fileName, message: 'Recording started successfully' } as ApiResponse)
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-        res.status(400).json({ success: false, error: errorMessage })
+        res.status(400).json({ success: false, error: errorMessage } as ApiResponse)
       }
     })
 
@@ -297,10 +305,13 @@ class VisualAnalyzerServer {
     this.app.get('/api/recording/files', (req: Request, res: Response) => {
       try {
         const files = this.recordingService.getRecordedFiles()
-        res.json(files)
+        res.json({
+          success: true,
+          results: files, // Include detailed results for each message
+        } as ApiResponse)
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-        res.status(500).json({ success: false, error: errorMessage })
+        res.status(500).json({ success: false, error: errorMessage } as ApiResponse)
       }
     })
 
@@ -332,29 +343,22 @@ class VisualAnalyzerServer {
     })
 
     // SignalK-compatible input test endpoint for sending NMEA 2000 messages
-    this.app.post('/skServer/inputTest', (req: Request, res: Response) => {
+    this.app.post('/api/send-n2k', (req: Request, res: Response) => {
       try {
-        const { value, sendToN2K }: InputTestRequest = req.body
+        const values = req.body.values
 
-        if (!value) {
+        if (!values) {
           return res.status(400).json({
             success: false,
-            error: 'Missing required field: value',
+            error: 'Missing required field: values',
           } as ApiResponse)
         }
 
-        let pgnDataArray: any[] = []
+        const pgnDataArray: any[] = []
 
-        // Check if input is a string (NMEA 2000 format) or JSON
-        if (typeof value === 'string') {
-          // Try to parse as JSON first
-          try {
-            const jsonParsed = JSON.parse(value)
-            pgnDataArray = [jsonParsed]
-            //console.log('Parsed as JSON from string value')
-          } catch (jsonParseError) {
-            // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
-            // Split by newlines to handle multiple lines
+        for (const value of values) {
+          // Check if input is a string (NMEA 2000 format) or JSON
+          if (typeof value === 'string') {
             const lines = value.split(/\r?\n/).filter((line) => line.trim())
 
             if (lines.length === 0) {
@@ -398,16 +402,15 @@ class VisualAnalyzerServer {
                 error: 'Error parsing NMEA 2000 strings: ' + errorMessage,
               } as ApiResponse)
             }
+          } else if (typeof value === 'object') {
+            // Value is already a JSON object
+            pgnDataArray.push(value)
+          } else {
+            return res.status(400).json({
+              success: false,
+              error: 'Value must be a string (JSON or NMEA 2000 format) or object',
+            } as ApiResponse)
           }
-        } else if (typeof value === 'object') {
-          // Value is already a JSON object
-          pgnDataArray = [value]
-          console.log('Using direct JSON object value')
-        } else {
-          return res.status(400).json({
-            success: false,
-            error: 'Value must be a string (JSON or NMEA 2000 format) or object',
-          } as ApiResponse)
         }
 
         // Process each parsed message
@@ -415,12 +418,11 @@ class VisualAnalyzerServer {
         for (const pgnData of pgnDataArray) {
           console.log('Processing NMEA 2000 message for transmission:', {
             pgn: pgnData.pgn,
-            sendToN2K: sendToN2K,
             data: pgnData,
           })
 
           // If we have an active NMEA provider, attempt to send the message
-          if (this.nmeaProvider && sendToN2K) {
+          if (this.nmeaProvider) {
             try {
               // Convert PGN object to raw NMEA 2000 format if the provider supports it
               if (typeof this.nmeaProvider.sendMessage === 'function') {
@@ -450,7 +452,7 @@ class VisualAnalyzerServer {
                 parsedData: pgnData,
               })
             }
-          } else if (sendToN2K) {
+          } else {
             console.log('No active NMEA connection - message not transmitted')
             results.push({
               pgn: pgnData.pgn,
@@ -458,13 +460,13 @@ class VisualAnalyzerServer {
               error: 'No active NMEA connection',
               parsedData: pgnData,
             })
-          } else {
+          } /*else {
             results.push({
               pgn: pgnData.pgn,
               transmitted: false,
               parsedData: pgnData,
             })
-          }
+          }*/
         }
 
         // Return success response in SignalK format
@@ -472,7 +474,6 @@ class VisualAnalyzerServer {
           success: true,
           message: `${pgnDataArray.length} message(s) processed successfully`,
           messagesProcessed: pgnDataArray.length,
-          transmitted: sendToN2K && this.nmeaProvider ? results.filter((r) => r.transmitted).length : 0,
           results: results, // Include detailed results for each message
         } as ApiResponse)
       } catch (error) {
@@ -487,110 +488,7 @@ class VisualAnalyzerServer {
 
     // SignalK transformation endpoint
     this.app.post('/api/transform/signalk', (req: Request, res: Response) => {
-      try {
-        const { data } = req.body
-
-        if (!data) {
-          return res.status(400).json({
-            success: false,
-            error: 'Missing required field: data',
-          })
-        }
-
-        let nmea2000Data: any[]
-
-        // Handle different input formats
-        if (typeof data === 'string') {
-          // Try to parse as JSON first
-          try {
-            const jsonParsed = JSON.parse(data)
-            nmea2000Data = Array.isArray(jsonParsed) ? jsonParsed : [jsonParsed]
-          } catch (jsonParseError) {
-            // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
-            const lines = data.split(/\r?\n/).filter((line: string) => line.trim())
-
-            if (lines.length === 0) {
-              return res.status(400).json({
-                success: false,
-                error: 'No valid lines found in input',
-              })
-            }
-
-            nmea2000Data = []
-            for (const line of lines) {
-              const trimmedLine = line.trim()
-              if (trimmedLine) {
-                try {
-                  const parsed = this.canboatParser.parseString(trimmedLine)
-                  if (parsed) {
-                    nmea2000Data.push(parsed)
-                  } else {
-                    console.warn(`Unable to parse line: ${trimmedLine}`)
-                  }
-                } catch (lineParseError) {
-                  const errorMessage = lineParseError instanceof Error ? lineParseError.message : 'Unknown error'
-                  console.warn(`Error parsing line "${trimmedLine}": ${errorMessage}`)
-                  // Continue processing other lines instead of failing
-                }
-              }
-            }
-
-            if (nmea2000Data.length === 0) {
-              return res.status(400).json({
-                success: false,
-                error: 'No valid NMEA 2000 messages could be parsed from input',
-              })
-            }
-          }
-        } else if (Array.isArray(data)) {
-          nmea2000Data = data
-        } else if (typeof data === 'object') {
-          nmea2000Data = [data]
-        } else {
-          return res.status(400).json({
-            success: false,
-            error: 'Invalid data format. Expected string, object, or array.',
-          })
-        }
-
-        // Transform each NMEA 2000 message to SignalK using N2kMapper
-        const signalKDeltas: any[] = []
-        const errors: Array<{ message: any; error: string }> = []
-
-        for (const nmea2000Message of nmea2000Data) {
-          try {
-            const signalKDelta = this.n2kMapper.toDelta(nmea2000Message)
-            if (signalKDelta && signalKDelta.updates && signalKDelta.updates.length > 0) {
-              signalKDeltas.push(signalKDelta)
-            } else {
-              console.warn('N2kMapper returned empty or invalid delta for:', nmea2000Message)
-            }
-          } catch (transformError) {
-            const errorMessage = transformError instanceof Error ? transformError.message : 'Unknown error'
-            console.error('Error transforming NMEA 2000 to SignalK:', transformError)
-            errors.push({
-              message: nmea2000Message,
-              error: errorMessage,
-            })
-          }
-        }
-
-        // Return success response with SignalK deltas
-        res.json({
-          success: true,
-          message: `${nmea2000Data.length} message(s) processed, ${signalKDeltas.length} SignalK delta(s) generated`,
-          messagesProcessed: nmea2000Data.length,
-          signalKDeltas: signalKDeltas,
-          errors: errors.length > 0 ? errors : undefined,
-        })
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-        console.error('Error processing SignalK transformation request:', error)
-        res.status(500).json({
-          success: false,
-          error: errorMessage,
-        })
-      }
+      translateToSignalK(req, res, this.canboatParser, this.n2kMapper)
     })
 
     // Serve static files from public directory
@@ -1126,6 +1024,108 @@ class VisualAnalyzerServer {
 
     this.server.close(() => {
       console.log('Visual Analyzer server stopped')
+    })
+  }
+}
+
+export const translateToSignalK = (req: Request, res: Response, canboatParser: FromPgn, n2kMapper: N2kMapper) => {
+  try {
+    const values = req.body.values as any[]
+
+    if (!values || values.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: values',
+      })
+    }
+
+    let nmea2000Data: any[]
+
+    const data = values[0]
+    // Handle different input formats
+    if (typeof data === 'string') {
+      // If JSON parsing fails, try to parse as NMEA 2000 string(s) using canboatjs
+      const lines = data.split(/\r?\n/).filter((line: string) => line.trim())
+
+      if (lines.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'No valid lines found in input',
+        })
+      }
+
+      nmea2000Data = []
+      for (const line of lines) {
+        const trimmedLine = line.trim()
+        if (trimmedLine) {
+          try {
+            const parsed = canboatParser.parseString(trimmedLine)
+            if (parsed) {
+              nmea2000Data.push(parsed)
+            } else {
+              console.warn(`Unable to parse line: ${trimmedLine}`)
+            }
+          } catch (lineParseError) {
+            const errorMessage = lineParseError instanceof Error ? lineParseError.message : 'Unknown error'
+            console.warn(`Error parsing line "${trimmedLine}": ${errorMessage}`)
+            // Continue processing other lines instead of failing
+          }
+        }
+      }
+
+      if (nmea2000Data.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'No valid NMEA 2000 messages could be parsed from input',
+        })
+      }
+    } else if (Array.isArray(data)) {
+      nmea2000Data = data
+    } else if (typeof data === 'object') {
+      nmea2000Data = [data]
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid data format. Expected string, object, or array.',
+      })
+    }
+
+    // Transform each NMEA 2000 message to SignalK using N2kMapper
+    const signalKDeltas: any[] = []
+    const errors: Array<{ message: any; error: string }> = []
+
+    for (const nmea2000Message of nmea2000Data) {
+      try {
+        const signalKDelta = n2kMapper.toDelta(nmea2000Message)
+        if (signalKDelta && signalKDelta.updates && signalKDelta.updates.length > 0) {
+          signalKDeltas.push(signalKDelta)
+        } else {
+          console.warn('N2kMapper returned empty or invalid delta for:', nmea2000Message)
+        }
+      } catch (transformError) {
+        const errorMessage = transformError instanceof Error ? transformError.message : 'Unknown error'
+        console.error('Error transforming NMEA 2000 to SignalK:', transformError)
+        errors.push({
+          message: nmea2000Message,
+          error: errorMessage,
+        })
+      }
+    }
+
+    // Return success response with SignalK deltas
+    res.json({
+      success: true,
+      message: `${nmea2000Data.length} message(s) processed, ${signalKDeltas.length} SignalK delta(s) generated`,
+      messagesProcessed: nmea2000Data.length,
+      signalKDeltas: signalKDeltas,
+      errors: errors.length > 0 ? errors : undefined,
+    })
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Error processing SignalK transformation request:', error)
+    res.status(500).json({
+      success: false,
+      error: errorMessage,
     })
   }
 }

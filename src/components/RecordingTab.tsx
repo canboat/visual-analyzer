@@ -17,6 +17,8 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardHeader, CardBody, Button, Alert, Badge, Row, Col, Input, FormGroup, Label, Table } from 'reactstrap'
 import { useRecording } from '../contexts/RecordingContext'
+import { recordingStorage } from '../utils/localStorage'
+import { server } from '../services'
 
 interface RecordingStatus {
   isRecording: boolean
@@ -47,7 +49,7 @@ const RecordingTab: React.FC = () => {
   const [autoGenerateFileName, setAutoGenerateFileName] = useState(true)
   const [recordingFormat, setRecordingFormat] = useState(() => {
     // Load last selected format from localStorage, default to 'passthrough'
-    return localStorage.getItem('visual-analyzer-recording-format') || 'passthrough'
+    return recordingStorage.getFormat()
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -110,9 +112,9 @@ const RecordingTab: React.FC = () => {
 
   const loadRecordingStatus = async () => {
     try {
-      const response = await fetch('/api/recording/status')
-      if (response.ok) {
-        const status = await response.json()
+      const response = await server.get({ type: 'recording' }, '/status')
+      if (response.success) {
+        const status = response.result
         // Update both local state and context
         setRecordingStatus(status)
         dispatch({ type: 'SET_STATUS', payload: status })
@@ -124,9 +126,9 @@ const RecordingTab: React.FC = () => {
 
   const loadRecordingFiles = async () => {
     try {
-      const response = await fetch('/api/recording/files')
-      if (response.ok) {
-        const files = await response.json()
+      const response = await server.get({ type: 'recording' }, '/files')
+      if (response.success) {
+        const files = response.results as RecordingFile[]
         setRecordingFiles(files)
       }
     } catch (err) {
@@ -137,7 +139,7 @@ const RecordingTab: React.FC = () => {
   const handleFormatChange = (newFormat: string) => {
     setRecordingFormat(newFormat)
     // Save to localStorage to remember for next session
-    localStorage.setItem('visual-analyzer-recording-format', newFormat)
+    recordingStorage.setFormat(newFormat)
   }
 
   const startRecording = async () => {
@@ -151,23 +153,17 @@ const RecordingTab: React.FC = () => {
           `recording_${new Date().toISOString().replace(/[:.]/g, '-')}.${getFileExtension(recordingFormat)}`
 
       console.log('Starting recording with fileName:', fileName, 'format:', recordingFormat)
-      const response = await fetch('/api/recording/start', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fileName, format: recordingFormat }),
-      })
+      const response = await server.post({ type: 'recording', value: { fileName, format: recordingFormat } }, '/start')
       console.log('Recording response:', response)
 
-      if (response.ok) {
-        const result = await response.json()
+      if (response.success) {
+        const result = response.result
         // Don't set local state here - it will be updated via WebSocket events
         // Refresh file list
         loadRecordingFiles()
       } else {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to start recording')
+        const errorData = response.error
+        throw new Error(errorData || 'Failed to start recording')
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to start recording'
@@ -183,17 +179,15 @@ const RecordingTab: React.FC = () => {
     setError(null)
 
     try {
-      const response = await fetch('/api/recording/stop', {
-        method: 'POST',
-      })
+      const response = await server.post({ type: 'recording' }, '/stop')
 
-      if (response.ok) {
+      if (response.success) {
         // Don't set local state here - it will be updated via WebSocket events
         // Refresh file list to show the completed recording
         loadRecordingFiles()
       } else {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to stop recording')
+        const errorData = response.error
+        throw new Error(errorData || 'Failed to stop recording')
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to stop recording'
@@ -209,11 +203,9 @@ const RecordingTab: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`/api/recording/files/${encodeURIComponent(fileName)}`, {
-        method: 'DELETE',
-      })
+      const response = await server.delete({ type: 'recording' }, `/files/${encodeURIComponent(fileName)}`)
 
-      if (response.ok) {
+      if (response.success) {
         loadRecordingFiles()
       } else {
         const errorData = await response.json()
@@ -241,9 +233,7 @@ const RecordingTab: React.FC = () => {
     try {
       // Delete all files in parallel
       const deletePromises = recordingFiles.map((file) =>
-        fetch(`/api/recording/files/${encodeURIComponent(file.name)}`, {
-          method: 'DELETE',
-        }),
+        server.delete({ type: 'recording' }, `/files/${encodeURIComponent(file.name)}`),
       )
 
       const results = await Promise.allSettled(deletePromises)
@@ -254,11 +244,9 @@ const RecordingTab: React.FC = () => {
         setError(`Failed to delete ${failures.length} file(s)`)
       } else {
         // Check for HTTP errors
-        const responses = results
-          .filter((result) => result.status === 'fulfilled')
-          .map((result) => (result as PromiseFulfilledResult<Response>).value)
+        const responses = results.filter((result) => result.status === 'fulfilled').map((result) => result.value)
 
-        const httpErrors = responses.filter((response) => !response.ok)
+        const httpErrors = responses.filter((response) => !response.success)
         if (httpErrors.length > 0) {
           setError(`Failed to delete ${httpErrors.length} file(s)`)
         }
@@ -286,7 +274,7 @@ const RecordingTab: React.FC = () => {
   }
 
   const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleString()
+    return dateString ? new Date(dateString).toLocaleString() : ''
   }
 
   const getFileExtension = (format: string): string => {
@@ -353,7 +341,7 @@ const RecordingTab: React.FC = () => {
                 <div className="mb-3">
                   <Row>
                     <Col sm={6}>
-                      <strong>Messages:</strong> {recordingStatus.messageCount.toLocaleString()}
+                      <strong>Messages:</strong> {recordingStatus.messageCount}
                     </Col>
                     <Col sm={6}>
                       <strong>Size:</strong> {formatFileSize(recordingStatus.fileSize)}
