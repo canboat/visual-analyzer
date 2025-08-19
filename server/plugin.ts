@@ -91,11 +91,9 @@ module.exports = function (app: ServerAPI) {
             recordingService.recordMessage(output, undefined)
           } else {
             try {
-              if (typeof output === 'string') {
-                const pgn = canboatParser.parseString(output)
-                if (pgn) {
-                  recordingService.recordMessage(undefined, pgn)
-                }
+              const pgn = canboatParser.parse(output)
+              if (pgn) {
+                recordingService.recordMessage(undefined, pgn)
               }
             } catch (error) {
               console.debug('Failed to parse raw NMEA data:', error)
@@ -221,7 +219,7 @@ module.exports = function (app: ServerAPI) {
 
       router.post('/api/recording/start', (req: any, res: any) => {
         try {
-          const { fileName, format } = req.body
+          const { fileName, format } = req.body.value
           const result = recordingService.startRecording({ fileName, format })
           res.json({
             success: true,

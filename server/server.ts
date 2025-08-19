@@ -283,7 +283,7 @@ class VisualAnalyzerServer {
 
     this.app.post('/api/recording/start', (req: Request, res: Response) => {
       try {
-        const { fileName, format } = req.body
+        const { fileName, format } = req.body.value
         const result = this.recordingService.startRecording({ fileName, format })
         res.json({ success: true, fileName: result.fileName, message: 'Recording started successfully' } as ApiResponse)
       } catch (error) {
@@ -653,11 +653,9 @@ class VisualAnalyzerServer {
           this.recordingService.recordMessage(rawData, undefined)
         } else {
           try {
-            if (typeof rawData === 'string') {
-              const pgn = this.canboatParser.parseString(rawData)
-              if (pgn) {
-                this.recordingService.recordMessage(undefined, pgn)
-              }
+            const pgn = this.canboatParser.parse(rawData)
+            if (pgn) {
+              this.recordingService.recordMessage(undefined, pgn)
             }
           } catch (error) {
             console.debug('Failed to parse raw NMEA data:', error)

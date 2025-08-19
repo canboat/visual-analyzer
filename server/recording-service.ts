@@ -28,6 +28,7 @@ import {
   pgnToCandump1,
   pgnToCandump2,
   pgnToCandump3,
+  encodeCandump2,
 } from '@canboat/canboatjs'
 import { PGN } from '@canboat/ts-pgns'
 
@@ -208,7 +209,7 @@ export class RecordingService extends EventEmitter {
     }
   }
 
-  public recordMessage(raw: string | undefined, pgn: PGN | undefined): void {
+  public recordMessage(raw: string | object | undefined, pgn: PGN | undefined): void {
     if (!this.isRecording || !this.fileStream) {
       return
     }
@@ -217,7 +218,12 @@ export class RecordingService extends EventEmitter {
       let formattedMessage: string | undefined = undefined
 
       if (this.currentFormat === 'passthrough') {
-        formattedMessage = raw
+        if (typeof raw === 'string') {
+          formattedMessage = raw
+        } else {
+          // right now, only canbus sends object data
+          formattedMessage = encodeCandump2({ ...raw, data: Buffer.from((raw as any).data) })[0]
+        }
       } else if (pgn !== undefined) {
         switch (this.currentFormat) {
           case 'canboat-json':
