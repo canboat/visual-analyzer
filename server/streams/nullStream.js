@@ -20,6 +20,7 @@ function NullStream() {
   Transform.call(this, {
     objectMode: true,
   })
+  this.fromPgn = true //bit of a hack to make so canbus stream does not use plainText
 }
 
 require('util').inherits(NullStream, Transform)
