@@ -55,7 +55,7 @@ const aisPGNs = [129038, 129039, 129041, 129794, 129809, 130842, 129793, 129810]
 export const getRowKey = (pgn: PGN, options: FilterOptions | undefined): string => {
   const usePKs = aisPGNs.includes(pgn.pgn) === false || options?.showAISOnSeparateLines === true
   let key = `${pgn.getDefinition().Id}-${pgn.pgn}-${pgn.src}}`
-  if ( usePKs ) {
+  if (usePKs) {
     key = `${key}-${createFieldDataHash(pgn, true)}`
   }
   if (

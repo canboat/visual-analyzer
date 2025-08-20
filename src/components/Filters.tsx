@@ -282,7 +282,6 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
                 <span>Show AIS Messages On Separate Lines</span>
               </Label>
             </Col>
-
           </Row>
           <Row>
             <Col xs="12" md="6" className="mb-2">
