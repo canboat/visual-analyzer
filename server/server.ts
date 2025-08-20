@@ -90,6 +90,10 @@ class VisualAnalyzerServer {
       includeByteMapping: true,
     })
 
+    this.canboatParser.on('error', (error) => {
+      console.debug('Canboat Parser error:', error)
+    })
+
     // Initialize N2kMapper for SignalK transformation
     this.n2kMapper = new N2kMapper({})
 

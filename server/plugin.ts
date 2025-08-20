@@ -52,6 +52,10 @@ module.exports = function (app: ServerAPI) {
         includeByteMapping: true,
       })
 
+      canboatParser.on('error', (error) => {
+        ;(app as any).debug('Canboat Parser error:', error)
+      })
+
       n2kMapper = new N2kMapper({})
 
       recordingService = new RecordingService(`${(app as any).config.configPath}/visual-analyzer`)

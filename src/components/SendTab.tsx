@@ -171,6 +171,11 @@ export const SendTab: React.FC = () => {
       includeInputData: true,
     })
 
+    parser.on('error', (pgn: any, error: any) => {
+      console.error(`Error parsing ${pgn.pgn} ${error}`)
+      //console.error(error.stack)
+    })
+
     for (const line of lines) {
       const trimmed = line.trim()
       if (!trimmed) continue
