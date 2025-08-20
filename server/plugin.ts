@@ -53,7 +53,7 @@ module.exports = function (app: ServerAPI) {
       })
 
       canboatParser.on('error', (error) => {
-        (app as any).debug('Canboat Parser error:', error)
+        ;(app as any).debug('Canboat Parser error:', error)
       })
 
       n2kMapper = new N2kMapper({})
