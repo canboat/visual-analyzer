@@ -50,8 +50,14 @@ interface LoginStatus {
   securityWasEnabled: boolean
 }
 
+const aisPGNs = [129038, 129039, 129041, 129794, 129809, 130842, 129793, 129810]
+
 export const getRowKey = (pgn: PGN, options: FilterOptions | undefined): string => {
-  let key = `${pgn.getDefinition().Id}-${pgn.pgn}-${pgn.src}- ${createFieldDataHash(pgn, true)}`
+  const usePKs = aisPGNs.includes(pgn.pgn) === false || options?.showAISOnSeparateLines === true
+  let key = `${pgn.getDefinition().Id}-${pgn.pgn}-${pgn.src}}`
+  if (usePKs) {
+    key = `${key}-${createFieldDataHash(pgn, true)}`
+  }
   if (
     (pgn.getDefinition().Fallback === true && options?.showUnknownProprietaryPGNsOnSeparateLines) ||
     (pgn.pgn === 126208 && options?.showPgn126208OnSeparateLines)

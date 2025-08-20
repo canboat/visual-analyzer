@@ -38,6 +38,7 @@ export type FilterOptions = {
   showInfoPgns?: boolean
   maxHistorySize?: number
   pauseUpdates?: boolean
+  showAISOnSeparateLines?: boolean
 }
 
 export const getFilterConfig = (filter?: Filter): FilterConfig => {
@@ -263,6 +264,22 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
                   }}
                 />
                 <span>Show PGN 126208 On Separate Lines</span>
+              </Label>
+            </Col>
+            <Col xs="12" md="6" className="mb-2">
+              <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                <Input
+                  type="checkbox"
+                  className="me-2"
+                  checked={filterOptions?.showAISOnSeparateLines ?? false}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    onFilterOptionsChange.next({
+                      ...filterOptions,
+                      showAISOnSeparateLines: e.target.checked,
+                    })
+                  }}
+                />
+                <span>Show AIS Messages On Separate Lines</span>
               </Label>
             </Col>
           </Row>
