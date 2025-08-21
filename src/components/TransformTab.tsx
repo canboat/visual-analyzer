@@ -234,67 +234,70 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   }
 
   // Manual parse function
-  const parseMessage = useCallback((messageToparse?: string) => {
-    const message = messageToparse || inputValue
-    if (!message.trim()) {
-      setParsedResult(null)
-      setParseError(null)
-      selectedPgnSubject.next(null)
-      validPgnSubject.next(undefined)
-      return
-    }
-
-    try {
-      setParseError(null)
-
-      // Try to parse as JSON first
-      if (message.trim().startsWith('{')) {
-        const jsonData = JSON.parse(message)
-        // If it's already a valid PGN JSON object, use it directly
-        if (jsonData.pgn && typeof jsonData.pgn === 'number') {
-          setParsedResult(jsonData as PGN)
-          selectedPgnSubject.next(jsonData as PGN)
-          validPgnSubject.next(jsonData as PGN)
-          // Add successful parse to history
-          addToHistory(message)
-        } else {
-          setParseError('Invalid PGN JSON format - missing required pgn field')
-          selectedPgnSubject.next(null)
-          validPgnSubject.next(undefined)
-        }
+  const parseMessage = useCallback(
+    (messageToparse?: string) => {
+      const message = messageToparse || inputValue
+      if (!message.trim()) {
+        setParsedResult(null)
+        setParseError(null)
+        selectedPgnSubject.next(null)
+        validPgnSubject.next(undefined)
         return
       }
 
-      // Try to parse as string format using a new parser instance
-      const lines = message.split('\n').filter((line) => line.trim())
+      try {
+        setParseError(null)
 
-      let result: PGN | undefined = undefined
-      const useCamel = outputFormat === 'canboat-json-camel' || outputFormat === 'signalk'
-      const parser = createParser(useCamel)
-      
-      for (const line of lines) {
-        result = parser.parseString(line)
-        if (result) {
-          setParsedResult(result)
-          selectedPgnSubject.next(result)
-          validPgnSubject.next(result)
-          // Add successful parse to history
-          addToHistory(message)
-          break
+        // Try to parse as JSON first
+        if (message.trim().startsWith('{')) {
+          const jsonData = JSON.parse(message)
+          // If it's already a valid PGN JSON object, use it directly
+          if (jsonData.pgn && typeof jsonData.pgn === 'number') {
+            setParsedResult(jsonData as PGN)
+            selectedPgnSubject.next(jsonData as PGN)
+            validPgnSubject.next(jsonData as PGN)
+            // Add successful parse to history
+            addToHistory(message)
+          } else {
+            setParseError('Invalid PGN JSON format - missing required pgn field')
+            selectedPgnSubject.next(null)
+            validPgnSubject.next(undefined)
+          }
+          return
         }
-      }
-      if (!result) {
-        setParseError('Failed to parse message - invalid format or unsupported PGN')
+
+        // Try to parse as string format using a new parser instance
+        const lines = message.split('\n').filter((line) => line.trim())
+
+        let result: PGN | undefined = undefined
+        const useCamel = outputFormat === 'canboat-json-camel' || outputFormat === 'signalk'
+        const parser = createParser(useCamel)
+
+        for (const line of lines) {
+          result = parser.parseString(line)
+          if (result) {
+            setParsedResult(result)
+            selectedPgnSubject.next(result)
+            validPgnSubject.next(result)
+            // Add successful parse to history
+            addToHistory(message)
+            break
+          }
+        }
+        if (!result) {
+          setParseError('Failed to parse message - invalid format or unsupported PGN')
+          selectedPgnSubject.next(null)
+          validPgnSubject.next(undefined)
+        }
+      } catch (error) {
+        console.error('Error parsing input value:', error)
+        setParseError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`)
         selectedPgnSubject.next(null)
         validPgnSubject.next(undefined)
       }
-    } catch (error) {
-      console.error('Error parsing input value:', error)
-      setParseError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      selectedPgnSubject.next(null)
-      validPgnSubject.next(undefined)
-    }
-  }, [inputValue, outputFormat, createParser, addToHistory])
+    },
+    [inputValue, outputFormat, createParser, addToHistory],
+  )
 
   // Handle parse button click
   const handleParse = () => {
