@@ -838,7 +838,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                       : profile.type === 'socketcan'
                                         ? 'warning'
                                         : profile.type === 'file'
-                                          ? 'dark'
+                                          ? 'secondary'
                                           : 'primary'
                                 }`}
                               >
