@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Card, CardBody } from 'reactstrap'
 import {
   FromPgn,
@@ -55,7 +55,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   const validPgnSubject = useMemo(() => new BehaviorSubject<PGN | undefined>(undefined), [])
 
   // Function to create a new parser instance with appropriate options
-  const createParser = (useCamel: boolean = true) => {
+  const createParser = useCallback((useCamel: boolean = true) => {
     const newParser = new FromPgn({
       returnNulls: true,
       checkForInvalidFields: true,
@@ -77,7 +77,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
     })
 
     return newParser
-  }
+  }, [])
   // Load initial values from localStorage
   const [inputValue, setInputValue] = useState<string>(() => {
     return transformTabStorage.getInputValue()
@@ -161,7 +161,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   }
 
   // Function to add message to history
-  const addToHistory = (message: string) => {
+  const addToHistory = useCallback((message: string) => {
     if (!message.trim()) return
 
     const historyItem: MessageHistory = {
@@ -176,7 +176,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
       // Add new item at the beginning and limit to 20 items
       return [historyItem, ...filtered].slice(0, 20)
     })
-  }
+  }, [])
 
   // Function to select message from history
   const selectFromHistory = (message: string) => {
@@ -283,7 +283,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
       selectedPgnSubject.next(null)
       validPgnSubject.next(undefined)
     }
-  }, [inputValue, outputFormat, createParser, selectedPgnSubject, validPgnSubject, addToHistory])
+  }, [inputValue, outputFormat, createParser, addToHistory])
 
   // Handle SignalK transformation when format changes to signalk
   useEffect(() => {
