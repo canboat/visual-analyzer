@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Card, CardBody } from 'reactstrap'
 import {
   FromPgn,
@@ -54,12 +54,12 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   // Create filtered subject that only emits valid PGN values (no nulls)
   const validPgnSubject = useMemo(() => new BehaviorSubject<PGN | undefined>(undefined), [])
 
-  // Create our own parser instance with appropriate options
-  const parser = useMemo(() => {
+  // Function to create a new parser instance with appropriate options
+  const createParser = useCallback((useCamel: boolean = true) => {
     const newParser = new FromPgn({
       returnNulls: true,
       checkForInvalidFields: true,
-      useCamel: true,
+      useCamel,
       useCamelCompat: false,
       returnNonMatches: true,
       createPGNObjects: true,
@@ -161,7 +161,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   }
 
   // Function to add message to history
-  const addToHistory = (message: string) => {
+  const addToHistory = useCallback((message: string) => {
     if (!message.trim()) return
 
     const historyItem: MessageHistory = {
@@ -176,17 +176,27 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
       // Add new item at the beginning and limit to 20 items
       return [historyItem, ...filtered].slice(0, 20)
     })
-  }
+  }, [])
 
   // Function to select message from history
   const selectFromHistory = (message: string) => {
     setInputValue(message)
     setShowHistoryDropdown(false)
+    // Auto-parse when selecting from history since these are known valid messages
+    parseMessage(message)
   }
 
   // Reset history navigation when input changes manually
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(event.target.value)
+  }
+
+  // Handle keyboard shortcuts in the textarea
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault()
+      handleParse()
+    }
   }
 
   // Function to clear history
@@ -223,43 +233,46 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
     }
   }
 
-  // Auto-parse whenever input, parser, or output format changes
-  useEffect(() => {
-    if (!inputValue.trim()) {
-      setParsedResult(null)
-      setParseError(null)
-      selectedPgnSubject.next(null)
-      validPgnSubject.next(undefined)
-      return
-    }
-
-    try {
-      setParseError(null)
-
-      // Try to parse as JSON first
-      if (inputValue.trim().startsWith('{')) {
-        const jsonData = JSON.parse(inputValue)
-        // If it's already a valid PGN JSON object, use it directly
-        if (jsonData.pgn && typeof jsonData.pgn === 'number') {
-          setParsedResult(jsonData as PGN)
-          selectedPgnSubject.next(jsonData as PGN)
-          validPgnSubject.next(jsonData as PGN)
-          // Add successful parse to history
-          addToHistory(inputValue)
-        } else {
-          setParseError('Invalid PGN JSON format - missing required pgn field')
-          selectedPgnSubject.next(null)
-          validPgnSubject.next(undefined)
-        }
+  // Manual parse function
+  const parseMessage = useCallback(
+    (messageToparse?: string) => {
+      const message = messageToparse || inputValue
+      if (!message.trim()) {
+        setParsedResult(null)
+        setParseError(null)
+        selectedPgnSubject.next(null)
+        validPgnSubject.next(undefined)
         return
       }
 
-      // Try to parse as string format using the parser if available
-      if (parser) {
-        const lines = inputValue.split('\n').filter((line) => line.trim())
+      try {
+        setParseError(null)
+
+        // Try to parse as JSON first
+        if (message.trim().startsWith('{')) {
+          const jsonData = JSON.parse(message)
+          // If it's already a valid PGN JSON object, use it directly
+          if (jsonData.pgn && typeof jsonData.pgn === 'number') {
+            setParsedResult(jsonData as PGN)
+            selectedPgnSubject.next(jsonData as PGN)
+            validPgnSubject.next(jsonData as PGN)
+            // Add successful parse to history
+            addToHistory(message)
+          } else {
+            setParseError('Invalid PGN JSON format - missing required pgn field')
+            selectedPgnSubject.next(null)
+            validPgnSubject.next(undefined)
+          }
+          return
+        }
+
+        // Try to parse as string format using a new parser instance
+        const lines = message.split('\n').filter((line) => line.trim())
 
         let result: PGN | undefined = undefined
-        parser.options.useCamel = outputFormat === 'canboat-json-camel' || outputFormat === 'signalk'
+        const useCamel = outputFormat === 'canboat-json-camel' || outputFormat === 'signalk'
+        const parser = createParser(useCamel)
+
         for (const line of lines) {
           result = parser.parseString(line)
           if (result) {
@@ -267,7 +280,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
             selectedPgnSubject.next(result)
             validPgnSubject.next(result)
             // Add successful parse to history
-            addToHistory(inputValue)
+            addToHistory(message)
             break
           }
         }
@@ -276,18 +289,20 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
           selectedPgnSubject.next(null)
           validPgnSubject.next(undefined)
         }
-      } else {
-        setParseError('Parser not available')
+      } catch (error) {
+        console.error('Error parsing input value:', error)
+        setParseError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`)
         selectedPgnSubject.next(null)
         validPgnSubject.next(undefined)
       }
-    } catch (error) {
-      console.error('Error parsing input value:', error)
-      setParseError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      selectedPgnSubject.next(null)
-      validPgnSubject.next(undefined)
-    }
-  }, [inputValue, parser, outputFormat])
+    },
+    [inputValue, outputFormat, createParser, addToHistory],
+  )
+
+  // Handle parse button click
+  const handleParse = () => {
+    parseMessage()
+  }
 
   // Handle SignalK transformation when format changes to signalk
   useEffect(() => {
@@ -577,7 +592,8 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
                     rows={12}
                     value={inputValue}
                     onChange={handleInputChange}
-                    placeholder='Enter your NMEA 2000 message here (auto-parsed)...
+                    onKeyDown={handleKeyDown}
+                    placeholder='Enter your NMEA 2000 message here (click Parse or press Ctrl+Enter to process)...
 Examples:
 String format: 2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,00
 Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src": 17, "dst": 255, "pgn": 127250, "description": "Vessel Heading", "fields": {"SID": 0, "Heading": 1.5708, "Deviation": null, "Variation": null, "Reference": "Magnetic"}}'
@@ -590,6 +606,9 @@ Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src":
                   />
                 </div>
                 <div className="d-flex gap-2 mb-3">
+                  <button className="btn btn-primary" type="button" onClick={handleParse}>
+                    Parse
+                  </button>
                   <button className="btn btn-secondary" type="button" onClick={handleClear}>
                     Clear
                   </button>
