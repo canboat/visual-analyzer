@@ -54,12 +54,12 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   // Create filtered subject that only emits valid PGN values (no nulls)
   const validPgnSubject = useMemo(() => new BehaviorSubject<PGN | undefined>(undefined), [])
 
-  // Create our own parser instance with appropriate options
-  const parser = useMemo(() => {
+  // Function to create a new parser instance with appropriate options
+  const createParser = (useCamel: boolean = true) => {
     const newParser = new FromPgn({
       returnNulls: true,
       checkForInvalidFields: true,
-      useCamel: true,
+      useCamel,
       useCamelCompat: false,
       returnNonMatches: true,
       createPGNObjects: true,
@@ -77,7 +77,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
     })
 
     return newParser
-  }, [])
+  }
   // Load initial values from localStorage
   const [inputValue, setInputValue] = useState<string>(() => {
     return transformTabStorage.getInputValue()
@@ -254,30 +254,26 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
         return
       }
 
-      // Try to parse as string format using the parser if available
-      if (parser) {
-        const lines = inputValue.split('\n').filter((line) => line.trim())
+      // Try to parse as string format using a new parser instance
+      const lines = inputValue.split('\n').filter((line) => line.trim())
 
-        let result: PGN | undefined = undefined
-        parser.options.useCamel = outputFormat === 'canboat-json-camel' || outputFormat === 'signalk'
-        for (const line of lines) {
-          result = parser.parseString(line)
-          if (result) {
-            setParsedResult(result)
-            selectedPgnSubject.next(result)
-            validPgnSubject.next(result)
-            // Add successful parse to history
-            addToHistory(inputValue)
-            break
-          }
+      let result: PGN | undefined = undefined
+      const useCamel = outputFormat === 'canboat-json-camel' || outputFormat === 'signalk'
+      const parser = createParser(useCamel)
+      
+      for (const line of lines) {
+        result = parser.parseString(line)
+        if (result) {
+          setParsedResult(result)
+          selectedPgnSubject.next(result)
+          validPgnSubject.next(result)
+          // Add successful parse to history
+          addToHistory(inputValue)
+          break
         }
-        if (!result) {
-          setParseError('Failed to parse message - invalid format or unsupported PGN')
-          selectedPgnSubject.next(null)
-          validPgnSubject.next(undefined)
-        }
-      } else {
-        setParseError('Parser not available')
+      }
+      if (!result) {
+        setParseError('Failed to parse message - invalid format or unsupported PGN')
         selectedPgnSubject.next(null)
         validPgnSubject.next(undefined)
       }
@@ -287,7 +283,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
       selectedPgnSubject.next(null)
       validPgnSubject.next(undefined)
     }
-  }, [inputValue, parser, outputFormat])
+  }, [inputValue, outputFormat, createParser, selectedPgnSubject, validPgnSubject, addToHistory])
 
   // Handle SignalK transformation when format changes to signalk
   useEffect(() => {
