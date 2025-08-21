@@ -182,11 +182,21 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   const selectFromHistory = (message: string) => {
     setInputValue(message)
     setShowHistoryDropdown(false)
+    // Auto-parse when selecting from history since these are known valid messages
+    parseMessage(message)
   }
 
   // Reset history navigation when input changes manually
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(event.target.value)
+  }
+
+  // Handle keyboard shortcuts in the textarea
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault()
+      handleParse()
+    }
   }
 
   // Function to clear history
@@ -223,9 +233,10 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
     }
   }
 
-  // Auto-parse whenever input, parser, or output format changes
-  useEffect(() => {
-    if (!inputValue.trim()) {
+  // Manual parse function
+  const parseMessage = useCallback((messageToparse?: string) => {
+    const message = messageToparse || inputValue
+    if (!message.trim()) {
       setParsedResult(null)
       setParseError(null)
       selectedPgnSubject.next(null)
@@ -237,15 +248,15 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
       setParseError(null)
 
       // Try to parse as JSON first
-      if (inputValue.trim().startsWith('{')) {
-        const jsonData = JSON.parse(inputValue)
+      if (message.trim().startsWith('{')) {
+        const jsonData = JSON.parse(message)
         // If it's already a valid PGN JSON object, use it directly
         if (jsonData.pgn && typeof jsonData.pgn === 'number') {
           setParsedResult(jsonData as PGN)
           selectedPgnSubject.next(jsonData as PGN)
           validPgnSubject.next(jsonData as PGN)
           // Add successful parse to history
-          addToHistory(inputValue)
+          addToHistory(message)
         } else {
           setParseError('Invalid PGN JSON format - missing required pgn field')
           selectedPgnSubject.next(null)
@@ -255,7 +266,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
       }
 
       // Try to parse as string format using a new parser instance
-      const lines = inputValue.split('\n').filter((line) => line.trim())
+      const lines = message.split('\n').filter((line) => line.trim())
 
       let result: PGN | undefined = undefined
       const useCamel = outputFormat === 'canboat-json-camel' || outputFormat === 'signalk'
@@ -268,7 +279,7 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
           selectedPgnSubject.next(result)
           validPgnSubject.next(result)
           // Add successful parse to history
-          addToHistory(inputValue)
+          addToHistory(message)
           break
         }
       }
@@ -284,6 +295,11 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
       validPgnSubject.next(undefined)
     }
   }, [inputValue, outputFormat, createParser, addToHistory])
+
+  // Handle parse button click
+  const handleParse = () => {
+    parseMessage()
+  }
 
   // Handle SignalK transformation when format changes to signalk
   useEffect(() => {
@@ -573,7 +589,8 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
                     rows={12}
                     value={inputValue}
                     onChange={handleInputChange}
-                    placeholder='Enter your NMEA 2000 message here (auto-parsed)...
+                    onKeyDown={handleKeyDown}
+                    placeholder='Enter your NMEA 2000 message here (click Parse or press Ctrl+Enter to process)...
 Examples:
 String format: 2023-10-15T10:30:45.123Z,2,127250,17,255,8,00,fc,69,97,00,00,00,00
 Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src": 17, "dst": 255, "pgn": 127250, "description": "Vessel Heading", "fields": {"SID": 0, "Heading": 1.5708, "Deviation": null, "Variation": null, "Reference": "Magnetic"}}'
@@ -586,6 +603,9 @@ Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src":
                   />
                 </div>
                 <div className="d-flex gap-2 mb-3">
+                  <button className="btn btn-primary" type="button" onClick={handleParse}>
+                    Parse
+                  </button>
                   <button className="btn btn-secondary" type="button" onClick={handleClear}>
                     Clear
                   </button>
