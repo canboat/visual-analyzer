@@ -35,7 +35,7 @@ The Visual Analyzer can also be run as a standalone web server, making it perfec
 Install globally using npm and start the server:
 
 ```bash
-npm install -g @canboat/visual-analyzer
+sudo npm install -g @canboat/visual-analyzer
 
 visual-analyzer --open
 ```
