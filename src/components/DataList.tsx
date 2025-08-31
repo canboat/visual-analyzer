@@ -24,6 +24,14 @@ import { PgnNumber, PGNDataMap } from '../types'
 import { Filter, filterFor, getFilterConfig, FilterOptions } from './Filters'
 import { getRowKey } from './AppPanel'
 
+type SortColumn = 'timestamp' | 'pgn' | 'src' | 'dst' | 'description'
+type SortDirection = 'asc' | 'desc'
+
+interface SortConfig {
+  column: SortColumn
+  direction: SortDirection
+}
+
 type PGNDataEntry = {
   current: PGN
   history: PGN[]
@@ -43,6 +51,7 @@ export const DataList = (props: DataListProps) => {
   const doFiltering = useObservableState(props.doFiltering)
   const filterOptions = useObservableState(props.filterOptions)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ column: 'src', direction: 'asc' })
 
   const filterConfig = getFilterConfig(filter)
 
@@ -77,6 +86,61 @@ export const DataList = (props: DataListProps) => {
       return newSet
     })
   }, [])
+
+  const handleSort = useCallback((column: SortColumn) => {
+    setSortConfig((prev) => ({
+      column,
+      direction: prev.column === column && prev.direction === 'asc' ? 'desc' : 'asc',
+    }))
+  }, [])
+
+  const getSortedEntries = useCallback(
+    (entries: [string, PGNDataEntry][]) => {
+      return entries.sort(([, a], [, b]) => {
+        let comparison = 0
+        
+        switch (sortConfig.column) {
+          case 'timestamp':
+            const timeA = new Date(a.current.timestamp || 0).getTime()
+            const timeB = new Date(b.current.timestamp || 0).getTime()
+            comparison = timeA - timeB
+            break
+          case 'pgn':
+            comparison = a.current.pgn - b.current.pgn
+            break
+          case 'src':
+            comparison = (a.current.src || 0) - (b.current.src || 0)
+            break
+          case 'dst':
+            comparison = (a.current.dst || 0) - (b.current.dst || 0)
+            break
+          case 'description':
+            const descA = a.current.getDefinition().Description.toLowerCase()
+            const descB = b.current.getDefinition().Description.toLowerCase()
+            comparison = descA.localeCompare(descB)
+            break
+        }
+        
+        return sortConfig.direction === 'asc' ? comparison : -comparison
+      })
+    },
+    [sortConfig]
+  )
+
+  const getSortIcon = useCallback(
+    (column: SortColumn) => {
+      if (sortConfig.column !== column) {
+        return <i className="fas fa-sort" style={{ color: '#ccc', marginLeft: '4px' }} />
+      }
+      return (
+        <i
+          className={`fas fa-sort-${sortConfig.direction === 'asc' ? 'up' : 'down'}`}
+          style={{ marginLeft: '4px' }}
+        />
+      )
+    },
+    [sortConfig]
+  )
 
   const handleRowClick = useCallback(
     (row: PGN) => {
@@ -125,24 +189,28 @@ export const DataList = (props: DataListProps) => {
         <thead>
           <tr>
             <th style={{ width: '55px' }}></th>
-            <th>Timestamp</th>
-            <th>pgn</th>
-            <th>src</th>
-            <th>dst</th>
-            <th>Description</th>
+            <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('timestamp')}>
+              Timestamp{getSortIcon('timestamp')}
+            </th>
+            <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('pgn')}>
+              pgn{getSortIcon('pgn')}
+            </th>
+            <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('src')}>
+              src{getSortIcon('src')}
+            </th>
+            <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('dst')}>
+              dst{getSortIcon('dst')}
+            </th>
+            <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('description')}>
+              Description{getSortIcon('description')}
+            </th>
           </tr>
         </thead>
         <tbody>
-          {(data != undefined ? Object.entries(data) : [])
-            .filter(([, entry]) => filterFor(doFiltering, filterConfig)(entry.current))
-            .sort(([, a], [, b]) => {
-              // Sort by PGN first, then by src
-              if (a.current.src !== b.current.src) {
-                return a.current.src! - b.current.src!
-              }
-              return a.current.pgn - b.current.pgn
-            })
-            .map(([rowKey, entry], index) => {
+          {getSortedEntries(
+            (data != undefined ? Object.entries(data) : [])
+              .filter(([, entry]) => filterFor(doFiltering, filterConfig)(entry.current))
+          ).map(([rowKey, entry], index) => {
               const row = entry.current
               const isExpanded = expandedRows.has(rowKey)
               const hasHistory = entry.history.length > 0
