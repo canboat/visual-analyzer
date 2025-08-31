@@ -189,19 +189,19 @@ export const DataList = (props: DataListProps) => {
         <thead>
           <tr>
             <th style={{ width: '55px' }}></th>
-            <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('timestamp')}>
+            <th style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }} onClick={() => handleSort('timestamp')}>
               Timestamp{getSortIcon('timestamp')}
             </th>
-            <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('pgn')}>
+            <th style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }} onClick={() => handleSort('pgn')}>
               pgn{getSortIcon('pgn')}
             </th>
-            <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('src')}>
+            <th style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }} onClick={() => handleSort('src')}>
               src{getSortIcon('src')}
             </th>
-            <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('dst')}>
+            <th style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }} onClick={() => handleSort('dst')}>
               dst{getSortIcon('dst')}
             </th>
-            <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort('description')}>
+            <th style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }} onClick={() => handleSort('description')}>
               Description{getSortIcon('description')}
             </th>
           </tr>
