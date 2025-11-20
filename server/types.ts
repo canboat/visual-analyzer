@@ -20,7 +20,7 @@ import { EventEmitter } from 'events'
 export interface ConnectionProfile {
   id?: string
   name: string
-  type: 'serial' | 'network' | 'signalk' | 'socketcan' | 'file'
+  type: 'serial' | 'network' | 'socketcan' | 'file'
 
   // Serial connection specific
   serialPort?: string
@@ -31,11 +31,6 @@ export interface ConnectionProfile {
   networkHost?: string
   networkPort?: number
   networkProtocol?: 'tcp' | 'udp'
-
-  // SignalK specific
-  signalkUrl?: string
-  signalkUsername?: string
-  signalkPassword?: string
 
   // SocketCAN specific
   socketcanInterface?: string

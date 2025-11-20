@@ -49,11 +49,10 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
 
   public async connect(): Promise<void> {
     try {
-      if (this.options.type === 'signalk') {
-        await this.connectToSignalK()
-      } else if (this.options.type === 'file') {
+      if (this.options.type === 'file') {
         await this.connectToFile()
       } else {
+        // Use CanDevice for all connection types including signalk
         this.canDevice = new CanDevice(this.getServerApp(), this.options)
         await this.canDevice.start()
         this.isConnected = true
@@ -208,6 +207,9 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
       emit: (event: string, data: any) => {
         if (event === 'canboatjs:rawoutput') {
           this.emit('raw-nmea', data)
+        } else if (event === 'pgn') {
+          // canboatjs emits parsed PGNs as 'pgn' events
+          this.emit('nmea-data', data)
         } else {
           this.emit(event, data)
         }
@@ -427,13 +429,6 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
   }
 
   public getAuthStatus(): any {
-    if (this.options.type === 'signalk') {
-      return {
-        isAuthenticated: !!this.authToken,
-        token: this.authToken,
-        username: this.options.signalkUsername,
-      }
-    }
     return null
   }
 
@@ -450,7 +445,6 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
         this.canDevice?.send(data)
         break
       case 'file':
-      case 'signalk':
         break
       default:
         throw new Error(`Message transmission not supported for connection type: ${this.options.type}`)

@@ -562,11 +562,6 @@ class VisualAnalyzerServer {
               timestamp: this.connectionState.lastUpdate,
             }
 
-            // Add authentication status if this is a SignalK connection
-            if (this.nmeaProvider && this.nmeaProvider.options.type === 'signalk') {
-              statusData.auth = this.nmeaProvider.getAuthStatus?.()
-            }
-
             ws.send(JSON.stringify(statusData))
           } else {
             ws.send(
@@ -734,11 +729,6 @@ class VisualAnalyzerServer {
         timestamp: new Date().toISOString(),
       }
 
-      // Add authentication status if this is a SignalK connection
-      if (this.nmeaProvider && this.nmeaProvider.options.type === 'signalk') {
-        connectionData.auth = this.nmeaProvider.getAuthStatus?.()
-      }
-
       this.broadcast(connectionData)
     })
 
@@ -869,10 +859,6 @@ class VisualAnalyzerServer {
         if (!['tcp', 'udp'].includes(profile.networkProtocol!)) {
           throw new Error('Network protocol must be tcp or udp')
         }
-        break
-
-      case 'signalk':
-        if (!profile.signalkUrl) throw new Error('SignalK URL is required for SignalK connection')
         break
 
       case 'socketcan':

@@ -36,10 +36,7 @@ import {
 interface ConnectionProfile {
   id: string
   name: string
-  type: 'serial' | 'network' | 'signalk' | 'socketcan' | 'file'
-  signalkUrl?: string
-  signalkUsername?: string
-  signalkPassword?: string
+  type: 'serial' | 'network' | 'socketcan' | 'file'
   serialPort?: string
   baudRate?: number
   deviceType?:
@@ -94,9 +91,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
   const [formData, setFormData] = useState<Omit<ConnectionProfile, 'id'>>({
     name: '',
     type: 'network',
-    signalkUrl: '',
-    signalkUsername: '',
-    signalkPassword: '',
     serialPort: '',
     baudRate: 115200,
     deviceType: 'Yacht Devices RAW',
@@ -194,6 +188,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
 
     try {
       const profileId = editingProfile?.id || formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+      const profileData = { ...formData }
 
       const response = await fetch('/api/connections', {
         method: 'POST',
@@ -202,7 +197,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
         },
         body: JSON.stringify({
           id: profileId,
-          ...formData,
+          ...profileData,
         }),
       })
 
@@ -293,9 +288,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
     setFormData({
       name: '',
       type: 'network',
-      signalkUrl: '',
-      signalkUsername: '',
-      signalkPassword: '',
       serialPort: '',
       baudRate: 115200,
       deviceType: 'Yacht Devices RAW',
@@ -350,71 +342,12 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
             >
               <option value="network">Network (TCP/UDP)</option>
               <option value="serial">Serial Port</option>
-              <option value="signalk">SignalK Server</option>
               <option value="socketcan">SocketCAN (Linux CAN)</option>
               <option value="file">File Playback</option>
             </Input>
           </FormGroup>
         </div>
 
-        {formData.type === 'signalk' && (
-          <div className="border rounded p-3 bg-light">
-            <h6 className="text-primary mb-3">SignalK Server Configuration</h6>
-            <FormGroup>
-              <Label for="signalkUrl" className="font-weight-bold">
-                SignalK URL
-              </Label>
-              <Input
-                type="url"
-                id="signalkUrl"
-                placeholder="http://localhost:3000"
-                value={formData.signalkUrl}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('signalkUrl', e.target.value)}
-                className="form-control-lg"
-              />
-              <small className="form-text text-muted">Full URL including protocol (http:// or https://)</small>
-            </FormGroup>
-
-            <div className="row">
-              <div className="col-md-6">
-                <FormGroup>
-                  <Label for="signalkUsername" className="font-weight-bold">
-                    Username (Optional)
-                  </Label>
-                  <Input
-                    type="text"
-                    id="signalkUsername"
-                    placeholder="username"
-                    value={formData.signalkUsername}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange('signalkUsername', e.target.value)
-                    }
-                    className="form-control-lg"
-                  />
-                  <small className="form-text text-muted">Leave empty if no authentication required</small>
-                </FormGroup>
-              </div>
-              <div className="col-md-6">
-                <FormGroup>
-                  <Label for="signalkPassword" className="font-weight-bold">
-                    Password (Optional)
-                  </Label>
-                  <Input
-                    type="password"
-                    id="signalkPassword"
-                    placeholder="password"
-                    value={formData.signalkPassword}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange('signalkPassword', e.target.value)
-                    }
-                    className="form-control-lg"
-                  />
-                  <small className="form-text text-muted">Leave empty if no authentication required</small>
-                </FormGroup>
-              </div>
-            </div>
-          </div>
-        )}
 
         {formData.type === 'serial' && (
           <div className="border rounded p-3 bg-light">
@@ -847,14 +780,6 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                             </td>
                             <td>
                               <small className="text-muted">
-                                {profile.type === 'signalk' && (
-                                  <>
-                                    {profile.signalkUrl}
-                                    {profile.signalkUsername && (
-                                      <span className="ml-2 badge badge-outline-info">Auth</span>
-                                    )}
-                                  </>
-                                )}
                                 {profile.type === 'serial' && (
                                   <>
                                     {profile.serialPort} ({profile.deviceType})
