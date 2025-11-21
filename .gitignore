@@ -139,3 +139,9 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 public/
+
+# testbuilds
+.claude
+*.tgz
+PATCHED/
+node_modules

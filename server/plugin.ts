@@ -7,7 +7,7 @@ import {
   //Path
 } from '@signalk/server-api'
 import { ApiResponse } from './types'
-import { FromPgn } from '@canboat/canboatjs'
+import { FromPgn, pgnToYdgwRawFormat } from '@canboat/canboatjs'
 import { N2kMapper } from '@signalk/n2k-signalk'
 import { translateToSignalK } from './server'
 import { RecordingService } from './recording-service'
@@ -103,6 +103,32 @@ module.exports = function (app: ServerAPI) {
               console.debug('Failed to parse raw NMEA data:', error)
             }
           }
+        }
+      })
+
+      // Listen for outgoing NMEA2000 messages from signalk-to-nmea2000 plugin
+      anyapp.on('nmea2000JsonOut', (pgnData: any) => {
+        console.log('Outgoing NMEA2000 message detected:', {
+          pgn: pgnData.pgn,
+          description: pgnData.description || `PGN ${pgnData.pgn}`,
+        })
+
+        try {
+          // Convert PGN object to YDRAW format for broadcast to clients
+          const ydrawLines = pgnToYdgwRawFormat(pgnData)
+          if (ydrawLines && ydrawLines.length > 0) {
+            ydrawLines.forEach((line: string) => {
+              console.log('Broadcasting outgoing message as YDRAW:', line)
+              anyapp.emit('canboatjs:rawoutput', line)
+            })
+          }
+        } catch (error) {
+          console.error('Failed to encode PGN to YDRAW format:', error)
+        }
+
+        // Also record if recording is active
+        if (recordingService.getStatus().isRecording && recordingService.getStatus().format === 'canboat') {
+          recordingService.recordMessage(undefined, pgnData)
         }
       })
     },
