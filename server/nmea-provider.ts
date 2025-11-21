@@ -208,6 +208,9 @@ class NMEADataProvider extends EventEmitter implements INMEAProvider {
       emit: (event: string, data: any) => {
         if (event === 'canboatjs:rawoutput') {
           this.emit('raw-nmea', data)
+        } else if (event === 'pgn') {
+          // canboatjs emits parsed PGNs as 'pgn' events
+          this.emit('nmea-data', data)
         } else {
           this.emit(event, data)
         }
