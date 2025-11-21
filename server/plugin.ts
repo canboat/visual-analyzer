@@ -108,17 +108,11 @@ module.exports = function (app: ServerAPI) {
 
       // Listen for outgoing NMEA2000 messages from signalk-to-nmea2000 plugin
       anyapp.on('nmea2000JsonOut', (pgnData: any) => {
-        console.log('Outgoing NMEA2000 message detected:', {
-          pgn: pgnData.pgn,
-          description: pgnData.description || `PGN ${pgnData.pgn}`,
-        })
-
         try {
           // Convert PGN object to YDRAW format for broadcast to clients
           const ydrawLines = pgnToYdgwRawFormat(pgnData)
           if (ydrawLines && ydrawLines.length > 0) {
             ydrawLines.forEach((line: string) => {
-              console.log('Broadcasting outgoing message as YDRAW:', line)
               anyapp.emit('canboatjs:rawoutput', line)
             })
           }
