@@ -76,31 +76,55 @@ export const SentencePanel = (props: SentencePanelProps) => {
   }, [props.onDefinitionsChanged])
 
   const copyPgnData = async () => {
-    if (pgnData) {
-      try {
-        const dataToSave = JSON.stringify(
-          pgnData,
-          (key, value) =>
-            key === 'input' || key === 'rawData' || key === 'byteMapping' || key === 'definition' ? undefined : value,
-          2,
-        )
+    if (!pgnData) return
+
+    const dataToSave = JSON.stringify(
+      pgnData,
+      (key, value) =>
+        key === 'input' || key === 'rawData' || key === 'byteMapping' || key === 'definition' ? undefined : value,
+      2,
+    )
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(dataToSave)
-        // You could add a toast notification here if desired
-      } catch (err) {
-        console.error('Failed to copy PGN data:', err)
+      } else {
+        // Fallback for browsers that don't support clipboard API
+        const textarea = document.createElement('textarea')
+        textarea.value = dataToSave
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
       }
+    } catch (err) {
+      console.error('Failed to copy PGN data:', err)
     }
   }
 
   const copyInputData = async () => {
-    if (pgnData?.input) {
-      try {
-        const inputDataToSave = pgnData.input.join('\n')
+    if (!pgnData?.input) return
+
+    const inputDataToSave = pgnData.input.join('\n')
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(inputDataToSave)
-        // You could add a toast notification here if desired
-      } catch (err) {
-        console.error('Failed to copy input data:', err)
+      } else {
+        // Fallback for browsers that don't support clipboard API
+        const textarea = document.createElement('textarea')
+        textarea.value = inputDataToSave
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
       }
+    } catch (err) {
+      console.error('Failed to copy input data:', err)
     }
   }
 
