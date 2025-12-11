@@ -582,8 +582,8 @@ const AppPanelInner = (props: any) => {
           //console.log('pgn', pgn)
           pgn.timestamp = new Date().toISOString()
 
-          if ( parsed.event === 'canboatjs:rawsend' ) {
-            (pgn as any).sent = true
+          if (parsed.event === 'canboatjs:rawsend') {
+            ;(pgn as any).sent = true
             pgn.src = 256
           }
           // Add to pending updates instead of processing immediately
@@ -610,7 +610,8 @@ const AppPanelInner = (props: any) => {
           // Use SignalK admin UI WebSocket in embedded mode
           webSocket = props.adminUI.openWebsocket({
             subscribe: 'none',
-            events: 'canboatjs:rawoutput,canboatjs:rawsend,recording:started,recording:stopped,recording:progress,recording:error',
+            events:
+              'canboatjs:rawoutput,canboatjs:rawsend,recording:started,recording:stopped,recording:progress,recording:error',
           })
 
           // Set connection status for embedded mode - assume connected if websocket was created
