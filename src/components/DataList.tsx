@@ -260,7 +260,7 @@ export const DataList = (props: DataListProps) => {
                     {row.pgn}
                   </td>
                   <td style={{ color: 'red', cursor: 'pointer' }} onMouseDown={(e) => handleSrcClick(e, row.src!)}>
-                    {row.src}
+                    {(row as any).sent ? 'self' : row.src}
                   </td>
                   <td>{row.dst}</td>
                   <td onMouseDown={(e) => handleDescriptionClick(e, row)} style={{ cursor: 'pointer' }}>
