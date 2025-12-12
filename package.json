@@ -42,7 +42,7 @@
     "@tsconfig/node20": "^20.1.6",
     "@types/express": "^4.17.21",
     "@types/node": "^20.0.0",
-    "@types/react": "^17.0.0",
+    "@types/react": "^19.2.2",
     "@types/react-dom": "^17.0.0",
     "@types/react-leaflet": "^2.5.2",
     "@types/ws": "^8.5.10",
