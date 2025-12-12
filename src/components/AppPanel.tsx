@@ -576,7 +576,7 @@ const AppPanelInner = (props: any) => {
 
         let pgn: PGN | undefined = undefined
         if (parserRef.current) {
-          pgn = parserRef.current.parse(parsed.data)
+          pgn = parserRef.current.parse(parsed.event === 'canboatjs:rawsend' ? parsed.data.data : parsed.data)
         }
         if (pgn !== undefined) {
           //console.log('pgn', pgn)
@@ -584,7 +584,9 @@ const AppPanelInner = (props: any) => {
 
           if (parsed.event === 'canboatjs:rawsend') {
             ;(pgn as any).sent = true
-            pgn.src = 256
+            if (parsed.data.knownSrc !== true) {
+              pgn.src = 256
+            }
           }
           // Add to pending updates instead of processing immediately
           pendingDataUpdates.current.push(pgn)
