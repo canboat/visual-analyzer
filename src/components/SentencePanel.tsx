@@ -29,7 +29,6 @@ import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
 import { DeviceMap } from '../types'
 import { changedDefinitionsTracker, saveDefinition } from './EditorTab'
-import { Nav, NavItem, NavLink, TabContent, TabPane, Card, CardBody, CardHeader } from 'reactstrap'
 
 // Import the separated tab components
 import { HumanReadableTab } from './HumanReadableTab'
@@ -267,85 +266,97 @@ export const SentencePanel = (props: SentencePanelProps) => {
         flexDirection: 'column',
       }}
     >
-      <Nav tabs>
-        <NavItem>
-          <NavLink
-            className={activeTab === READABLE_TAB_ID ? 'active ' : ''}
+      <ul className="nav nav-tabs">
+        <li className="nav-item">
+          <button
+            type="button"
+            className={`nav-link ${activeTab === READABLE_TAB_ID ? 'active' : ''}`}
             onClick={() => setActiveTab(READABLE_TAB_ID)}
           >
             Data
-          </NavLink>
-        </NavItem>
-        <NavItem>
-          <NavLink className={activeTab === DATA_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(DATA_TAB_ID)}>
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            type="button"
+            className={`nav-link ${activeTab === DATA_TAB_ID ? 'active' : ''}`}
+            onClick={() => setActiveTab(DATA_TAB_ID)}
+          >
             JSON
-          </NavLink>
-        </NavItem>
-        <NavItem>
-          <NavLink className={activeTab === INPUT_TAB_ID ? 'active ' : ''} onClick={() => setActiveTab(INPUT_TAB_ID)}>
+          </button>
+        </li>
+        <li className="nav-item">
+          <button
+            type="button"
+            className={`nav-link ${activeTab === INPUT_TAB_ID ? 'active' : ''}`}
+            onClick={() => setActiveTab(INPUT_TAB_ID)}
+          >
             Input
-          </NavLink>
-        </NavItem>
+          </button>
+        </li>
         {info[pgnData.src!]?.info && (
-          <NavItem>
-            <NavLink
-              className={activeTab === DEVICE_TAB_ID ? 'active ' : ''}
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${activeTab === DEVICE_TAB_ID ? 'active' : ''}`}
               onClick={() => setActiveTab(DEVICE_TAB_ID)}
             >
               Device Info
-            </NavLink>
-          </NavItem>
+            </button>
+          </li>
         )}
         {!props.inEditingTab && (
-          <NavItem>
-            <NavLink
-              className={activeTab === PGNDEF_TAB_ID ? 'active ' : ''}
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${activeTab === PGNDEF_TAB_ID ? 'active' : ''}`}
               onClick={() => setActiveTab(PGNDEF_TAB_ID)}
             >
               Definition
-            </NavLink>
-          </NavItem>
+            </button>
+          </li>
         )}
-        <NavItem>
-          <NavLink
-            className={activeTab === MAPPING_TAB_ID ? 'active ' : ''}
+        <li className="nav-item">
+          <button
+            type="button"
+            className={`nav-link ${activeTab === MAPPING_TAB_ID ? 'active' : ''}`}
             onClick={() => setActiveTab(MAPPING_TAB_ID)}
           >
             Byte Mapping
-          </NavLink>
-        </NavItem>
-      </Nav>
-      <TabContent activeTab={activeTab} style={{ flex: 1, overflow: 'auto' }}>
-        <TabPane tabId={READABLE_TAB_ID}>
-          <Card>
-            <CardBody>
+          </button>
+        </li>
+      </ul>
+      <div className="tab-content" style={{ flex: 1, overflow: 'auto' }}>
+        <div className={`tab-pane ${activeTab === READABLE_TAB_ID ? 'show active' : ''}`}>
+          <div className="card">
+            <div className="card-body">
               <HumanReadableTab pgnData={pgnData} definition={definition} pgnHistory={pgnWithHistory?.history || []} />
-            </CardBody>
-          </Card>
-        </TabPane>
-        <TabPane tabId={DATA_TAB_ID}>
-          <Card>
-            <CardBody style={{ padding: 0 }}>
+            </div>
+          </div>
+        </div>
+        <div className={`tab-pane ${activeTab === DATA_TAB_ID ? 'show active' : ''}`}>
+          <div className="card">
+            <div className="card-body" style={{ padding: 0 }}>
               <JsonDataTab pgnData={pgnData} pgnHistory={pgnWithHistory?.history || []} onCopyData={copyPgnData} />
-            </CardBody>
-          </Card>
-        </TabPane>
-        <TabPane tabId={INPUT_TAB_ID}>
-          <Card>
-            <CardBody style={{ padding: 0 }}>
+            </div>
+          </div>
+        </div>
+        <div className={`tab-pane ${activeTab === INPUT_TAB_ID ? 'show active' : ''}`}>
+          <div className="card">
+            <div className="card-body" style={{ padding: 0 }}>
               <InputDataTab
                 pgnData={pgnData}
                 onCopyInput={copyInputData}
                 isEditing={props.inEditingTab}
                 onInputChange={handleInputDataChange}
               />
-            </CardBody>
-          </Card>
-        </TabPane>
+            </div>
+          </div>
+        </div>
         {definition !== undefined && !props.inEditingTab && (
-          <TabPane tabId={PGNDEF_TAB_ID}>
-            <Card>
-              <CardBody style={{ padding: 0 }}>
+          <div className={`tab-pane ${activeTab === PGNDEF_TAB_ID ? 'show active' : ''}`}>
+            <div className="card">
+              <div className="card-body" style={{ padding: 0 }}>
                 <PgnDefinitionTab
                   key={pgnData.pgn}
                   definition={definition}
@@ -356,35 +367,35 @@ export const SentencePanel = (props: SentencePanelProps) => {
                   onEditPgn={props.inEditingTab === false ? props.onEditPgn : undefined}
                   changedLookups={changedDefinitionsTracker.getChangedLookups()}
                 />
-              </CardBody>
-            </Card>
-          </TabPane>
+              </div>
+            </div>
+          </div>
         )}
         {info[pgnData.src!]?.info && (
-          <TabPane tabId={DEVICE_TAB_ID}>
-            <Card>
-              <CardBody style={{ padding: 0 }}>
+          <div className={`tab-pane ${activeTab === DEVICE_TAB_ID ? 'show active' : ''}`}>
+            <div className="card">
+              <div className="card-body" style={{ padding: 0 }}>
                 <DeviceInfoTab pgnData={pgnData} info={info} />
-              </CardBody>
-            </Card>
-          </TabPane>
+              </div>
+            </div>
+          </div>
         )}
-        <TabPane tabId={MAPPING_TAB_ID}>
-          <Card>
-            <CardHeader>
+        <div className={`tab-pane ${activeTab === MAPPING_TAB_ID ? 'show active' : ''}`}>
+          <div className="card">
+            <div className="card-header">
               <small>
                 <strong>PGN:</strong> {pgnData.pgn} |<strong> Source:</strong> {pgnData.src} |
                 <strong> Destination:</strong> {pgnData.dst}
                 <br />
                 <strong>Description:</strong> {pgnData.description || 'N/A'}
               </small>
-            </CardHeader>
-            <CardBody>
+            </div>
+            <div className="card-body">
               <ByteMappingTab pgnData={pgnData} definition={definition} />
-            </CardBody>
-          </Card>
-        </TabPane>
-      </TabContent>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

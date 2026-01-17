@@ -15,7 +15,6 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { Card, CardBody } from 'reactstrap'
 import {
   FromPgn,
   pgnToActisenseSerialFormat,
@@ -457,8 +456,8 @@ const TransformTab: React.FC<TransformTabProps> = ({ isEmbedded = false }) => {
   }
 
   return (
-    <Card>
-      <CardBody>
+    <div className="card">
+      <div className="card-body">
         <h4 className="text-sk-primary">Data Transformation</h4>
         <p className="mb-3">Transform and convert NMEA 2000 data between different formats and protocols.</p>
 
@@ -709,8 +708,8 @@ Canboat JSON format: {"timestamp": "2023-10-15T10:30:45.123Z", "prio": 2, "src":
             </div>
           </div>
         </div>
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   )
 }
 

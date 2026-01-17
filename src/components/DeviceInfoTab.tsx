@@ -17,7 +17,6 @@
 import React from 'react'
 import { PGN, Definition } from '@canboat/ts-pgns'
 import { DeviceMap } from '../types'
-import { Card, CardHeader, CardBody } from 'reactstrap'
 
 interface DeviceInfoTabProps {
   pgnData: PGN
@@ -62,18 +61,18 @@ export const DeviceInfoTab = ({ pgnData, info }: DeviceInfoTabProps) => {
 
   return (
     <>
-      <CardHeader>{tabHeader()}</CardHeader>
+      <div className="card-header">{tabHeader()}</div>
       <div className="p-3">
         {info[pgnData.src!]?.info ? (
           <div>
             {Object.entries(info[pgnData.src!].info).map(([pgnNumber, pgnInfo]: [string, any]) => (
-              <Card key={pgnNumber} className="mb-3" style={{ border: '1px solid #e0e0e0' }}>
-                <CardHeader style={{ backgroundColor: '#f8f9fa', padding: '10px 15px' }}>
+              <div key={pgnNumber} className="card mb-3" style={{ border: '1px solid #e0e0e0' }}>
+                <div className="card-header" style={{ backgroundColor: '#f8f9fa', padding: '10px 15px' }}>
                   <h6 className="mb-0" style={{ color: '#495057' }}>
                     PGN {pgnNumber}: {pgnInfo.description || 'Unknown'}
                   </h6>
-                </CardHeader>
-                <CardBody style={{ padding: '15px' }}>
+                </div>
+                <div className="card-body" style={{ padding: '15px' }}>
                   <div className="row">
                     {Object.entries(pgnInfo.fields)
                       .filter(([key]) => key !== 'description')
@@ -104,8 +103,8 @@ export const DeviceInfoTab = ({ pgnData, info }: DeviceInfoTabProps) => {
                         </div>
                       ))}
                   </div>
-                </CardBody>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         ) : (

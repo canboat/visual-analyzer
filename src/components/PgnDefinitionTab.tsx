@@ -31,7 +31,6 @@ import {
   getPGNWithId,
   getEnumerationValue,
 } from '@canboat/ts-pgns'
-import { Table, Badge, Row, Col, Button, Input, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
 import { changedDefinitionsTracker, saveDefinition } from './EditorTab'
 
 // Helper function to convert text to camelCase
@@ -475,44 +474,44 @@ export const PgnDefinitionTab = ({
         `}
       </style>
       {/* Edit/Save/Cancel/Export buttons */}
-      <Row className="mb-3">
-        <Col className="d-flex justify-content-end">
+      <div className="row mb-3">
+        <div className="col d-flex justify-content-end">
           {!isEditing ? (
             <div className="d-flex gap-2 align-items-center">
               {hasBeenChanged && (
                 <div className="d-flex align-items-center me-3">
-                  <Badge color="info" className="me-2">
+                  <span className="badge bg-info me-2">
                     <i className="fa fa-edit me-1" />
                     Modified
-                  </Badge>
-                  <Button color="outline-primary" size="sm" onClick={handleExport}>
+                  </span>
+                  <button type="button" className="btn btn-outline-primary btn-sm" onClick={handleExport}>
                     <i className="fa fa-download me-2" />
                     Export Definition
-                  </Button>
+                  </button>
                 </div>
               )}
-              <Button
-                color="primary"
-                size="sm"
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
                 onClick={() => (onEditPgn ? onEditPgn(definition, pgnData) : handleEdit())}
               >
                 <i className="fa fa-edit me-2" />
                 Edit Definition
-              </Button>
+              </button>
             </div>
           ) : (
             <div className="d-flex gap-2">
-              <Button color="secondary" size="sm" onClick={handleCancel}>
+              <button type="button" className="btn btn-secondary btn-sm" onClick={handleCancel}>
                 <i className="fa fa-times me-2" />
                 Done
-              </Button>
+              </button>
             </div>
           )}
-        </Col>
-      </Row>
+        </div>
+      </div>
 
-      <Row>
-        <Col>
+      <div className="row">
+        <div className="col">
           <h6>PGN Details</h6>
           <dl className="row" style={{ marginBottom: '0.5rem', lineHeight: '1.2' }}>
             <dt className="col-sm-4" style={{ marginBottom: '0.25rem' }}>
@@ -532,12 +531,11 @@ export const PgnDefinitionTab = ({
             </dt>
             <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
               {isEditing ? (
-                <Input
-                  type="textarea"
-                  size="sm"
-                  rows="1"
+                <textarea
+                  className="form-control form-control-sm"
+                  rows={1}
                   value={editedDefinition.Description}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => handleDescriptionChange(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLTextAreaElement>) => handleDescriptionChange(e.target.value)}
                 />
               ) : (
                 editedDefinition.Description
@@ -548,15 +546,14 @@ export const PgnDefinitionTab = ({
             </dt>
             <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
               {isEditing ? (
-                <Input
-                  type="select"
-                  size="sm"
+                <select
+                  className="form-control form-control-sm"
                   value={editedDefinition.Type}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => updateDefinition({ Type: e.target.value as any })}
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) => updateDefinition({ Type: e.target.value as any })}
                 >
                   <option value="Single">Single</option>
                   <option value="Fast">Fast</option>
-                </Input>
+                </select>
               ) : (
                 editedDefinition.Type
               )}
@@ -566,9 +563,9 @@ export const PgnDefinitionTab = ({
             </dt>
             <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
               {isEditing ? (
-                <Input
+                <input
                   type="number"
-                  size="sm"
+                  className="form-control form-control-sm"
                   value={editedDefinition.Priority}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
                     updateDefinition({ Priority: parseInt(e.target.value) || 0 })
@@ -584,7 +581,7 @@ export const PgnDefinitionTab = ({
             <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
               {isEditing ? (
                 <div className="form-check form-switch">
-                  <Input
+                  <input
                     className="form-check-input"
                     type="checkbox"
                     checked={editedDefinition.Complete}
@@ -592,9 +589,9 @@ export const PgnDefinitionTab = ({
                   />
                 </div>
               ) : (
-                <Badge color={editedDefinition.Complete ? 'success' : 'warning'}>
+                <span className={`badge bg-${editedDefinition.Complete ? 'success' : 'warning'}`}>
                   {editedDefinition.Complete ? 'Complete' : 'Incomplete'}
-                </Badge>
+                </span>
               )}
             </dd>
             {(editedDefinition.Length || isEditing) && (
@@ -604,9 +601,9 @@ export const PgnDefinitionTab = ({
                 </dt>
                 <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
                   {isEditing ? (
-                    <Input
+                    <input
                       type="number"
-                      size="sm"
+                      className="form-control form-control-sm"
                       value={editedDefinition.Length || ''}
                       onChange={(e: ChangeEvent<HTMLInputElement>) =>
                         updateDefinition({ Length: e.target.value ? parseInt(e.target.value) : undefined })
@@ -625,9 +622,9 @@ export const PgnDefinitionTab = ({
                 </dt>
                 <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
                   {isEditing ? (
-                    <Input
+                    <input
                       type="number"
-                      size="sm"
+                      className="form-control form-control-sm"
                       value={editedDefinition.TransmissionInterval || ''}
                       onChange={(e: ChangeEvent<HTMLInputElement>) =>
                         updateDefinition({
@@ -648,9 +645,9 @@ export const PgnDefinitionTab = ({
                 </dt>
                 <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
                   {isEditing ? (
-                    <Input
+                    <input
                       type="url"
-                      size="sm"
+                      className="form-control form-control-sm"
                       value={editedDefinition.URL || ''}
                       onChange={(e: ChangeEvent<HTMLInputElement>) =>
                         updateDefinition({ URL: e.target.value || undefined })
@@ -672,7 +669,7 @@ export const PgnDefinitionTab = ({
                 <dd className="col-sm-8" style={{ marginBottom: '0.25rem' }}>
                   {isEditing ? (
                     <div className="form-check form-switch">
-                      <Input
+                      <input
                         className="form-check-input"
                         type="checkbox"
                         checked={editedDefinition.Fallback}
@@ -682,16 +679,16 @@ export const PgnDefinitionTab = ({
                       />
                     </div>
                   ) : (
-                    <Badge color="info" size="sm">
+                    <span className="badge bg-info" style={{ fontSize: '0.75em' }}>
                       Yes
-                    </Badge>
+                    </span>
                   )}
                 </dd>
               </>
             )}
           </dl>
-        </Col>
-      </Row>
+        </div>
+      </div>
 
       {(editedDefinition.Fields && editedDefinition.Fields.length > 0) || isEditing ? (
         <div className="mt-3">
@@ -726,9 +723,9 @@ export const PgnDefinitionTab = ({
                               borderRadius: '2px',
                             }}
                           />
-                          <Badge bg="primary" style={{ fontSize: '0.65em' }}>
+                          <span className="badge bg-primary" style={{ fontSize: '0.65em' }}>
                             R1
-                          </Badge>
+                          </span>
                           <span>Set 1 ({editedDefinition.RepeatingFieldSet1Size} fields)</span>
                         </div>
                       )}
@@ -743,9 +740,9 @@ export const PgnDefinitionTab = ({
                               borderRadius: '2px',
                             }}
                           />
-                          <Badge bg="secondary" style={{ fontSize: '0.65em' }}>
+                          <span className="badge bg-secondary" style={{ fontSize: '0.65em' }}>
                             R2
-                          </Badge>
+                          </span>
                           <span>Set 2 ({editedDefinition.RepeatingFieldSet2Size} fields)</span>
                         </div>
                       )}
@@ -785,13 +782,12 @@ export const PgnDefinitionTab = ({
                               <div className="d-flex align-items-center">
                                 <span className="fw-bold">{field.Name}</span>
                                 {isRepeating && (
-                                  <Badge
-                                    bg={setNumber === 1 ? 'primary' : 'secondary'}
-                                    className="ms-2"
+                                  <span
+                                    className={`badge bg-${setNumber === 1 ? 'primary' : 'secondary'} ms-2`}
                                     style={{ fontSize: '0.7em' }}
                                   >
                                     R{setNumber}.{fieldInSet}
-                                  </Badge>
+                                  </span>
                                 )}
                               </div>
                               {field.Description && <div className="small text-muted">{field.Description}</div>}
@@ -845,9 +841,9 @@ export const PgnDefinitionTab = ({
                           <div>
                             <h6 className="card-title mb-1">
                               {isEditing ? (
-                                <Input
+                                <input
                                   type="text"
-                                  size="sm"
+                                  className="form-control form-control-sm"
                                   value={field.Name}
                                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
                                     handleFieldNameChange(index, e.target.value)
@@ -866,15 +862,15 @@ export const PgnDefinitionTab = ({
                           </div>
                         </div>
                         {isEditing && (
-                          <Button
-                            color="danger"
-                            size="sm"
+                          <button
+                            type="button"
+                            className="btn btn-danger btn-sm"
                             onClick={() => removeField(index)}
                             title="Remove field"
                             style={{ minWidth: '32px' }}
                           >
                             <i className="fa fa-trash" />
-                          </Button>
+                          </button>
                         )}
                       </div>
 
@@ -883,11 +879,10 @@ export const PgnDefinitionTab = ({
                           <label className="form-label small fw-bold">Type</label>
                           <div>
                             {isEditing ? (
-                              <Input
-                                type="select"
-                                size="sm"
+                              <select
+                                className="form-control form-control-sm"
                                 value={field.FieldType}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                                   updateField(index, { FieldType: e.target.value as any })
                                 }
                               >
@@ -906,11 +901,11 @@ export const PgnDefinitionTab = ({
                                 <option value="ISO_NAME">ISO Name</option>
                                 <option value="RESERVED">Reserved</option>
                                 <option value="SPARE">Spare</option>
-                              </Input>
+                              </select>
                             ) : (
-                              <Badge color="light" className="text-dark" style={{ fontSize: '0.8em' }}>
+                              <span className="badge bg-light text-dark" style={{ fontSize: '0.8em' }}>
                                 {formatFieldType(field.FieldType)}
-                              </Badge>
+                              </span>
                             )}
                           </div>
                         </div>
@@ -919,9 +914,9 @@ export const PgnDefinitionTab = ({
                           <label className="form-label small fw-bold">Size</label>
                           <div>
                             {isEditing ? (
-                              <Input
+                              <input
                                 type="number"
-                                size="sm"
+                                className="form-control form-control-sm"
                                 value={field.BitLength || ''}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                                   updateField(index, {
@@ -958,9 +953,9 @@ export const PgnDefinitionTab = ({
                           <label className="form-label small fw-bold">Unit</label>
                           <div>
                             {isEditing ? (
-                              <Input
+                              <input
                                 type="text"
-                                size="sm"
+                                className="form-control form-control-sm"
                                 value={field.Unit || ''}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                                   updateField(index, { Unit: e.target.value || undefined })
@@ -981,9 +976,9 @@ export const PgnDefinitionTab = ({
                           <label className="form-label small fw-bold">Resolution</label>
                           <div>
                             {isEditing ? (
-                              <Input
+                              <input
                                 type="number"
-                                size="sm"
+                                className="form-control form-control-sm"
                                 step="any"
                                 value={field.Resolution || ''}
                                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -1008,7 +1003,7 @@ export const PgnDefinitionTab = ({
                           <div>
                             {isEditing ? (
                               <div className="form-check">
-                                <Input
+                                <input
                                   className="form-check-input"
                                   type="checkbox"
                                   checked={field.PartOfPrimaryKey || false}
@@ -1019,9 +1014,7 @@ export const PgnDefinitionTab = ({
                                 <label className="form-check-label small">PK</label>
                               </div>
                             ) : field.PartOfPrimaryKey ? (
-                              <Badge color="primary" className="small">
-                                Key Field
-                              </Badge>
+                              <span className="badge bg-primary small">Key Field</span>
                             ) : (
                               <span className="text-muted small">—</span>
                             )}
@@ -1034,11 +1027,10 @@ export const PgnDefinitionTab = ({
                         <div className="row g-3 mt-2">
                           <div className="col-md-6">
                             <label className="form-label small fw-bold">Lookup Enumeration</label>
-                            <Input
-                              type="select"
-                              size="sm"
+                            <select
+                              className="form-control form-control-sm"
                               value={field.LookupEnumeration || ''}
-                              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                              onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                                 updateField(index, { LookupEnumeration: e.target.value || undefined })
                               }
                             >
@@ -1048,13 +1040,13 @@ export const PgnDefinitionTab = ({
                                   {lookup.label}
                                 </option>
                               ))}
-                            </Input>
+                            </select>
                           </div>
                           <div className="col-md-3">
                             <label className="form-label small fw-bold">Match</label>
-                            <Input
+                            <input
                               type="number"
-                              size="sm"
+                              className="form-control form-control-sm"
                               value={field.Match || ''}
                               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                                 updateField(index, { Match: e.target.value ? parseInt(e.target.value) : undefined })
@@ -1068,11 +1060,10 @@ export const PgnDefinitionTab = ({
                         <div className="row g-3 mt-2">
                           <div className="col-md-6">
                             <label className="form-label small fw-bold">Bit Lookup Enumeration</label>
-                            <Input
-                              type="select"
-                              size="sm"
+                            <select
+                              className="form-control form-control-sm"
                               value={field.LookupBitEnumeration || ''}
-                              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                              onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                                 updateField(index, { LookupBitEnumeration: e.target.value || undefined })
                               }
                             >
@@ -1082,13 +1073,13 @@ export const PgnDefinitionTab = ({
                                   {lookup.label}
                                 </option>
                               ))}
-                            </Input>
+                            </select>
                           </div>
                           <div className="col-md-3">
                             <label className="form-label small fw-bold">Match</label>
-                            <Input
+                            <input
                               type="number"
-                              size="sm"
+                              className="form-control form-control-sm"
                               value={field.Match || ''}
                               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                                 updateField(index, { Match: e.target.value ? parseInt(e.target.value) : undefined })
@@ -1103,9 +1094,9 @@ export const PgnDefinitionTab = ({
                         <div className="row g-3 mt-2">
                           <div className="col-md-3">
                             <label className="form-label small fw-bold">Match</label>
-                            <Input
+                            <input
                               type="number"
-                              size="sm"
+                              className="form-control form-control-sm"
                               value={field.Match || ''}
                               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                                 updateField(index, { Match: e.target.value ? parseInt(e.target.value) : undefined })
@@ -1154,12 +1145,11 @@ export const PgnDefinitionTab = ({
                         <div className="row g-3 mt-2">
                           <div className="col-12">
                             <label className="form-label small fw-bold">Description</label>
-                            <Input
-                              type="textarea"
-                              size="sm"
-                              rows="2"
+                            <textarea
+                              className="form-control form-control-sm"
+                              rows={2}
                               value={field.Description || ''}
-                              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                              onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
                                 updateField(index, { Description: e.target.value })
                               }
                               placeholder="Field description..."
@@ -1178,10 +1168,10 @@ export const PgnDefinitionTab = ({
               )}
               {isEditing && (
                 <div className="d-flex justify-content-center mt-3">
-                  <Button color="success" size="sm" onClick={addField}>
+                  <button type="button" className="btn btn-success btn-sm" onClick={addField}>
                     <i className="fa fa-plus me-2" />
                     Add Field
-                  </Button>
+                  </button>
                 </div>
               )}
             </div>
@@ -1197,9 +1187,9 @@ export const PgnDefinitionTab = ({
             <dt className="col-sm-4">Repeating Size:</dt>
             <dd className="col-sm-8">
               {isEditing ? (
-                <Input
+                <input
                   type="number"
-                  size="sm"
+                  className="form-control form-control-sm"
                   value={editedDefinition.RepeatingFieldSet1Size || ''}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
                     updateDefinition({ RepeatingFieldSet1Size: e.target.value ? parseInt(e.target.value) : undefined })
@@ -1214,9 +1204,9 @@ export const PgnDefinitionTab = ({
                 <dt className="col-sm-4">Start Field:</dt>
                 <dd className="col-sm-8">
                   {isEditing ? (
-                    <Input
+                    <input
                       type="number"
-                      size="sm"
+                      className="form-control form-control-sm"
                       value={editedDefinition.RepeatingFieldSet1StartField || ''}
                       onChange={(e: ChangeEvent<HTMLInputElement>) =>
                         updateDefinition({
@@ -1235,9 +1225,9 @@ export const PgnDefinitionTab = ({
                 <dt className="col-sm-4">Count Field:</dt>
                 <dd className="col-sm-8">
                   {isEditing ? (
-                    <Input
+                    <input
                       type="number"
-                      size="sm"
+                      className="form-control form-control-sm"
                       value={editedDefinition.RepeatingFieldSet1CountField || ''}
                       onChange={(e: ChangeEvent<HTMLInputElement>) =>
                         updateDefinition({
@@ -1256,58 +1246,70 @@ export const PgnDefinitionTab = ({
       )}
 
       {/* Export Modal */}
-      <Modal isOpen={showExportModal} toggle={closeExportModal} size="lg">
-        <ModalHeader>
-          Export Generated Headers
-          <div className="small text-muted">
-            PGN {editedDefinition.PGN} - {editedDefinition.Id}
-          </div>
-        </ModalHeader>
-        <ModalBody>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h6>Generated Header Text</h6>
-          </div>
-
-          <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-            <pre
-              className="bg-light p-3 rounded"
-              style={{
-                fontSize: '0.85em',
-                lineHeight: '1.4',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-all',
-                margin: 0,
-              }}
-            >
-              <code>{exportedJson}</code>
-            </pre>
-          </div>
-
-          {exportedJson &&
-            (() => {
-              // Parse the text to count sections
-              const sections = exportedJson.split('\n\n')
-              const hasLookupSections = sections.length > 1
-              const lookupCount = sections.length - 1 // Subtract 1 for the PGN header section
-
-              return (
-                <div className="mt-3 text-muted small">
-                  <i className="fa fa-info-circle me-1" />
-                  This export contains the generated header text ready for integration into pgn.h and lookup.h
+      {showExportModal && (
+        <>
+          <div className="modal-backdrop fade show" onClick={closeExportModal}></div>
+          <div className="modal fade show d-block" tabIndex={-1} role="dialog">
+            <div className="modal-dialog modal-lg" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">
+                    Export Generated Headers
+                    <div className="small text-muted">
+                      PGN {editedDefinition.PGN} - {editedDefinition.Id}
+                    </div>
+                  </h5>
+                  <button type="button" className="btn-close" aria-label="Close" onClick={closeExportModal}></button>
                 </div>
-              )
-            })()}
-        </ModalBody>
-        <ModalFooter>
-          <Button color="primary" onClick={handleCopyExport}>
-            <i className="fa fa-copy me-2" />
-            Copy to Clipboard
-          </Button>
-          <Button color="secondary" onClick={closeExportModal}>
-            Close
-          </Button>
-        </ModalFooter>
-      </Modal>
+                <div className="modal-body">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h6>Generated Header Text</h6>
+                  </div>
+
+                  <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                    <pre
+                      className="bg-light p-3 rounded"
+                      style={{
+                        fontSize: '0.85em',
+                        lineHeight: '1.4',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-all',
+                        margin: 0,
+                      }}
+                    >
+                      <code>{exportedJson}</code>
+                    </pre>
+                  </div>
+
+                  {exportedJson &&
+                    (() => {
+                      // Parse the text to count sections
+                      const sections = exportedJson.split('\n\n')
+                      const hasLookupSections = sections.length > 1
+                      const lookupCount = sections.length - 1 // Subtract 1 for the PGN header section
+
+                      return (
+                        <div className="mt-3 text-muted small">
+                          <i className="fa fa-info-circle me-1" />
+                          This export contains the generated header text ready for integration into pgn.h and lookup.h
+                        </div>
+                      )
+                    })()}
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-primary" onClick={handleCopyExport}>
+                    <i className="fa fa-copy me-2" />
+                    Copy to Clipboard
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={closeExportModal}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

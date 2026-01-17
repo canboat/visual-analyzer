@@ -16,28 +16,6 @@
 
 import React, { useState, useMemo, ChangeEvent, useCallback, useEffect, useRef } from 'react'
 import {
-  Card,
-  CardBody,
-  Row,
-  Col,
-  Input,
-  Table,
-  Badge,
-  Collapse,
-  Pagination,
-  PaginationItem,
-  PaginationLink,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  ListGroup,
-  ListGroupItem,
-  InputGroup,
-  InputGroupText,
-} from 'reactstrap'
-import {
   PGN,
   getAllPGNs,
   Definition,
@@ -106,15 +84,17 @@ const PgnRow = React.memo(
           )}
         </td>
         <td>
-          <Badge color={pgn.Type === 'Fast' ? 'primary' : 'secondary'}>{pgn.Type}</Badge>
+          <span className={`badge bg-${pgn.Type === 'Fast' ? 'primary' : 'secondary'}`}>{pgn.Type}</span>
         </td>
         <td>
-          <Badge color={pgn.Complete ? 'success' : 'warning'}>{pgn.Complete ? 'Complete' : 'Incomplete'}</Badge>
+          <span className={`badge bg-${pgn.Complete ? 'success' : 'warning'}`}>
+            {pgn.Complete ? 'Complete' : 'Incomplete'}
+          </span>
           {pgn.Fallback && (
             <div>
-              <Badge color="info" size="sm">
+              <span className="badge bg-info" style={{ fontSize: '0.75em' }}>
                 Fallback
-              </Badge>
+              </span>
             </div>
           )}
         </td>
@@ -125,17 +105,22 @@ const PgnRow = React.memo(
       </tr>
       <tr>
         <td colSpan={6} style={{ padding: 0 }}>
-          <Collapse isOpen={isExpanded}>
+          <div className={isExpanded ? 'collapse show' : 'collapse'}>
             <div className="p-3 bg-light">
-              <Row>
-                <Col md={6}>
+              <div className="row">
+                <div className="col-md-6">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <h6 className="mb-0">PGN Details</h6>
                     {onEditPgn && (
-                      <Button color="primary" size="sm" onClick={() => onEditPgn(pgn)} title="Edit this PGN definition">
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => onEditPgn(pgn)}
+                        title="Edit this PGN definition"
+                      >
                         <i className="fas fa-edit me-1" />
                         Edit PGN
-                      </Button>
+                      </button>
                     )}
                   </div>
                   <dl className="row">
@@ -167,9 +152,9 @@ const PgnRow = React.memo(
                       <>
                         <dt className="col-sm-4">Repeating Set 1:</dt>
                         <dd className="col-sm-8">
-                          <Badge color="info" className="me-2">
+                          <span className="badge bg-info me-2">
                             {pgn.RepeatingFieldSet1Size} field{pgn.RepeatingFieldSet1Size > 1 ? 's' : ''}
-                          </Badge>
+                          </span>
                           <small className="text-muted">
                             Starting at field {pgn.RepeatingFieldSet1StartField || 'unknown'}
                             {pgn.RepeatingFieldSet1CountField && (
@@ -183,9 +168,9 @@ const PgnRow = React.memo(
                       <>
                         <dt className="col-sm-4">Repeating Set 2:</dt>
                         <dd className="col-sm-8">
-                          <Badge color="info" className="me-2">
+                          <span className="badge bg-info me-2">
                             {pgn.RepeatingFieldSet2Size} field{pgn.RepeatingFieldSet2Size > 1 ? 's' : ''}
-                          </Badge>
+                          </span>
                           <small className="text-muted">
                             Starting at field {pgn.RepeatingFieldSet2StartField || 'unknown'}
                             {pgn.RepeatingFieldSet2CountField && (
@@ -206,16 +191,16 @@ const PgnRow = React.memo(
                       </>
                     )}
                   </dl>
-                </Col>
-                <Col md={6}>
+                </div>
+                <div className="col-md-6">
                   {pgn.Explanation && (
                     <div>
                       <h6>Explanation</h6>
                       <p className="small">{pgn.Explanation}</p>
                     </div>
                   )}
-                </Col>
-              </Row>
+                </div>
+              </div>
 
               {pgn.Fields.length > 0 && (
                 <div className="mt-3">
@@ -226,32 +211,32 @@ const PgnRow = React.memo(
                         <strong>Legend:</strong>{' '}
                         {pgn.RepeatingFieldSet1Size && (
                           <>
-                            <Badge color="info" size="sm" className="me-1">
+                            <span className="badge bg-info me-1" style={{ fontSize: '0.75em' }}>
                               R1
-                            </Badge>
+                            </span>
                             Repeating Set 1{' '}
                           </>
                         )}
                         {pgn.RepeatingFieldSet2Size && (
                           <>
-                            <Badge color="warning" size="sm" className="me-1">
+                            <span className="badge bg-warning me-1" style={{ fontSize: '0.75em' }}>
                               R2
-                            </Badge>
+                            </span>
                             Repeating Set 2{' '}
                           </>
                         )}
                         {(pgn.RepeatingFieldSet1CountField || pgn.RepeatingFieldSet2CountField) && (
                           <>
-                            <Badge color="secondary" size="sm" className="me-1">
+                            <span className="badge bg-secondary me-1" style={{ fontSize: '0.75em' }}>
                               COUNT
-                            </Badge>
+                            </span>
                             Count field
                           </>
                         )}
                       </small>
                     </div>
                   )}
-                  <Table size="sm" bordered>
+                  <table className="table table-sm table-bordered">
                     <thead>
                       <tr>
                         <th>Name</th>
@@ -289,31 +274,37 @@ const PgnRow = React.memo(
                               <div className="d-flex align-items-center">
                                 <code>{field.Name}</code>
                                 {isInRepeatingSet1 && (
-                                  <Badge color="info" size="sm" className="ms-2" title="Part of Repeating Set 1">
+                                  <span
+                                    className="badge bg-info ms-2"
+                                    style={{ fontSize: '0.75em' }}
+                                    title="Part of Repeating Set 1"
+                                  >
                                     R1
-                                  </Badge>
+                                  </span>
                                 )}
                                 {isInRepeatingSet2 && (
-                                  <Badge color="warning" size="sm" className="ms-2" title="Part of Repeating Set 2">
+                                  <span
+                                    className="badge bg-warning ms-2"
+                                    style={{ fontSize: '0.75em' }}
+                                    title="Part of Repeating Set 2"
+                                  >
                                     R2
-                                  </Badge>
+                                  </span>
                                 )}
                                 {isCountField && (
-                                  <Badge
-                                    color="secondary"
-                                    size="sm"
-                                    className="ms-2"
+                                  <span
+                                    className="badge bg-secondary ms-2"
+                                    style={{ fontSize: '0.75em' }}
                                     title="Count field for repeating set"
                                   >
                                     COUNT
-                                  </Badge>
+                                  </span>
                                 )}
                               </div>
                             </td>
                             <td>
-                              <Badge
-                                color={hasLookupValues(field) ? 'primary' : 'light'}
-                                className={hasLookupValues(field) ? 'text-white' : 'text-dark'}
+                              <span
+                                className={`badge ${hasLookupValues(field) ? 'bg-primary text-white' : 'bg-light text-dark'}`}
                                 style={{
                                   fontSize: '0.7em',
                                   cursor: hasLookupValues(field) ? 'pointer' : 'default',
@@ -325,7 +316,7 @@ const PgnRow = React.memo(
                                 {hasLookupValues(field) && (
                                   <i className="fas fa-external-link-alt ms-1" style={{ fontSize: '0.6em' }} />
                                 )}
-                              </Badge>
+                              </span>
                             </td>
                             <td>{getFieldSize(field)}</td>
                             <td>{field.Unit && <code className="small">{field.Unit}</code>}</td>
@@ -336,9 +327,13 @@ const PgnRow = React.memo(
                             </td>
                             <td>
                               {field.PartOfPrimaryKey && (
-                                <Badge color="success" size="sm" title="This field is part of the primary key">
+                                <span
+                                  className="badge bg-success"
+                                  style={{ fontSize: '0.75em' }}
+                                  title="This field is part of the primary key"
+                                >
                                   <i className="fas fa-key" />
-                                </Badge>
+                                </span>
                               )}
                             </td>
                             <td>
@@ -348,11 +343,11 @@ const PgnRow = React.memo(
                         )
                       })}
                     </tbody>
-                  </Table>
+                  </table>
                 </div>
               )}
             </div>
-          </Collapse>
+          </div>
         </td>
       </tr>
     </React.Fragment>
@@ -598,61 +593,61 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = ({ onEditPgn }) => {
   }, [])
 
   return (
-    <Card>
-      <CardBody>
-        <Row className="mb-3">
-          <Col md={6}>
-            <Input
+    <div className="card">
+      <div className="card-body">
+        <div className="row mb-3">
+          <div className="col-md-6">
+            <input
               type="text"
+              className="form-control"
               placeholder="Search PGNs by number, name, description, or fields..."
               value={searchTerm}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             />
-          </Col>
-          <Col md={6}>
-            <Input
-              type="select"
+          </div>
+          <div className="col-md-6">
+            <select
+              className="form-control"
               value={selectedCategory}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setSelectedCategory(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => setSelectedCategory(e.target.value)}
             >
               {categories.map((cat) => (
                 <option key={cat.value} value={cat.value}>
                   {cat.label} ({cat.count})
                 </option>
               ))}
-            </Input>
-          </Col>
-        </Row>
+            </select>
+          </div>
+        </div>
 
-        <Row className="mb-3 align-items-center">
-          <Col md={6}>
+        <div className="row mb-3 align-items-center">
+          <div className="col-md-6">
             <small className="text-muted">
               Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredPgns.length)} of{' '}
               {filteredPgns.length} PGNs
               {filteredPgns.length !== allPgns.length && ` (filtered from ${allPgns.length} total)`}
             </small>
-          </Col>
-          <Col md={6} className="text-end">
+          </div>
+          <div className="col-md-6 text-end">
             <div className="d-flex align-items-center justify-content-end">
               <small className="text-muted me-2">Per page:</small>
-              <Input
-                type="select"
+              <select
+                className="form-control form-control-sm"
                 value={pageSize}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => handlePageSizeChange(Number(e.target.value))}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => handlePageSizeChange(Number(e.target.value))}
                 style={{ width: 'auto', display: 'inline-block' }}
-                size="sm"
               >
                 <option value={25}>25</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
                 <option value={200}>200</option>
-              </Input>
+              </select>
             </div>
-          </Col>
-        </Row>
+          </div>
+        </div>
 
         <div ref={tableContainerRef} style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-          <Table striped hover size="sm">
+          <table className="table table-striped table-hover table-sm">
             <thead style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
               <tr>
                 <th style={{ width: '80px' }}>PGN</th>
@@ -679,195 +674,217 @@ export const PgnBrowser: React.FC<PgnBrowserProps> = ({ onEditPgn }) => {
                 />
               ))}
             </tbody>
-          </Table>
+          </table>
         </div>
 
         {/* Pagination Controls */}
         {totalPages > 1 && (
           <div className="d-flex justify-content-center mt-3">
-            <Pagination>
-              <PaginationItem disabled={currentPage === 1}>
-                <PaginationLink first onClick={() => setCurrentPage(1)} />
-              </PaginationItem>
-              <PaginationItem disabled={currentPage === 1}>
-                <PaginationLink previous onClick={() => setCurrentPage(currentPage - 1)} />
-              </PaginationItem>
+            <nav>
+              <ul className="pagination">
+                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                  <button type="button" className="page-link" onClick={() => setCurrentPage(1)}>
+                    &laquo;
+                  </button>
+                </li>
+                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                  <button type="button" className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>
+                    &lsaquo;
+                  </button>
+                </li>
 
-              {/* Show page numbers around current page */}
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const startPage = Math.max(1, currentPage - 2)
-                const pageNum = startPage + i
-                if (pageNum <= totalPages) {
-                  return (
-                    <PaginationItem key={pageNum} active={currentPage === pageNum}>
-                      <PaginationLink onClick={() => setCurrentPage(pageNum)}>{pageNum}</PaginationLink>
-                    </PaginationItem>
-                  )
-                }
-                return null
-              })}
+                {/* Show page numbers around current page */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const startPage = Math.max(1, currentPage - 2)
+                  const pageNum = startPage + i
+                  if (pageNum <= totalPages) {
+                    return (
+                      <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
+                        <button type="button" className="page-link" onClick={() => setCurrentPage(pageNum)}>
+                          {pageNum}
+                        </button>
+                      </li>
+                    )
+                  }
+                  return null
+                })}
 
-              <PaginationItem disabled={currentPage === totalPages}>
-                <PaginationLink next onClick={() => setCurrentPage(currentPage + 1)} />
-              </PaginationItem>
-              <PaginationItem disabled={currentPage === totalPages}>
-                <PaginationLink last onClick={() => setCurrentPage(totalPages)} />
-              </PaginationItem>
-            </Pagination>
+                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                  <button type="button" className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>
+                    &rsaquo;
+                  </button>
+                </li>
+                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                  <button type="button" className="page-link" onClick={() => setCurrentPage(totalPages)}>
+                    &raquo;
+                  </button>
+                </li>
+              </ul>
+            </nav>
           </div>
         )}
-      </CardBody>
+      </div>
 
       {/* Lookup Values Modal - Modern Design */}
-      <Modal isOpen={lookupModal.isOpen} toggle={closeLookupPopup} size="lg" className="modern-modal">
-        <ModalHeader
-          className="border-0 pb-2"
-          style={{
-            background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-            borderRadius: '0.5rem 0.5rem 0 0',
-          }}
-        >
-          <div className="d-flex flex-column w-100">
-            <h5 className="mb-2 text-primary">{lookupModal.title}</h5>
-            <div className="d-flex align-items-center">
-              <Badge color="light" className="text-dark me-2 px-3 py-2" style={{ fontSize: '0.85em' }}>
-                Field: {lookupModal.field?.Name}
-              </Badge>
-              {filteredEnumValues.length !== lookupModal.enumValues?.length && (
-                <Badge color="info" className="text-white" style={{ fontSize: '0.75em' }}>
-                  {filteredEnumValues.length} of {lookupModal.enumValues?.length} values
-                </Badge>
-              )}
-            </div>
-          </div>
-        </ModalHeader>
-        <ModalBody className="px-4 py-3">
-          {lookupModal.enumValues && lookupModal.enumValues.length > 0 ? (
-            <>
-              {/* Search Bar */}
-              {lookupModal.enumValues.length > 5 && (
-                <div className="mb-3">
-                  <InputGroup size="sm">
-                    <InputGroupText className="bg-light border-end-0">
-                      <i className="fas fa-search text-muted" style={{ fontSize: '0.8em' }} />
-                    </InputGroupText>
-                    <Input
-                      type="text"
-                      placeholder="Search values..."
-                      value={modalSearchTerm}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setModalSearchTerm(e.target.value)}
-                      className="border-start-0"
-                      style={{ fontSize: '0.9em' }}
-                    />
-                  </InputGroup>
+      {lookupModal.isOpen && (
+        <>
+          <div className="modal-backdrop fade show" onClick={closeLookupPopup}></div>
+          <div className="modal fade show d-block" tabIndex={-1} role="dialog">
+            <div className="modal-dialog modal-lg" role="document">
+              <div className="modal-content">
+                <div
+                  className="modal-header border-0 pb-2"
+                  style={{
+                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                    borderRadius: '0.5rem 0.5rem 0 0',
+                  }}
+                >
+                  <div className="d-flex flex-column w-100">
+                    <h5 className="mb-2 text-primary">{lookupModal.title}</h5>
+                    <div className="d-flex align-items-center">
+                      <span className="badge bg-light text-dark me-2 px-3 py-2" style={{ fontSize: '0.85em' }}>
+                        Field: {lookupModal.field?.Name}
+                      </span>
+                      {filteredEnumValues.length !== lookupModal.enumValues?.length && (
+                        <span className="badge bg-info text-white" style={{ fontSize: '0.75em' }}>
+                          {filteredEnumValues.length} of {lookupModal.enumValues?.length} values
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <button type="button" className="btn-close" aria-label="Close" onClick={closeLookupPopup}></button>
                 </div>
-              )}
-
-              {/* Values List */}
-              <div
-                style={{
-                  maxHeight: '400px',
-                  overflowY: 'auto',
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#c1c1c1 #f1f1f1',
-                }}
-              >
-                {filteredEnumValues.length > 0 ? (
-                  <div className="d-flex flex-column gap-1">
-                    {filteredEnumValues.map((enumValue, index) => (
-                      <div
-                        key={index}
-                        className="d-flex justify-content-between align-items-center px-3 py-2 border rounded"
-                        style={{
-                          transition: 'all 0.15s ease-in-out',
-                          backgroundColor: '#f8f9fa',
-                          borderColor: '#e9ecef !important',
-                          cursor: 'default',
-                          minHeight: '40px',
-                        }}
-                        onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
-                          const item = e.currentTarget
-                          item.style.backgroundColor = '#e3f2fd'
-                          item.style.borderColor = '#2196f3'
-                          item.style.transform = 'translateX(2px)'
-                        }}
-                        onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
-                          const item = e.currentTarget
-                          item.style.backgroundColor = '#f8f9fa'
-                          item.style.borderColor = '#e9ecef'
-                          item.style.transform = 'translateX(0)'
-                        }}
-                      >
-                        <div className="flex-grow-1 me-3 min-width-0">
-                          <div className="d-flex align-items-center">
-                            <span className="fw-medium text-dark me-2" style={{ fontSize: '0.9em' }}>
-                              {enumValue.name}
+                <div className="modal-body px-4 py-3">
+                  {lookupModal.enumValues && lookupModal.enumValues.length > 0 ? (
+                    <>
+                      {/* Search Bar */}
+                      {lookupModal.enumValues.length > 5 && (
+                        <div className="mb-3">
+                          <div className="input-group input-group-sm">
+                            <span className="input-group-text bg-light border-end-0">
+                              <i className="fas fa-search text-muted" style={{ fontSize: '0.8em' }} />
                             </span>
-                            {enumValue.description && (
-                              <small className="text-muted text-truncate" style={{ fontSize: '0.75em' }}>
-                                - {enumValue.description}
-                              </small>
-                            )}
+                            <input
+                              type="text"
+                              className="form-control border-start-0"
+                              placeholder="Search values..."
+                              value={modalSearchTerm}
+                              onChange={(e: ChangeEvent<HTMLInputElement>) => setModalSearchTerm(e.target.value)}
+                              style={{ fontSize: '0.9em' }}
+                            />
                           </div>
                         </div>
-                        <Badge
-                          color="primary"
-                          className="text-white fw-medium px-2 py-1 flex-shrink-0"
-                          style={{ fontSize: '0.75em', minWidth: '50px' }}
-                        >
-                          {enumValue.value}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-5">
-                    <div className="mb-3">
-                      <i className="fas fa-search text-muted" style={{ fontSize: '3em', opacity: 0.3 }} />
-                    </div>
-                    <h6 className="text-muted mb-2">No values found</h6>
-                    <p className="text-muted small mb-0">Try adjusting your search term or clearing the filter</p>
-                    {modalSearchTerm && (
-                      <Button
-                        color="link"
-                        size="sm"
-                        className="mt-2 text-primary"
-                        onClick={() => setModalSearchTerm('')}
+                      )}
+
+                      {/* Values List */}
+                      <div
+                        style={{
+                          maxHeight: '400px',
+                          overflowY: 'auto',
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: '#c1c1c1 #f1f1f1',
+                        }}
                       >
-                        Clear search
-                      </Button>
-                    )}
+                        {filteredEnumValues.length > 0 ? (
+                          <div className="d-flex flex-column gap-1">
+                            {filteredEnumValues.map((enumValue, index) => (
+                              <div
+                                key={index}
+                                className="d-flex justify-content-between align-items-center px-3 py-2 border rounded"
+                                style={{
+                                  transition: 'all 0.15s ease-in-out',
+                                  backgroundColor: '#f8f9fa',
+                                  borderColor: '#e9ecef !important',
+                                  cursor: 'default',
+                                  minHeight: '40px',
+                                }}
+                                onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+                                  const item = e.currentTarget
+                                  item.style.backgroundColor = '#e3f2fd'
+                                  item.style.borderColor = '#2196f3'
+                                  item.style.transform = 'translateX(2px)'
+                                }}
+                                onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+                                  const item = e.currentTarget
+                                  item.style.backgroundColor = '#f8f9fa'
+                                  item.style.borderColor = '#e9ecef'
+                                  item.style.transform = 'translateX(0)'
+                                }}
+                              >
+                                <div className="flex-grow-1 me-3 min-width-0">
+                                  <div className="d-flex align-items-center">
+                                    <span className="fw-medium text-dark me-2" style={{ fontSize: '0.9em' }}>
+                                      {enumValue.name}
+                                    </span>
+                                    {enumValue.description && (
+                                      <small className="text-muted text-truncate" style={{ fontSize: '0.75em' }}>
+                                        - {enumValue.description}
+                                      </small>
+                                    )}
+                                  </div>
+                                </div>
+                                <span
+                                  className="badge bg-primary text-white fw-medium px-2 py-1 flex-shrink-0"
+                                  style={{ fontSize: '0.75em', minWidth: '50px' }}
+                                >
+                                  {enumValue.value}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-5">
+                            <div className="mb-3">
+                              <i className="fas fa-search text-muted" style={{ fontSize: '3em', opacity: 0.3 }} />
+                            </div>
+                            <h6 className="text-muted mb-2">No values found</h6>
+                            <p className="text-muted small mb-0">
+                              Try adjusting your search term or clearing the filter
+                            </p>
+                            {modalSearchTerm && (
+                              <button
+                                type="button"
+                                className="btn btn-link btn-sm mt-2 text-primary"
+                                onClick={() => setModalSearchTerm('')}
+                              >
+                                Clear search
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-5">
+                      <div className="mb-3">
+                        <i className="fas fa-info-circle text-muted" style={{ fontSize: '3em', opacity: 0.3 }} />
+                      </div>
+                      <h6 className="text-muted mb-2">No lookup values available</h6>
+                      <p className="text-muted small mb-0">This field doesn't have any predefined lookup values.</p>
+                    </div>
+                  )}
+                </div>
+                <div className="modal-footer border-0 pt-2">
+                  <div className="d-flex justify-content-between w-100 align-items-center">
+                    <small className="text-muted">
+                      {lookupModal.enumValues && lookupModal.enumValues.length > 0 && (
+                        <>
+                          <i className="fas fa-list me-1" />
+                          {lookupModal.enumValues.length} total value{lookupModal.enumValues.length !== 1 ? 's' : ''}
+                        </>
+                      )}
+                    </small>
+                    <button type="button" className="btn btn-primary px-4" onClick={closeLookupPopup}>
+                      Close
+                    </button>
                   </div>
-                )}
+                </div>
               </div>
-            </>
-          ) : (
-            <div className="text-center py-5">
-              <div className="mb-3">
-                <i className="fas fa-info-circle text-muted" style={{ fontSize: '3em', opacity: 0.3 }} />
-              </div>
-              <h6 className="text-muted mb-2">No lookup values available</h6>
-              <p className="text-muted small mb-0">This field doesn't have any predefined lookup values.</p>
             </div>
-          )}
-        </ModalBody>
-        <ModalFooter className="border-0 pt-2">
-          <div className="d-flex justify-content-between w-100 align-items-center">
-            <small className="text-muted">
-              {lookupModal.enumValues && lookupModal.enumValues.length > 0 && (
-                <>
-                  <i className="fas fa-list me-1" />
-                  {lookupModal.enumValues.length} total value{lookupModal.enumValues.length !== 1 ? 's' : ''}
-                </>
-              )}
-            </small>
-            <Button color="primary" onClick={closeLookupPopup} className="px-4">
-              Close
-            </Button>
           </div>
-        </ModalFooter>
-      </Modal>
-    </Card>
+        </>
+      )}
+    </div>
   )
 }
 

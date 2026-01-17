@@ -16,7 +16,6 @@
 
 import React from 'react'
 import { PGN } from '@canboat/ts-pgns'
-import { Button, CardHeader } from 'reactstrap'
 
 interface JsonDataTabProps {
   pgnData: PGN
@@ -46,12 +45,12 @@ export const JsonDataTab = ({ pgnData, pgnHistory = [], onCopyData }: JsonDataTa
 
   return (
     <>
-      <CardHeader className="d-flex justify-content-between align-items-center">
+      <div className="card-header d-flex justify-content-between align-items-center">
         {tabHeader()}
-        <Button size="sm" color="secondary" onClick={onCopyData} title="Copy PGN data to clipboard">
+        <button className="btn btn-sm btn-secondary" onClick={onCopyData} title="Copy PGN data to clipboard">
           Copy
-        </Button>
-      </CardHeader>
+        </button>
+      </div>
       <div className="p-3">
         <pre>{pgnToJson(pgnData)}</pre>
       </div>
