@@ -15,7 +15,6 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { Card, CardHeader, CardBody } from 'reactstrap'
 import { FromPgn } from '@canboat/canboatjs'
 import { sendTabStorage } from '../utils/localStorage'
 import { server } from '../services'
@@ -263,11 +262,11 @@ export const SendTab: React.FC = () => {
   return (
     <div className="row mb-4">
       <div className="col-12">
-        <Card>
-          <CardHeader>
+        <div className="card">
+          <div className="card-header">
             <h6 className="mb-0">Send Raw NMEA 2000 Message</h6>
-          </CardHeader>
-          <CardBody>
+          </div>
+          <div className="card-body">
             <p className="card-text small mb-3">
               Enter NMEA 2000 messages in any format supported by canboatjs (Actisense, YDRAW, Canboat JSON, etc.).
               Multiple messages can be entered on separate lines.
@@ -487,8 +486,8 @@ export const SendTab: React.FC = () => {
                 <strong>Success:</strong> Message(s) sent successfully at {sendStatus.lastSent}
               </div>
             )}
-          </CardBody>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

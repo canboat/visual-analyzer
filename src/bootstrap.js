@@ -15,7 +15,7 @@
  */
 
 import React from 'react'
-import ReactDOM from 'react-dom'
+import * as ReactDOMClient from 'react-dom/client'
 import AppPanel from './components/AppPanel'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '@fortawesome/fontawesome-free/css/all.min.css'
@@ -80,8 +80,8 @@ const mockAdminUI = {
   },
 }
 
-// Render the AppPanel with mock props
-ReactDOM.render(
+// Create the app element
+const App = () => (
   <React.StrictMode>
     <div>
       {/* SignalK-style Header */}
@@ -120,6 +120,10 @@ ReactDOM.render(
         />
       </div>
     </div>
-  </React.StrictMode>,
-  document.getElementById('root'),
+  </React.StrictMode>
 )
+
+// Use createRoot for React 18+ (modern rendering API)
+const container = document.getElementById('root')
+const root = ReactDOMClient.createRoot(container)
+root.render(<App />)

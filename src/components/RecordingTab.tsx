@@ -15,7 +15,6 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { Card, CardHeader, CardBody, Button, Alert, Badge, Row, Col, Input, FormGroup, Label, Table } from 'reactstrap'
 import { useRecording } from '../contexts/RecordingContext'
 import { recordingStorage } from '../utils/localStorage'
 import { server } from '../services'
@@ -309,23 +308,23 @@ const RecordingTab: React.FC = () => {
 
   return (
     <div className="container-fluid mt-3">
-      <Row>
-        <Col md={6}>
-          <Card>
-            <CardHeader>
+      <div className="row">
+        <div className="col-md-6">
+          <div className="card">
+            <div className="card-header">
               <h5>Recording Control</h5>
-            </CardHeader>
-            <CardBody>
+            </div>
+            <div className="card-body">
               {error && (
-                <Alert color="danger" className="mb-3">
+                <div className="alert alert-danger mb-3">
                   <strong>Error:</strong> {error}
-                </Alert>
+                </div>
               )}
 
               <div className="mb-3">
-                <Badge color={recordingStatus.isRecording ? 'success' : 'secondary'} className="me-2">
+                <span className={`badge ${recordingStatus.isRecording ? 'bg-success' : 'bg-secondary'} me-2`}>
                   {recordingStatus.isRecording ? '● Recording' : '○ Not Recording'}
-                </Badge>
+                </span>
                 {recordingStatus.isRecording && recordingStatus.fileName && (
                   <small className="text-muted">
                     File: {recordingStatus.fileName}
@@ -342,14 +341,14 @@ const RecordingTab: React.FC = () => {
 
               {recordingStatus.isRecording && (
                 <div className="mb-3">
-                  <Row>
-                    <Col sm={6}>
+                  <div className="row">
+                    <div className="col-sm-6">
                       <strong>Messages:</strong> {recordingStatus.messageCount}
-                    </Col>
-                    <Col sm={6}>
+                    </div>
+                    <div className="col-sm-6">
                       <strong>Size:</strong> {formatFileSize(recordingStatus.fileSize)}
-                    </Col>
-                  </Row>
+                    </div>
+                  </div>
                   {recordingStatus.startTime && (
                     <div className="mt-2">
                       <strong>Started:</strong> {formatDate(recordingStatus.startTime)}
@@ -360,76 +359,88 @@ const RecordingTab: React.FC = () => {
 
               {!recordingStatus.isRecording && (
                 <div className="mb-3">
-                  <FormGroup>
-                    <Label for="recordingFormat">Recording Format:</Label>
-                    <Input
-                      type="select"
+                  <div className="mb-3">
+                    <label htmlFor="recordingFormat" className="form-label">
+                      Recording Format:
+                    </label>
+                    <select
                       id="recordingFormat"
+                      className="form-select"
                       value={recordingFormat}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFormatChange(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleFormatChange(e.target.value)}
                     >
                       {recordingFormats.map((format) => (
                         <option key={format.value} value={format.value}>
                           {format.label}
                         </option>
                       ))}
-                    </Input>
-                  </FormGroup>
-                  <FormGroup check>
-                    <Label check>
-                      <Input
-                        type="checkbox"
-                        checked={autoGenerateFileName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAutoGenerateFileName(e.target.checked)}
-                      />
+                    </select>
+                  </div>
+                  <div className="form-check">
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      id="autoGenerateFileName"
+                      checked={autoGenerateFileName}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAutoGenerateFileName(e.target.checked)}
+                    />
+                    <label className="form-check-label" htmlFor="autoGenerateFileName">
                       Auto-generate filename
-                    </Label>
-                  </FormGroup>
+                    </label>
+                  </div>
                   {!autoGenerateFileName && (
-                    <FormGroup className="mt-2">
-                      <Label for="fileName">Custom filename:</Label>
-                      <Input
+                    <div className="mb-3 mt-2">
+                      <label htmlFor="fileName" className="form-label">
+                        Custom filename:
+                      </label>
+                      <input
                         type="text"
+                        className="form-control"
                         id="fileName"
                         value={customFileName}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomFileName(e.target.value)}
                         placeholder={`recording_2025-01-01.${getFileExtension(recordingFormat)}`}
                       />
-                    </FormGroup>
+                    </div>
                   )}
                 </div>
               )}
 
               <div className="d-grid gap-2">
                 {!recordingStatus.isRecording ? (
-                  <Button color="success" onClick={startRecording} disabled={loading}>
+                  <button type="button" className="btn btn-success" onClick={startRecording} disabled={loading}>
                     {loading ? 'Starting...' : 'Start Recording'}
-                  </Button>
+                  </button>
                 ) : (
-                  <Button color="danger" onClick={stopRecording} disabled={loading}>
+                  <button type="button" className="btn btn-danger" onClick={stopRecording} disabled={loading}>
                     {loading ? 'Stopping...' : 'Stop Recording'}
-                  </Button>
+                  </button>
                 )}
               </div>
-            </CardBody>
-          </Card>
-        </Col>
+            </div>
+          </div>
+        </div>
 
-        <Col md={6}>
-          <Card>
-            <CardHeader className="d-flex justify-content-between align-items-center">
+        <div className="col-md-6">
+          <div className="card">
+            <div className="card-header d-flex justify-content-between align-items-center">
               <h5 className="mb-0">Recorded Files</h5>
               {recordingFiles.length > 0 && (
-                <Button size="sm" color="outline-danger" onClick={deleteAllFiles} disabled={loading}>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-danger"
+                  onClick={deleteAllFiles}
+                  disabled={loading}
+                >
                   {loading ? 'Deleting...' : 'Delete All'}
-                </Button>
+                </button>
               )}
-            </CardHeader>
-            <CardBody>
+            </div>
+            <div className="card-body">
               {recordingFiles.length === 0 ? (
                 <p className="text-muted">No recordings found.</p>
               ) : (
-                <Table responsive size="sm">
+                <table className="table table-responsive table-sm">
                   <thead>
                     <tr>
                       <th>Filename</th>
@@ -459,22 +470,26 @@ const RecordingTab: React.FC = () => {
                           <small>{formatDate(file.created)}</small>
                         </td>
                         <td>
-                          <Button size="sm" color="primary" className="me-1" onClick={() => downloadFile(file.name)}>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-primary me-1"
+                            onClick={() => downloadFile(file.name)}
+                          >
                             Download
-                          </Button>
-                          <Button size="sm" color="danger" onClick={() => deleteFile(file.name)}>
+                          </button>
+                          <button type="button" className="btn btn-sm btn-danger" onClick={() => deleteFile(file.name)}>
                             Delete
-                          </Button>
+                          </button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                </Table>
+                </table>
               )}
-            </CardBody>
-          </Card>
-        </Col>
-      </Row>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

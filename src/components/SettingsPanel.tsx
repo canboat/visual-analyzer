@@ -15,7 +15,6 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { Card, CardBody, Button, Form, FormGroup, Label, Input, Alert, Row, Col } from 'reactstrap'
 
 interface ServerConfig {
   server: {
@@ -196,22 +195,22 @@ export const SettingsPanel: React.FC = () => {
 
   if (loading && !config) {
     return (
-      <Card>
-        <CardBody>
+      <div className="card">
+        <div className="card-body">
           <div className="text-center">
             <div className="spinner-border" role="status">
               <span className="sr-only">Loading...</span>
             </div>
             <p className="mt-2">Loading configuration...</p>
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardBody>
+    <div className="card">
+      <div className="card-body">
         <h4 className="text-sk-primary">Server Configuration</h4>
         <p className="mb-3">Configure NMEA 2000 data sources and server settings.</p>
 
@@ -221,16 +220,16 @@ export const SettingsPanel: React.FC = () => {
         </div>
 
         {message && (
-          <Alert color={message.type === 'success' ? 'success' : 'danger'} className="mb-3">
+          <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-danger'} mb-3`}>
             {message.text}
-          </Alert>
+          </div>
         )}
 
         {config && (
           <div className="mb-3">
             <h6>Connection Status</h6>
             <div className="d-flex align-items-center">
-              <span className={`badge ${config.connection.isConnected ? 'badge-success' : 'badge-secondary'} mr-2`}>
+              <span className={`badge ${config.connection.isConnected ? 'bg-success' : 'bg-secondary'} mr-2`}>
                 {config.connection.isConnected ? 'Connected' : 'Disconnected'}
               </span>
               {config.connection.activeProfile && (
@@ -242,21 +241,28 @@ export const SettingsPanel: React.FC = () => {
           </div>
         )}
 
-        <Form>
-          <Row>
-            <Col md={6}>
-              <Card className="mb-3">
+        <form>
+          <div className="row">
+            <div className="col-md-6">
+              <div className="card mb-3">
                 <div className="card-header d-flex justify-content-between align-items-center">
                   <strong>SignalK Server</strong>
-                  <Button size="sm" color="outline-secondary" onClick={() => clearDataSource('signalk')}>
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => clearDataSource('signalk')}
+                  >
                     Clear
-                  </Button>
+                  </button>
                 </div>
-                <CardBody>
-                  <FormGroup>
-                    <Label for="signalkUrl">SignalK URL</Label>
-                    <Input
+                <div className="card-body">
+                  <div className="mb-3">
+                    <label htmlFor="signalkUrl" className="form-label">
+                      SignalK URL
+                    </label>
+                    <input
                       type="url"
+                      className="form-control"
                       id="signalkUrl"
                       placeholder="http://localhost:3000"
                       value={formData.signalkUrl}
@@ -267,39 +273,48 @@ export const SettingsPanel: React.FC = () => {
                     <small className="form-text text-muted">
                       Connect to a SignalK server for converted NMEA 2000 data
                     </small>
-                  </FormGroup>
-                </CardBody>
-              </Card>
-            </Col>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <Col md={6}>
-              <Card className="mb-3">
+            <div className="col-md-6">
+              <div className="card mb-3">
                 <div className="card-header d-flex justify-content-between align-items-center">
                   <strong>Serial Port</strong>
-                  <Button size="sm" color="outline-secondary" onClick={() => clearDataSource('serial')}>
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => clearDataSource('serial')}
+                  >
                     Clear
-                  </Button>
+                  </button>
                 </div>
-                <CardBody>
-                  <FormGroup>
-                    <Label for="deviceType">Device Type</Label>
-                    <Input
-                      type="select"
+                <div className="card-body">
+                  <div className="mb-3">
+                    <label htmlFor="deviceType" className="form-label">
+                      Device Type
+                    </label>
+                    <select
+                      className="form-control"
                       id="deviceType"
                       value={formData.deviceType}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                         handleInputChange('deviceType', e.target.value as 'Actisense' | 'iKonvert' | 'Yacht Devices')
                       }
                     >
                       <option value="Actisense">Actisense (NGT-1, NGT-1-ISO)</option>
                       <option value="iKonvert">iKonvert (NMEA 2000 Gateway)</option>
                       <option value="Yacht Devices">Yacht Devices (YDWG-02, YDNU-02)</option>
-                    </Input>
-                  </FormGroup>
-                  <FormGroup>
-                    <Label for="serialPort">Serial Port</Label>
-                    <Input
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="serialPort" className="form-label">
+                      Serial Port
+                    </label>
+                    <input
                       type="text"
+                      className="form-control"
                       id="serialPort"
                       placeholder="/dev/ttyUSB0 or COM3"
                       value={formData.serialPort}
@@ -307,14 +322,16 @@ export const SettingsPanel: React.FC = () => {
                         handleInputChange('serialPort', e.target.value)
                       }
                     />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label for="baudRate">Baud Rate</Label>
-                    <Input
-                      type="select"
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="baudRate" className="form-label">
+                      Baud Rate
+                    </label>
+                    <select
+                      className="form-control"
                       id="baudRate"
                       value={formData.baudRate}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                         handleInputChange('baudRate', parseInt(e.target.value))
                       }
                     >
@@ -322,30 +339,37 @@ export const SettingsPanel: React.FC = () => {
                       <option value={38400}>38400</option>
                       <option value={115200}>115200</option>
                       <option value={230400}>230400</option>
-                    </Input>
-                  </FormGroup>
+                    </select>
+                  </div>
                   <small className="form-text text-muted">
                     Select your NMEA 2000 gateway device type and configure the serial connection
                   </small>
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <Row>
-            <Col md={6}>
-              <Card className="mb-3">
+          <div className="row">
+            <div className="col-md-6">
+              <div className="card mb-3">
                 <div className="card-header d-flex justify-content-between align-items-center">
                   <strong>Network Source</strong>
-                  <Button size="sm" color="outline-secondary" onClick={() => clearDataSource('network')}>
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => clearDataSource('network')}
+                  >
                     Clear
-                  </Button>
+                  </button>
                 </div>
-                <CardBody>
-                  <FormGroup>
-                    <Label for="networkHost">Host/IP Address</Label>
-                    <Input
+                <div className="card-body">
+                  <div className="mb-3">
+                    <label htmlFor="networkHost" className="form-label">
+                      Host/IP Address
+                    </label>
+                    <input
                       type="text"
+                      className="form-control"
                       id="networkHost"
                       placeholder="192.168.1.100 or ydwg"
                       value={formData.networkHost}
@@ -353,43 +377,48 @@ export const SettingsPanel: React.FC = () => {
                         handleInputChange('networkHost', e.target.value)
                       }
                     />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label for="networkPort">Port</Label>
-                    <Input
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="networkPort" className="form-label">
+                      Port
+                    </label>
+                    <input
                       type="number"
+                      className="form-control"
                       id="networkPort"
                       value={formData.networkPort}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleInputChange('networkPort', parseInt(e.target.value))
                       }
                     />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label for="networkProtocol">Protocol</Label>
-                    <Input
-                      type="select"
+                  </div>
+                  <div className="mb-3">
+                    <label htmlFor="networkProtocol" className="form-label">
+                      Protocol
+                    </label>
+                    <select
+                      className="form-control"
                       id="networkProtocol"
                       value={formData.networkProtocol}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                         handleInputChange('networkProtocol', e.target.value as 'tcp' | 'udp')
                       }
                     >
                       <option value="tcp">TCP</option>
                       <option value="udp">UDP</option>
-                    </Input>
-                  </FormGroup>
+                    </select>
+                  </div>
                   <small className="form-text text-muted">Connect to network-enabled NMEA 2000 gateways</small>
-                </CardBody>
-              </Card>
-            </Col>
+                </div>
+              </div>
+            </div>
 
-            <Col md={6}>
-              <Card className="mb-3">
+            <div className="col-md-6">
+              <div className="card mb-3">
                 <div className="card-header">
                   <strong>Server Information</strong>
                 </div>
-                <CardBody>
+                <div className="card-body">
                   {config && (
                     <div>
                       <p>
@@ -406,23 +435,23 @@ export const SettingsPanel: React.FC = () => {
                       </div>
                     </div>
                   )}
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="text-center mt-4">
-            <Button color="primary" onClick={saveConfiguration} disabled={saving} className="mr-2">
+            <button type="button" className="btn btn-primary mr-2" onClick={saveConfiguration} disabled={saving}>
               {saving ? 'Saving...' : 'Save Configuration'}
-            </Button>
-            <Button color="secondary" onClick={restartConnection} disabled={loading} className="mr-2">
+            </button>
+            <button type="button" className="btn btn-secondary mr-2" onClick={restartConnection} disabled={loading}>
               {loading ? 'Restarting...' : 'Restart Connection'}
-            </Button>
-            <Button color="outline-secondary" onClick={loadConfiguration} disabled={loading}>
+            </button>
+            <button type="button" className="btn btn-outline-secondary" onClick={loadConfiguration} disabled={loading}>
               Reload
-            </Button>
+            </button>
           </div>
-        </Form>
+        </form>
 
         <div className="mt-4">
           <h6>Usage Tips</h6>
@@ -434,7 +463,7 @@ export const SettingsPanel: React.FC = () => {
             <li>Changes are saved automatically and connection restarts immediately</li>
           </ul>
         </div>
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   )
 }
