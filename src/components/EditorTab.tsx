@@ -16,25 +16,6 @@
 
 import React, { useState } from 'react'
 import {
-  Card,
-  CardBody,
-  Nav,
-  NavItem,
-  NavLink,
-  TabContent,
-  TabPane,
-  Container,
-  Row,
-  Col,
-  Button,
-  Table,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Input,
-} from 'reactstrap'
-import {
   PGN,
   Definition,
   EnumBase,
@@ -632,9 +613,9 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
   }
 
   return (
-    <Container fluid>
-      <Card>
-        <CardBody>
+    <div className="container-fluid">
+      <div className="card">
+        <div className="card-body">
           <div className="mb-3">
             <h4>PGN Definition Editor</h4>
             <p className="text-muted">
@@ -643,53 +624,56 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
           </div>
 
           {/* Sub-navigation for editor sections */}
-          <Nav tabs className="mb-3">
-            <NavItem>
-              <NavLink
-                className={activeSubTab === PGN_DEFINITIONS_TAB ? 'active' : ''}
+          <ul className="nav nav-tabs mb-3">
+            <li className="nav-item">
+              <button
+                type="button"
+                className={`nav-link ${activeSubTab === PGN_DEFINITIONS_TAB ? 'active' : ''}`}
                 onClick={() => handleSubTabChange(PGN_DEFINITIONS_TAB)}
                 style={{ cursor: 'pointer' }}
               >
                 PGN Definitions
-              </NavLink>
-            </NavItem>
-            <NavItem>
-              <NavLink
-                className={activeSubTab === LOOKUPS_TAB ? 'active' : ''}
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                type="button"
+                className={`nav-link ${activeSubTab === LOOKUPS_TAB ? 'active' : ''}`}
                 onClick={() => handleSubTabChange(LOOKUPS_TAB)}
                 style={{ cursor: 'pointer' }}
               >
                 Lookups
-              </NavLink>
-            </NavItem>
-            <NavItem>
-              <NavLink
-                className={activeSubTab === BIT_LOOKUPS_TAB ? 'active' : ''}
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                type="button"
+                className={`nav-link ${activeSubTab === BIT_LOOKUPS_TAB ? 'active' : ''}`}
                 onClick={() => handleSubTabChange(BIT_LOOKUPS_TAB)}
                 style={{ cursor: 'pointer' }}
               >
                 Bit Lookups
-              </NavLink>
-            </NavItem>
-          </Nav>
+              </button>
+            </li>
+          </ul>
 
-          <TabContent activeTab={activeSubTab}>
-            <TabPane tabId={PGN_DEFINITIONS_TAB}>
+          <div className="tab-content">
+            <div className={`tab-pane ${activeSubTab === PGN_DEFINITIONS_TAB ? 'show active' : ''}`}>
               {/* Top Section - Changed PGN Definitions List */}
-              <Row className="mb-3">
-                <Col md="12">
-                  <Card>
-                    <CardBody>
+              <div className="row mb-3">
+                <div className="col-md-12">
+                  <div className="card">
+                    <div className="card-body">
                       <div className="d-flex justify-content-between align-items-center mb-3">
                         <h5 className="mb-0">Changed PGN Definitions</h5>
-                        <Button
-                          color="secondary"
-                          size="sm"
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
                           onClick={clearAllDefinitions}
                           disabled={Object.keys(changedDefinitionsTracker.definitions).length === 0}
                         >
                           Clear All
-                        </Button>
+                        </button>
                       </div>
 
                       {Object.keys(changedDefinitionsTracker.definitions).length === 0 ? (
@@ -707,68 +691,69 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                             flexDirection: 'column',
                           }}
                         >
-                          <Table responsive bordered size="sm">
-                            <thead>
-                              <tr>
-                                <th>PGN</th>
-                                <th>Description</th>
-                                <th style={{ width: '50px' }}></th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {Object.entries(changedDefinitionsTracker.definitions)
-                                .sort(([, a], [, b]) => a.PGN - b.PGN)
-                                .map(([id, definition], index) => {
-                                  const isEvenRow = index % 2 === 0
-                                  return (
-                                    <tr
-                                      key={id}
-                                      style={{
-                                        backgroundColor:
-                                          selectedDefinitionId === id
-                                            ? '#d1ecf1'
-                                            : isEvenRow
-                                              ? '#ffffff'
-                                              : 'rgba(0,0,0,.05)',
-                                        cursor: 'pointer',
-                                      }}
-                                      onClick={() => handleDefinitionSelect(id, definition)}
-                                    >
-                                      <td style={{ color: 'red', fontWeight: 'bold' }}>{definition.PGN}</td>
-                                      <td style={{ fontFamily: 'monospace' }}>{definition.Description}</td>
-                                      <td style={{ textAlign: 'center' }}>
-                                        <Button
-                                          color="danger"
-                                          size="sm"
-                                          outline
-                                          onClick={(e: React.MouseEvent) => {
-                                            e.stopPropagation()
-                                            clearSingleDefinition(id)
-                                          }}
-                                          title="Remove from changed list"
-                                          style={{ lineHeight: 1, padding: '0.125rem 0.375rem' }}
-                                        >
-                                          ×
-                                        </Button>
-                                      </td>
-                                    </tr>
-                                  )
-                                })}
-                            </tbody>
-                          </Table>
+                          <div className="table-responsive">
+                            <table className="table table-bordered table-sm">
+                              <thead>
+                                <tr>
+                                  <th>PGN</th>
+                                  <th>Description</th>
+                                  <th style={{ width: '50px' }}></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {Object.entries(changedDefinitionsTracker.definitions)
+                                  .sort(([, a], [, b]) => a.PGN - b.PGN)
+                                  .map(([id, definition], index) => {
+                                    const isEvenRow = index % 2 === 0
+                                    return (
+                                      <tr
+                                        key={id}
+                                        style={{
+                                          backgroundColor:
+                                            selectedDefinitionId === id
+                                              ? '#d1ecf1'
+                                              : isEvenRow
+                                                ? '#ffffff'
+                                                : 'rgba(0,0,0,.05)',
+                                          cursor: 'pointer',
+                                        }}
+                                        onClick={() => handleDefinitionSelect(id, definition)}
+                                      >
+                                        <td style={{ color: 'red', fontWeight: 'bold' }}>{definition.PGN}</td>
+                                        <td style={{ fontFamily: 'monospace' }}>{definition.Description}</td>
+                                        <td style={{ textAlign: 'center' }}>
+                                          <button
+                                            type="button"
+                                            className="btn btn-outline-danger btn-sm"
+                                            onClick={(e: React.MouseEvent) => {
+                                              e.stopPropagation()
+                                              clearSingleDefinition(id)
+                                            }}
+                                            title="Remove from changed list"
+                                            style={{ lineHeight: 1, padding: '0.125rem 0.375rem' }}
+                                          >
+                                            ×
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    )
+                                  })}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       )}
-                    </CardBody>
-                  </Card>
-                </Col>
-              </Row>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Bottom Section - Two Columns */}
-              <Row>
+              <div className="row">
                 {/* Left Column - PGN Definition Tab */}
-                <Col md="6">
-                  <Card style={{ height: 'calc(100vh - 400px)', minHeight: '800px' }}>
-                    <CardBody style={{ height: '100%', overflow: 'hidden', padding: 0 }}>
+                <div className="col-md-6">
+                  <div className="card" style={{ height: 'calc(100vh - 400px)', minHeight: '800px' }}>
+                    <div className="card-body" style={{ height: '100%', overflow: 'hidden', padding: 0 }}>
                       {selectedDefinitionId && currentPgn ? (
                         <PgnDefinitionTab
                           definition={changedDefinitionsTracker.getDefinition(selectedDefinitionId)!}
@@ -797,14 +782,14 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                           </div>
                         </div>
                       )}
-                    </CardBody>
-                  </Card>
-                </Col>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Right Column - Sentence Panel */}
-                <Col md="6">
-                  <Card style={{ height: 'calc(100vh - 400px)', minHeight: '800px' }}>
-                    <CardBody style={{ height: '100%', overflow: 'hidden', padding: 0 }}>
+                <div className="col-md-6">
+                  <div className="card" style={{ height: 'calc(100vh - 400px)', minHeight: '800px' }}>
+                    <div className="card-body" style={{ height: '100%', overflow: 'hidden', padding: 0 }}>
                       {selectedDefinitionId ? (
                         <SentencePanel
                           selectedPgn={selectedPgn}
@@ -832,13 +817,13 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                           </div>
                         </div>
                       )}
-                    </CardBody>
-                  </Card>
-                </Col>
-              </Row>
-            </TabPane>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <TabPane tabId={LOOKUPS_TAB}>
+            <div className={`tab-pane ${activeSubTab === LOOKUPS_TAB ? 'show active' : ''}`}>
               <LookupEditor
                 key={`lookups-${trackerVersion}`}
                 changedLookups={changedDefinitionsTracker.lookups}
@@ -847,9 +832,9 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                 onClearAll={clearAllLookups}
                 onLookupEdit={handleLookupEdit}
               />
-            </TabPane>
+            </div>
 
-            <TabPane tabId={BIT_LOOKUPS_TAB}>
+            <div className={`tab-pane ${activeSubTab === BIT_LOOKUPS_TAB ? 'show active' : ''}`}>
               <BitLookupEditor
                 key={`bitlookups-${trackerVersion}`}
                 changedBitLookups={changedDefinitionsTracker.bitLookups}
@@ -858,108 +843,128 @@ const EditorTab: React.FC<EditorTabProps> = ({ isEmbedded = false, deviceInfo })
                 onClearAll={clearAllBitLookups}
                 onBitLookupEdit={handleLookupEdit}
               />
-            </TabPane>
-          </TabContent>
-        </CardBody>
-      </Card>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Lookup Editor Modal */}
-      <Modal isOpen={!!editingLookup} toggle={closeLookupEditor} size="lg">
-        <ModalHeader toggle={closeLookupEditor}>
-          {editingLookup?.enumName ? 'Edit' : 'Create'} {editingLookup?.type === 'lookup' ? 'Lookup' : 'Bit Lookup'}{' '}
-          Enumeration
-          {editingLookup?.enumName && editingLookup.enumName === newLookupName && (
-            <div className="small text-muted">Current lookup: {editingLookup.enumName}</div>
-          )}
-        </ModalHeader>
-        <ModalBody>
-          {/* Name input for all lookups */}
-          {editingLookup && (
-            <div className="mb-3">
-              <label className="form-label">{editingLookup.type === 'lookup' ? 'Lookup' : 'Bit Lookup'} Name</label>
-              <Input
-                type="text"
-                placeholder={`Enter ${editingLookup.type === 'lookup' ? 'lookup' : 'bit lookup'} name`}
-                value={newLookupName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewLookupName(e.target.value)}
-              />
-              {editingLookup.enumName && editingLookup.enumName !== newLookupName && (
-                <div className="small text-muted mt-1">Original name: {editingLookup.enumName}</div>
-              )}
-            </div>
-          )}
-
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h6>Lookup Values</h6>
-            <Button color="success" size="sm" onClick={addLookupValue}>
-              <i className="fa fa-plus me-2" />
-              Add Value
-            </Button>
-          </div>
-
-          <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            <Table size="sm" bordered>
-              <thead>
-                <tr>
-                  <th style={{ width: '120px' }}>Key/Value</th>
-                  <th>Name/Description</th>
-                  <th style={{ width: '80px' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lookupValues.map((item, index) => (
-                  <tr key={index}>
-                    <td>
-                      <Input
-                        type={editingLookup?.type === 'bitlookup' ? 'text' : 'number'}
-                        size="sm"
-                        value={item.key}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          updateLookupValue(index, e.target.value, item.value)
-                        }
-                        placeholder={editingLookup?.type === 'bitlookup' ? '0x01' : '0'}
-                      />
-                    </td>
-                    <td>
-                      <Input
+      {editingLookup && (
+        <>
+          <div className="modal-backdrop fade show" onClick={closeLookupEditor}></div>
+          <div className="modal fade show d-block" tabIndex={-1} role="dialog">
+            <div className="modal-dialog modal-lg" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">
+                    {editingLookup?.enumName ? 'Edit' : 'Create'}{' '}
+                    {editingLookup?.type === 'lookup' ? 'Lookup' : 'Bit Lookup'} Enumeration
+                    {editingLookup?.enumName && editingLookup.enumName === newLookupName && (
+                      <div className="small text-muted">Current lookup: {editingLookup.enumName}</div>
+                    )}
+                  </h5>
+                  <button type="button" className="btn-close" aria-label="Close" onClick={closeLookupEditor}></button>
+                </div>
+                <div className="modal-body">
+                  {/* Name input for all lookups */}
+                  {editingLookup && (
+                    <div className="mb-3">
+                      <label className="form-label">
+                        {editingLookup.type === 'lookup' ? 'Lookup' : 'Bit Lookup'} Name
+                      </label>
+                      <input
                         type="text"
-                        size="sm"
-                        value={item.value}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          updateLookupValue(index, item.key, e.target.value)
-                        }
-                        placeholder="Value name"
+                        className="form-control"
+                        placeholder={`Enter ${editingLookup.type === 'lookup' ? 'lookup' : 'bit lookup'} name`}
+                        value={newLookupName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewLookupName(e.target.value)}
                       />
-                    </td>
-                    <td className="text-center">
-                      <Button color="danger" size="sm" onClick={() => removeLookupValue(index)} title="Remove value">
-                        <i className="fa fa-trash" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
+                      {editingLookup.enumName && editingLookup.enumName !== newLookupName && (
+                        <div className="small text-muted mt-1">Original name: {editingLookup.enumName}</div>
+                      )}
+                    </div>
+                  )}
 
-          {lookupValues.length === 0 && (
-            <div className="text-center text-muted p-4">
-              <i className="fa fa-info-circle me-2" />
-              No lookup values defined. Click "Add Value" to start.
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h6>Lookup Values</h6>
+                    <button type="button" className="btn btn-success btn-sm" onClick={addLookupValue}>
+                      <i className="fa fa-plus me-2" />
+                      Add Value
+                    </button>
+                  </div>
+
+                  <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                    <table className="table table-sm table-bordered">
+                      <thead>
+                        <tr>
+                          <th style={{ width: '120px' }}>Key/Value</th>
+                          <th>Name/Description</th>
+                          <th style={{ width: '80px' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {lookupValues.map((item, index) => (
+                          <tr key={index}>
+                            <td>
+                              <input
+                                type={editingLookup?.type === 'bitlookup' ? 'text' : 'number'}
+                                className="form-control form-control-sm"
+                                value={item.key}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                  updateLookupValue(index, e.target.value, item.value)
+                                }
+                                placeholder={editingLookup?.type === 'bitlookup' ? '0x01' : '0'}
+                              />
+                            </td>
+                            <td>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                value={item.value}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                  updateLookupValue(index, item.key, e.target.value)
+                                }
+                                placeholder="Value name"
+                              />
+                            </td>
+                            <td className="text-center">
+                              <button
+                                type="button"
+                                className="btn btn-danger btn-sm"
+                                onClick={() => removeLookupValue(index)}
+                                title="Remove value"
+                              >
+                                <i className="fa fa-trash" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {lookupValues.length === 0 && (
+                    <div className="text-center text-muted p-4">
+                      <i className="fa fa-info-circle me-2" />
+                      No lookup values defined. Click "Add Value" to start.
+                    </div>
+                  )}
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-primary" onClick={saveLookupValues}>
+                    <i className="fa fa-save me-2" />
+                    Save Lookup
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={closeLookupEditor}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button color="primary" onClick={saveLookupValues}>
-            <i className="fa fa-save me-2" />
-            Save Lookup
-          </Button>
-          <Button color="secondary" onClick={closeLookupEditor}>
-            Cancel
-          </Button>
-        </ModalFooter>
-      </Modal>
-    </Container>
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 

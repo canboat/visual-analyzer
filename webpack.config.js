@@ -27,7 +27,7 @@ module.exports = {
         loader: 'babel-loader',
         exclude: /node_modules/,
         options: {
-          presets: ['@babel/preset-react'],
+          presets: [['@babel/preset-react', { runtime: 'classic' }]],
         },
       },
       {
@@ -60,13 +60,13 @@ module.exports = {
       shared: {
         react: {
           singleton: true,
-          eager: false,
-          requiredVersion: '^16.13.1',
+          requiredVersion: '>=16.8.0',
+          strictVersion: false,
         },
         'react-dom': {
           singleton: true,
-          eager: false,
-          requiredVersion: '^16.13.1',
+          requiredVersion: '>=16.8.0',
+          strictVersion: false,
         },
       },
     }),

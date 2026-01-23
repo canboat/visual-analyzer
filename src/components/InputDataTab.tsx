@@ -16,7 +16,6 @@
 
 import React, { useState, useCallback, useEffect } from 'react'
 import { PGN } from '@canboat/ts-pgns'
-import { Button, CardHeader, Input } from 'reactstrap'
 
 interface InputDataTabProps {
   pgnData: PGN
@@ -36,7 +35,7 @@ export const InputDataTab = ({ pgnData, onCopyInput, isEditing = false, onInputC
     setHasChanges(false)
   }, [pgnData.input])
 
-  const handleTextChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTextChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = event.target.value
     setEditingText(newText)
     setHasChanges(true)
@@ -67,28 +66,28 @@ export const InputDataTab = ({ pgnData, onCopyInput, isEditing = false, onInputC
 
   return (
     <>
-      <CardHeader className="d-flex justify-content-between align-items-center">
+      <div className="card-header d-flex justify-content-between align-items-center">
         {tabHeader()}
         <div>
           {isEditing && hasChanges && (
             <>
-              <Button size="sm" color="success" onClick={handleSave} title="Save changes" className="me-2">
+              <button className="btn btn-sm btn-success me-2" onClick={handleSave} title="Save changes">
                 Save
-              </Button>
-              <Button size="sm" color="secondary" onClick={handleCancel} title="Cancel changes" className="me-2">
+              </button>
+              <button className="btn btn-sm btn-secondary me-2" onClick={handleCancel} title="Cancel changes">
                 Cancel
-              </Button>
+              </button>
             </>
           )}
-          <Button size="sm" color="secondary" onClick={onCopyInput} title="Copy input data to clipboard">
+          <button className="btn btn-sm btn-secondary" onClick={onCopyInput} title="Copy input data to clipboard">
             Copy
-          </Button>
+          </button>
         </div>
-      </CardHeader>
+      </div>
       <div className="p-3">
         {isEditing ? (
-          <Input
-            type="textarea"
+          <textarea
+            className="form-control"
             value={editingText}
             onChange={handleTextChange}
             style={{

@@ -421,7 +421,7 @@ export const ByteMappingTab = ({ pgnData, definition }: ByteMappingTabProps) => 
             </thead>
             <tbody>
               {(() => {
-                const rows: JSX.Element[] = []
+                const rows: React.ReactElement[] = []
                 let repeatingFieldsProcessed = false
 
                 for (let fieldIndex = 0; fieldIndex < definition.Fields.length; fieldIndex++) {

@@ -15,7 +15,6 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { Col, Input, Label, Row, Table, Button, Collapse, Card, CardBody, CardHeader } from 'reactstrap'
 import { Subject } from 'rxjs'
 import { useObservableState } from 'observable-hooks'
 import Creatable from 'react-select/creatable'
@@ -156,8 +155,8 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
   }, [isOpen])
 
   return (
-    <Card>
-      <CardHeader className="d-flex justify-content-between align-items-center py-2" style={{ cursor: 'pointer' }}>
+    <div className="card">
+      <div className="card-header d-flex justify-content-between align-items-center py-2" style={{ cursor: 'pointer' }}>
         <div className="d-flex align-items-center flex-grow-1" onClick={() => setIsOpen(!isOpen)}>
           <h6 className="mb-0" style={{ fontWeight: 'bold' }}>
             Options
@@ -165,8 +164,8 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
         </div>
         <div className="d-flex align-items-center">
           <span style={{ fontSize: '14px', fontWeight: '500', marginRight: '8px' }}>Pause Updates</span>
-          <Label className="switch switch-text switch-primary mb-0 me-3">
-            <Input
+          <label className="switch switch-text switch-primary mb-0 me-3">
+            <input
               type="checkbox"
               id="pauseUpdates"
               name="pauseUpdates"
@@ -183,10 +182,10 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
             />
             <span className="switch-label" data-on="On" data-off="Off" />
             <span className="switch-handle" />
-          </Label>
-          <Button
-            color="outline-primary"
-            size="sm"
+          </label>
+          <button
+            type="button"
+            className="btn btn-outline-primary btn-sm"
             style={{ border: 'none', fontSize: '16px', padding: '2px 6px' }}
             onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
               e.stopPropagation()
@@ -194,16 +193,16 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
             }}
           >
             {isOpen ? '−' : '+'}
-          </Button>
+          </button>
         </div>
-      </CardHeader>
-      <Collapse isOpen={isOpen}>
-        <CardBody>
-          <Row>
+      </div>
+      <div className={isOpen ? 'collapse show' : 'collapse'}>
+        <div className="card-body">
+          <div className="row">
             {/*
-            <Col xs="12" md="6" className="mb-2">
-              <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
-                <Input
+            <div className="col-12 col-md-6 mb-2">
+              <label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                <input
                   type="checkbox"
                   className="me-2"
                   checked={filterOptions?.useCamelCase ?? true}
@@ -215,12 +214,12 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
                   }}
                 />
                 <span>Use CamelCase Field Names</span>
-              </Label>
-            </Col>
+              </label>
+            </div>
 */}
-            <Col xs="12" md="6" className="mb-2">
-              <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
-                <Input
+            <div className="col-12 col-md-6 mb-2">
+              <label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                <input
                   type="checkbox"
                   className="me-2"
                   checked={filterOptions?.showInfoPgns ?? false}
@@ -232,11 +231,11 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
                   }}
                 />
                 <span>Show Info PGNs</span>
-              </Label>
-            </Col>
-            <Col xs="12" md="6" className="mb-2">
-              <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
-                <Input
+              </label>
+            </div>
+            <div className="col-12 col-md-6 mb-2">
+              <label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                <input
                   type="checkbox"
                   className="me-2"
                   checked={filterOptions?.showUnknownProprietaryPGNsOnSeparateLines ?? false}
@@ -248,11 +247,11 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
                   }}
                 />
                 <span>Show Unknown Proprietary PGNs On Separate Lines</span>
-              </Label>
-            </Col>
-            <Col xs="12" md="6" className="mb-2">
-              <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
-                <Input
+              </label>
+            </div>
+            <div className="col-12 col-md-6 mb-2">
+              <label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                <input
                   type="checkbox"
                   className="me-2"
                   checked={filterOptions?.showPgn126208OnSeparateLines ?? false}
@@ -264,11 +263,11 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
                   }}
                 />
                 <span>Show PGN 126208 On Separate Lines</span>
-              </Label>
-            </Col>
-            <Col xs="12" md="6" className="mb-2">
-              <Label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
-                <Input
+              </label>
+            </div>
+            <div className="col-12 col-md-6 mb-2">
+              <label className="d-flex align-items-center" style={{ cursor: 'pointer' }}>
+                <input
                   type="checkbox"
                   className="me-2"
                   checked={filterOptions?.showAISOnSeparateLines ?? false}
@@ -280,15 +279,16 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
                   }}
                 />
                 <span>Show AIS Messages On Separate Lines</span>
-              </Label>
-            </Col>
-          </Row>
-          <Row>
-            <Col xs="12" md="6" className="mb-2">
-              <Label className="d-block" style={{ cursor: 'default' }}>
+              </label>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-12 col-md-6 mb-2">
+              <label className="d-block" style={{ cursor: 'default' }}>
                 <span className="mb-2 d-block">Max History Size per PGN</span>
-                <Input
+                <input
                   type="number"
+                  className="form-control"
                   min="0"
                   max="1000"
                   value={filterOptions?.maxHistorySize ?? 10}
@@ -305,12 +305,12 @@ const OptionsPanel: React.FC<OptionsPanelProps> = ({ filterOptions, onFilterOpti
                   Set to 0 to disable history tracking. History stores previous values of each PGN allowing you to see
                   changes over time by expanding rows with the chevron icon.
                 </small>
-              </Label>
-            </Col>
-          </Row>
-        </CardBody>
-      </Collapse>
-    </Card>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -347,8 +347,11 @@ export const FilterPanel = (props: FilterPanelProps) => {
 
   return (
     <>
-      <Card className="mb-3">
-        <CardHeader className="d-flex justify-content-between align-items-center py-2" style={{ cursor: 'pointer' }}>
+      <div className="card mb-3">
+        <div
+          className="card-header d-flex justify-content-between align-items-center py-2"
+          style={{ cursor: 'pointer' }}
+        >
           <div className="d-flex align-items-center flex-grow-1" onClick={() => setIsOpen(!isOpen)}>
             <h6 className="mb-0" style={{ fontWeight: 'bold' }}>
               Filters
@@ -356,8 +359,8 @@ export const FilterPanel = (props: FilterPanelProps) => {
           </div>
           <div className="d-flex align-items-center">
             <span style={{ fontSize: '14px', fontWeight: '500', marginRight: '8px' }}>Enable Filtering</span>
-            <Label className="switch switch-text switch-primary mb-0 me-3">
-              <Input
+            <label className="switch switch-text switch-primary mb-0 me-3">
+              <input
                 type="checkbox"
                 id="enableFiltering"
                 name="enableFiltering"
@@ -371,10 +374,10 @@ export const FilterPanel = (props: FilterPanelProps) => {
               />
               <span className="switch-label" data-on="On" data-off="Off" />
               <span className="switch-handle" />
-            </Label>
-            <Button
-              color="outline-primary"
-              size="sm"
+            </label>
+            <button
+              type="button"
+              className="btn btn-outline-primary btn-sm"
               style={{ border: 'none', fontSize: '16px', padding: '2px 6px' }}
               onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                 e.stopPropagation()
@@ -382,16 +385,16 @@ export const FilterPanel = (props: FilterPanelProps) => {
               }}
             >
               {isOpen ? '−' : '+'}
-            </Button>
+            </button>
           </div>
-        </CardHeader>
-        <Collapse isOpen={isOpen}>
-          <CardBody>
-            <Row className="mb-4">
-              <Col xs="12" md="4" className="mb-3">
-                <Label htmlFor="pgns" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+        </div>
+        <div className={isOpen ? 'collapse show' : 'collapse'}>
+          <div className="card-body">
+            <div className="row mb-4">
+              <div className="col-12 col-md-4 mb-3">
+                <label htmlFor="pgns" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
                   PGNs
-                </Label>
+                </label>
                 <Creatable
                   value={filter?.pgn?.map(toPgnOption)}
                   isMulti
@@ -404,11 +407,11 @@ export const FilterPanel = (props: FilterPanelProps) => {
                     props.doFiltering.next(true)
                   }}
                 />
-              </Col>
-              <Col xs="12" md="4" className="mb-3">
-                <Label htmlFor="srcs" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+              </div>
+              <div className="col-12 col-md-4 mb-3">
+                <label htmlFor="srcs" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
                   Sources
-                </Label>
+                </label>
                 <Creatable
                   value={filter?.src?.map((src) => toSrcOption(src, deviceInfo))}
                   isMulti
@@ -421,11 +424,11 @@ export const FilterPanel = (props: FilterPanelProps) => {
                     props.doFiltering.next(true)
                   }}
                 />
-              </Col>
-              <Col xs="12" md="4" className="mb-3">
-                <Label htmlFor="dsts" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+              </div>
+              <div className="col-12 col-md-4 mb-3">
+                <label htmlFor="dsts" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
                   Destinations
-                </Label>
+                </label>
                 <Creatable
                   value={filter?.dst?.map((src) => toDstOption(src, deviceInfo))}
                   isMulti
@@ -438,13 +441,13 @@ export const FilterPanel = (props: FilterPanelProps) => {
                     props.doFiltering.next(true)
                   }}
                 />
-              </Col>
-            </Row>
-            <Row className="mb-4">
-              <Col xs="12" md="6" className="mb-3">
-                <Label htmlFor="manufacturers" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+              </div>
+            </div>
+            <div className="row mb-4">
+              <div className="col-12 col-md-6 mb-3">
+                <label htmlFor="manufacturers" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
                   Manufacturers
-                </Label>
+                </label>
                 <Creatable
                   value={filter?.manufacturer?.map(toManufacturerOption)}
                   isMulti
@@ -457,29 +460,29 @@ export const FilterPanel = (props: FilterPanelProps) => {
                     props.doFiltering.next(true)
                   }}
                 />
-              </Col>
-              <Col xs="12" md="6" className="mb-3">
-                <Label htmlFor="javascriptFilter" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+              </div>
+              <div className="col-12 col-md-6 mb-3">
+                <label htmlFor="javascriptFilter" style={{ fontWeight: 'bold', marginBottom: '8px' }}>
                   JavaScript Filter
-                </Label>
-                <Input
-                  type="textarea"
+                </label>
+                <textarea
                   id="javascriptFilter"
                   name="javascriptFilter"
+                  className="form-control"
                   placeholder="Enter JavaScript code to filter PGNs (e.g., pgn.src === 1 && pgn.pgn === 127251 && pgn.fields.sog > 5)"
                   value={filter?.javaScript || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                     props.filter.next({ ...filter, javaScript: e.target.value })
                     props.doFiltering.next(true)
                   }}
                   style={{ fontFamily: 'monospace', fontSize: '12px', resize: 'vertical' }}
                   rows={3}
                 />
-              </Col>
-            </Row>
-          </CardBody>
-        </Collapse>
-      </Card>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <OptionsPanel filterOptions={filterOptions} onFilterOptionsChange={props.filterOptions} />
     </>
   )

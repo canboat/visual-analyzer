@@ -15,7 +15,6 @@
  */
 
 import React, { useEffect, useState, useRef, useCallback } from 'react'
-import { Card, CardBody, Col, Row, Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
 import { ReplaySubject, combineLatest } from 'rxjs'
 // import * as pkg from '../../package.json'
 import { PgnNumber, DeviceMap } from '../types'
@@ -321,7 +320,7 @@ const AppPanelInner = (props: any) => {
 
       try {
         console.log('Checking authentication status...')
-        const response = await fetch('/skServer/loginStatus')
+        const response = await fetch('/skServer/loginStatus', { credentials: 'include' })
         if (response.ok) {
           const loginStatus: LoginStatus = await response.json()
           console.log('Login status received:', loginStatus)
@@ -849,73 +848,80 @@ const AppPanelInner = (props: any) => {
       )}
 
       <div className="d-flex align-items-center justify-content-between mb-2">
-        <Nav tabs>
-          <NavItem>
-            <NavLink
-              className={activeTab === ANALYZER_TAB_ID ? 'active' : ''}
+        <ul className="nav nav-tabs">
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${activeTab === ANALYZER_TAB_ID ? 'active' : ''}`}
               onClick={() => handleTabChange(ANALYZER_TAB_ID)}
               style={{ cursor: 'pointer' }}
             >
               NMEA 2000 Analyzer
-            </NavLink>
-          </NavItem>
-          <NavItem>
-            <NavLink
-              className={activeTab === SEND_TAB_ID ? 'active' : ''}
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${activeTab === SEND_TAB_ID ? 'active' : ''}`}
               onClick={() => handleTabChange(SEND_TAB_ID)}
               style={{ cursor: 'pointer' }}
             >
               Send
-            </NavLink>
-          </NavItem>
-          <NavItem>
-            <NavLink
-              className={activeTab === TRANSFORM_TAB_ID ? 'active' : ''}
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${activeTab === TRANSFORM_TAB_ID ? 'active' : ''}`}
               onClick={() => handleTabChange(TRANSFORM_TAB_ID)}
               style={{ cursor: 'pointer' }}
             >
               Transform
-            </NavLink>
-          </NavItem>
-          <NavItem>
-            <NavLink
-              className={activeTab === PGN_BROWSER_TAB_ID ? 'active' : ''}
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${activeTab === PGN_BROWSER_TAB_ID ? 'active' : ''}`}
               onClick={() => handleTabChange(PGN_BROWSER_TAB_ID)}
               style={{ cursor: 'pointer' }}
             >
               PGN Browser
-            </NavLink>
-          </NavItem>
-          <NavItem>
-            <NavLink
-              className={activeTab === EDITING_TAB_ID ? 'active' : ''}
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${activeTab === EDITING_TAB_ID ? 'active' : ''}`}
               onClick={() => handleTabChange(EDITING_TAB_ID)}
               style={{ cursor: 'pointer' }}
             >
               Editing
-            </NavLink>
-          </NavItem>
-          <NavItem>
-            <NavLink
-              className={activeTab === RECORDING_TAB_ID ? 'active' : ''}
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              type="button"
+              className={`nav-link ${activeTab === RECORDING_TAB_ID ? 'active' : ''}`}
               onClick={() => handleTabChange(RECORDING_TAB_ID)}
               style={{ cursor: 'pointer' }}
             >
               Recording
-            </NavLink>
-          </NavItem>
+            </button>
+          </li>
           {!isEmbedded && (
-            <NavItem>
-              <NavLink
-                className={activeTab === CONNECTIONS_TAB_ID ? 'active' : ''}
+            <li className="nav-item">
+              <button
+                type="button"
+                className={`nav-link ${activeTab === CONNECTIONS_TAB_ID ? 'active' : ''}`}
                 onClick={() => handleTabChange(CONNECTIONS_TAB_ID)}
                 style={{ cursor: 'pointer' }}
               >
                 Connections
-              </NavLink>
-            </NavItem>
+              </button>
+            </li>
           )}
-        </Nav>
+        </ul>
 
         {/* Small connection status indicator */}
         <div className="d-flex align-items-center gap-2">
@@ -927,13 +933,13 @@ const AppPanelInner = (props: any) => {
           </span>
         </div>
       </div>
-      <TabContent activeTab={activeTab}>
-        <TabPane tabId={ANALYZER_TAB_ID}>
-          <Card>
-            <CardBody>
+      <div className="tab-content">
+        <div className={`tab-pane ${activeTab === ANALYZER_TAB_ID ? 'show active' : ''}`}>
+          <div className="card">
+            <div className="card-body">
               <div id="content">
-                <Row>
-                  <Col xs="24" md="12">
+                <div className="row">
+                  <div className="col-12">
                     <FilterPanel
                       doFiltering={doFiltering}
                       filter={filter}
@@ -941,11 +947,11 @@ const AppPanelInner = (props: any) => {
                       availableSrcs={availableSrcs}
                       deviceInfo={deviceInfo}
                     />
-                  </Col>
-                </Row>
-                <Row>
+                  </div>
+                </div>
+                <div className="row">
                   {showDataList && (
-                    <Col xs="12" md="6">
+                    <div className="col-12 col-md-6">
                       <DataList
                         data={data}
                         filter={filter}
@@ -970,9 +976,9 @@ const AppPanelInner = (props: any) => {
                           }
                         }}
                       />
-                    </Col>
+                    </div>
                   )}
-                  <Col xs="12" md={showDataList ? '6' : '12'}>
+                  <div className={`col-12 col-md-${showDataList ? '6' : '12'}`}>
                     <SentencePanel
                       selectedPgn={selectedPgn}
                       selectedPgnWithHistory={selectedPgnWithHistory}
@@ -980,33 +986,33 @@ const AppPanelInner = (props: any) => {
                       inEditingTab={false}
                       info={deviceInfo}
                     ></SentencePanel>
-                  </Col>
-                </Row>
+                  </div>
+                </div>
               </div>
-            </CardBody>
-          </Card>
-        </TabPane>
-        <TabPane tabId={SEND_TAB_ID}>
+            </div>
+          </div>
+        </div>
+        <div className={`tab-pane ${activeTab === SEND_TAB_ID ? 'show active' : ''}`}>
           <SendTab />
-        </TabPane>
-        <TabPane tabId={TRANSFORM_TAB_ID}>
+        </div>
+        <div className={`tab-pane ${activeTab === TRANSFORM_TAB_ID ? 'show active' : ''}`}>
           <TransformTab isEmbedded={isEmbedded} />
-        </TabPane>
-        <TabPane tabId={PGN_BROWSER_TAB_ID}>
+        </div>
+        <div className={`tab-pane ${activeTab === PGN_BROWSER_TAB_ID ? 'show active' : ''}`}>
           <PgnBrowser onEditPgn={handleEditPgn} />
-        </TabPane>
-        <TabPane tabId={EDITING_TAB_ID}>
+        </div>
+        <div className={`tab-pane ${activeTab === EDITING_TAB_ID ? 'show active' : ''}`}>
           <EditorTab isEmbedded={isEmbedded} deviceInfo={deviceInfo} />
-        </TabPane>
-        <TabPane tabId={RECORDING_TAB_ID}>
+        </div>
+        <div className={`tab-pane ${activeTab === RECORDING_TAB_ID ? 'show active' : ''}`}>
           <RecordingTab />
-        </TabPane>
+        </div>
         {!isEmbedded && (
-          <TabPane tabId={CONNECTIONS_TAB_ID}>
+          <div className={`tab-pane ${activeTab === CONNECTIONS_TAB_ID ? 'show active' : ''}`}>
             <ConnectionManagerPanel connectionStatus={connectionStatus} onStatusUpdate={setConnectionStatus} />
-          </TabPane>
+          </div>
         )}
-      </TabContent>
+      </div>
     </div>
   )
 }

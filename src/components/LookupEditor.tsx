@@ -15,20 +15,6 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react'
-import {
-  Card,
-  CardBody,
-  Button,
-  Table,
-  Row,
-  Col,
-  Alert,
-  InputGroup,
-  InputGroupText,
-  Input,
-  FormGroup,
-  Label,
-} from 'reactstrap'
 import { Enumeration, getEnumerations, removeLookup } from '@canboat/ts-pgns'
 
 interface LookupEditorProps {
@@ -110,8 +96,8 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
 
   return (
     <>
-      <Card>
-        <CardBody>
+      <div className="card">
+        <div className="card-body">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <div>
               <h5 className="mb-0">Lookups Management</h5>
@@ -120,52 +106,54 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
               </small>
             </div>
             <div className="d-flex gap-2">
-              <Button
-                color="primary"
-                size="sm"
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
                 onClick={() => onLookupEdit && onLookupEdit('', 'lookup', [])}
                 disabled={!onLookupEdit}
               >
                 New Lookup
-              </Button>
-              <Button
-                color="secondary"
-                size="sm"
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
                 onClick={onClearAll}
                 disabled={Object.keys(changedLookups).length === 0}
               >
                 Clear All Changes
-              </Button>
+              </button>
             </div>
           </div>
 
           {/* Filters */}
-          <Row className="mb-3">
-            <Col md="8">
-              <InputGroup size="sm">
-                <InputGroupText>🔍</InputGroupText>
-                <Input
+          <div className="row mb-3">
+            <div className="col-md-8">
+              <div className="input-group input-group-sm">
+                <span className="input-group-text">🔍</span>
+                <input
                   type="text"
+                  className="form-control"
                   placeholder="Search lookups by name..."
                   value={searchTerm}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                 />
-              </InputGroup>
-            </Col>
-            <Col md="4">
-              <FormGroup check size="sm">
-                <Input
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="form-check">
+                <input
                   type="checkbox"
+                  className="form-check-input"
                   id="showOnlyChanged"
                   checked={showOnlyChanged}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setShowOnlyChanged(e.target.checked)}
                 />
-                <Label check for="showOnlyChanged" className="text-muted">
+                <label className="form-check-label text-muted" htmlFor="showOnlyChanged">
                   Show only changed lookups
-                </Label>
-              </FormGroup>
-            </Col>
-          </Row>
+                </label>
+              </div>
+            </div>
+          </div>
 
           {/* Lookups Table */}
           <div style={{ height: '500px', overflow: 'auto' }}>
@@ -181,7 +169,7 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
                 )}
               </div>
             ) : (
-              <Table responsive bordered size="sm" style={{ marginBottom: 0 }}>
+              <table className="table table-responsive table-bordered table-sm" style={{ marginBottom: 0 }}>
                 <thead style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                   <tr>
                     <th>Name</th>
@@ -203,7 +191,7 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
                         <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
                           {lookup.Name}
                           {!showOnlyChanged && changedLookups[lookup.Name] && (
-                            <span className="badge badge-warning ms-2" title="Modified">
+                            <span className="badge bg-warning ms-2" title="Modified">
                               ●
                             </span>
                           )}
@@ -212,25 +200,23 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
                         <td>{lookup.EnumValues.length}</td>
                         <td>
                           <div className="d-flex gap-1">
-                            <Button
-                              color="primary"
-                              size="sm"
-                              outline
+                            <button
+                              type="button"
+                              className="btn btn-outline-primary btn-sm"
                               onClick={() => editLookup(lookup)}
                               title="Edit lookup"
                             >
                               ✏️
-                            </Button>
+                            </button>
                             {changedLookups[lookup.Name] && (
-                              <Button
-                                color="danger"
-                                size="sm"
-                                outline
+                              <button
+                                type="button"
+                                className="btn btn-outline-danger btn-sm"
                                 onClick={() => deleteLookup(lookup.Name)}
                                 title="Remove changes"
                               >
                                 ✗
-                              </Button>
+                              </button>
                             )}
                           </div>
                         </td>
@@ -238,12 +224,12 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
                     )
                   })}
                 </tbody>
-              </Table>
+              </table>
             )}
           </div>
 
           {(showOnlyChanged ? Object.keys(changedLookups).length > 0 : true) && (
-            <Alert color="info" className="mt-3 mb-0">
+            <div className="alert alert-info mt-3 mb-0">
               {showOnlyChanged ? (
                 <>
                   <strong>{Object.keys(changedLookups).length}</strong> lookup(s) have been modified and will be saved
@@ -259,10 +245,10 @@ const LookupEditor: React.FC<LookupEditorProps> = ({
                   )}
                 </>
               )}
-            </Alert>
+            </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
     </>
   )
 }

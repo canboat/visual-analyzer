@@ -16,7 +16,6 @@
 
 import { useObservableState } from 'observable-hooks'
 import React, { useCallback, useState } from 'react'
-import { Table, Collapse, Badge } from 'reactstrap'
 import { PGN } from '@canboat/ts-pgns'
 
 import { Subject } from 'rxjs'
@@ -182,141 +181,143 @@ export const DataList = (props: DataListProps) => {
         flexDirection: 'column',
       }}
     >
-      <Table responsive bordered size="sm">
-        <thead>
-          <tr>
-            <th style={{ width: '55px' }}></th>
-            <th
-              style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }}
-              onClick={() => handleSort('timestamp')}
-            >
-              Timestamp{getSortIcon('timestamp')}
-            </th>
-            <th
-              style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }}
-              onClick={() => handleSort('pgn')}
-            >
-              pgn{getSortIcon('pgn')}
-            </th>
-            <th
-              style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }}
-              onClick={() => handleSort('src')}
-            >
-              src{getSortIcon('src')}
-            </th>
-            <th
-              style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }}
-              onClick={() => handleSort('dst')}
-            >
-              dst{getSortIcon('dst')}
-            </th>
-            <th
-              style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }}
-              onClick={() => handleSort('description')}
-            >
-              Description{getSortIcon('description')}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {getSortedEntries(
-            (data != undefined ? Object.entries(data) : []).filter(([, entry]) =>
-              filterFor(doFiltering, filterConfig)(entry.current),
-            ),
-          ).map(([rowKey, entry], index) => {
-            const row = entry.current
-            const isExpanded = expandedRows.has(rowKey)
-            const hasHistory = entry.history.length > 0
-            const isEvenRow = index % 2 === 0
+      <div className="table-responsive">
+        <table className="table table-bordered table-sm">
+          <thead>
+            <tr>
+              <th style={{ width: '55px' }}></th>
+              <th
+                style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }}
+                onClick={() => handleSort('timestamp')}
+              >
+                Timestamp{getSortIcon('timestamp')}
+              </th>
+              <th
+                style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }}
+                onClick={() => handleSort('pgn')}
+              >
+                pgn{getSortIcon('pgn')}
+              </th>
+              <th
+                style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }}
+                onClick={() => handleSort('src')}
+              >
+                src{getSortIcon('src')}
+              </th>
+              <th
+                style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }}
+                onClick={() => handleSort('dst')}
+              >
+                dst{getSortIcon('dst')}
+              </th>
+              <th
+                style={{ cursor: 'pointer', userSelect: 'none', minWidth: '0px', whiteSpace: 'nowrap' }}
+                onClick={() => handleSort('description')}
+              >
+                Description{getSortIcon('description')}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {getSortedEntries(
+              (data != undefined ? Object.entries(data) : []).filter(([, entry]) =>
+                filterFor(doFiltering, filterConfig)(entry.current),
+              ),
+            ).map(([rowKey, entry], index) => {
+              const row = entry.current
+              const isExpanded = expandedRows.has(rowKey)
+              const hasHistory = entry.history.length > 0
+              const isEvenRow = index % 2 === 0
 
-            return (
-              <React.Fragment key={rowKey}>
-                <tr style={{ backgroundColor: isEvenRow ? '#ffffff' : 'rgba(0,0,0,.05)' }}>
-                  <td>
-                    {hasHistory && (
-                      <i
-                        className={`fas fa-chevron-${isExpanded ? 'down' : 'right'}`}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => toggleRowExpansion(rowKey)}
-                      />
-                    )}
-                    {hasHistory && (
-                      <Badge color="info" size="sm" className="ms-1" title={`${entry.history.length} previous entries`}>
-                        {entry.history.length}
-                      </Badge>
-                    )}
-                  </td>
-                  <td style={{ fontFamily: 'monospace', cursor: 'pointer' }} onClick={() => handleRowClick(row)}>
-                    {new Date(row.timestamp!).toLocaleTimeString([], { hour12: false })}
-                  </td>
-                  <td
-                    style={{
-                      color: 'red',
-                      cursor: 'pointer',
-                      fontWeight: hasHistory ? 'bold' : 'normal',
-                    }}
-                    onMouseDown={(e) => handlePgnClick(e, row.pgn.toString())}
-                  >
-                    {row.pgn}
-                  </td>
-                  <td style={{ color: 'red', cursor: 'pointer' }} onMouseDown={(e) => handleSrcClick(e, row.src!)}>
-                    {(row as any).sent ? 'self' : row.src}
-                  </td>
-                  <td>{row.dst}</td>
-                  <td onMouseDown={(e) => handleDescriptionClick(e, row)} style={{ cursor: 'pointer' }}>
-                    <span style={{ fontFamily: 'monospace' }}>{row.getDefinition().Description}</span>
-                  </td>
-                </tr>
-                {hasHistory && (
-                  <tr style={{ backgroundColor: 'transparent' }}>
-                    <td colSpan={6} style={{ padding: 0, borderTop: 'none', backgroundColor: 'transparent' }}>
-                      <Collapse isOpen={isExpanded}>
-                        <div style={{ backgroundColor: '#f8f9fa', padding: '8px' }}>
-                          <div style={{ marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
-                            History ({entry.history.length} previous entries):
-                          </div>
-                          <Table size="sm" bordered style={{ marginBottom: 0 }}>
-                            <thead>
-                              <tr style={{ backgroundColor: '#e9ecef' }}>
-                                <th>Timestamp</th>
-                                <th>pgn</th>
-                                <th>src</th>
-                                <th>dst</th>
-                                <th>Description</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {entry.history.map((historicalRow: PGN, index: number) => (
-                                <tr
-                                  key={`${rowKey}-history-${index}`}
-                                  style={{ cursor: 'pointer' }}
-                                  onClick={() => handleRowClick(historicalRow)}
-                                >
-                                  <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                                    {new Date(historicalRow.timestamp!).toLocaleTimeString([], { hour12: false })}
-                                  </td>
-                                  <td style={{ fontSize: '0.8rem' }}>{historicalRow.pgn}</td>
-                                  <td style={{ fontSize: '0.8rem' }}>{historicalRow.src}</td>
-                                  <td style={{ fontSize: '0.8rem' }}>{historicalRow.dst}</td>
-                                  <td style={{ fontSize: '0.8rem' }}>
-                                    <span style={{ fontFamily: 'monospace' }}>
-                                      {historicalRow.getDefinition().Description}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </Table>
-                        </div>
-                      </Collapse>
+              return (
+                <React.Fragment key={rowKey}>
+                  <tr style={{ backgroundColor: isEvenRow ? '#ffffff' : 'rgba(0,0,0,.05)' }}>
+                    <td>
+                      {hasHistory && (
+                        <i
+                          className={`fas fa-chevron-${isExpanded ? 'down' : 'right'}`}
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => toggleRowExpansion(rowKey)}
+                        />
+                      )}
+                      {hasHistory && (
+                        <span className="badge bg-info ms-1" title={`${entry.history.length} previous entries`}>
+                          {entry.history.length}
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ fontFamily: 'monospace', cursor: 'pointer' }} onClick={() => handleRowClick(row)}>
+                      {new Date(row.timestamp!).toLocaleTimeString([], { hour12: false })}
+                    </td>
+                    <td
+                      style={{
+                        color: 'red',
+                        cursor: 'pointer',
+                        fontWeight: hasHistory ? 'bold' : 'normal',
+                      }}
+                      onMouseDown={(e) => handlePgnClick(e, row.pgn.toString())}
+                    >
+                      {row.pgn}
+                    </td>
+                    <td style={{ color: 'red', cursor: 'pointer' }} onMouseDown={(e) => handleSrcClick(e, row.src!)}>
+                      {(row as any).sent ? 'self' : row.src}
+                    </td>
+                    <td>{row.dst}</td>
+                    <td onMouseDown={(e) => handleDescriptionClick(e, row)} style={{ cursor: 'pointer' }}>
+                      <span style={{ fontFamily: 'monospace' }}>{row.getDefinition().Description}</span>
                     </td>
                   </tr>
-                )}
-              </React.Fragment>
-            )
-          })}
-        </tbody>
-      </Table>
+                  {hasHistory && (
+                    <tr style={{ backgroundColor: 'transparent' }}>
+                      <td colSpan={6} style={{ padding: 0, borderTop: 'none', backgroundColor: 'transparent' }}>
+                        <div className={isExpanded ? 'collapse show' : 'collapse'}>
+                          <div style={{ backgroundColor: '#f8f9fa', padding: '8px' }}>
+                            <div style={{ marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                              History ({entry.history.length} previous entries):
+                            </div>
+                            <table className="table table-sm table-bordered" style={{ marginBottom: 0 }}>
+                              <thead>
+                                <tr style={{ backgroundColor: '#e9ecef' }}>
+                                  <th>Timestamp</th>
+                                  <th>pgn</th>
+                                  <th>src</th>
+                                  <th>dst</th>
+                                  <th>Description</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {entry.history.map((historicalRow: PGN, index: number) => (
+                                  <tr
+                                    key={`${rowKey}-history-${index}`}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => handleRowClick(historicalRow)}
+                                  >
+                                    <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                                      {new Date(historicalRow.timestamp!).toLocaleTimeString([], { hour12: false })}
+                                    </td>
+                                    <td style={{ fontSize: '0.8rem' }}>{historicalRow.pgn}</td>
+                                    <td style={{ fontSize: '0.8rem' }}>{historicalRow.src}</td>
+                                    <td style={{ fontSize: '0.8rem' }}>{historicalRow.dst}</td>
+                                    <td style={{ fontSize: '0.8rem' }}>
+                                      <span style={{ fontFamily: 'monospace' }}>
+                                        {historicalRow.getDefinition().Description}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

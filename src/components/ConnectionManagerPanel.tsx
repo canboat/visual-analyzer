@@ -15,23 +15,6 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import {
-  Card,
-  CardBody,
-  Button,
-  Form,
-  FormGroup,
-  Label,
-  Input,
-  Alert,
-  Row,
-  Col,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Table,
-} from 'reactstrap'
 
 interface ConnectionProfile {
   id: string
@@ -319,98 +302,97 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
 
   const renderConnectionForm = () => {
     return (
-      <Form>
+      <form>
         <div className="mb-4">
-          <FormGroup>
-            <Label for="connectionName" className="font-weight-bold">
+          <div className="mb-3">
+            <label htmlFor="connectionName" className="form-label fw-bold">
               Connection Name
-            </Label>
-            <Input
+            </label>
+            <input
               type="text"
+              className="form-control form-control-lg"
               id="connectionName"
               placeholder="My NMEA 2000 Gateway"
               value={formData.name}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('name', e.target.value)}
               required
-              className="form-control-lg"
             />
             <small className="form-text text-muted">Choose a descriptive name to easily identify this connection</small>
-          </FormGroup>
+          </div>
 
-          <FormGroup>
-            <Label for="connectionType" className="font-weight-bold">
+          <div className="mb-3">
+            <label htmlFor="connectionType" className="form-label fw-bold">
               Connection Type
-            </Label>
-            <Input
-              type="select"
+            </label>
+            <select
               id="connectionType"
+              className="form-select form-select-lg"
               value={formData.type}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('type', e.target.value)}
-              className="form-control-lg"
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('type', e.target.value)}
             >
               <option value="network">Network (TCP/UDP)</option>
               <option value="serial">Serial Port</option>
               <option value="signalk">SignalK Server</option>
               <option value="socketcan">SocketCAN (Linux CAN)</option>
               <option value="file">File Playback</option>
-            </Input>
-          </FormGroup>
+            </select>
+          </div>
         </div>
 
         {formData.type === 'signalk' && (
           <div className="border rounded p-3 bg-light">
             <h6 className="text-primary mb-3">SignalK Server Configuration</h6>
-            <FormGroup>
-              <Label for="signalkUrl" className="font-weight-bold">
+            <div className="mb-3">
+              <label htmlFor="signalkUrl" className="form-label fw-bold">
                 SignalK URL
-              </Label>
-              <Input
+              </label>
+              <input
                 type="url"
+                className="form-control form-control-lg"
                 id="signalkUrl"
                 placeholder="http://localhost:3000"
                 value={formData.signalkUrl}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('signalkUrl', e.target.value)}
-                className="form-control-lg"
               />
               <small className="form-text text-muted">Full URL including protocol (http:// or https://)</small>
-            </FormGroup>
+            </div>
 
             <div className="row">
               <div className="col-md-6">
-                <FormGroup>
-                  <Label for="signalkUsername" className="font-weight-bold">
+                <div className="mb-3">
+                  <label htmlFor="signalkUsername" className="form-label fw-bold">
                     Username (Optional)
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     type="text"
+                    className="form-control form-control-lg"
                     id="signalkUsername"
                     placeholder="username"
                     value={formData.signalkUsername}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange('signalkUsername', e.target.value)
                     }
-                    className="form-control-lg"
                   />
                   <small className="form-text text-muted">Leave empty if no authentication required</small>
-                </FormGroup>
+                </div>
               </div>
               <div className="col-md-6">
-                <FormGroup>
-                  <Label for="signalkPassword" className="font-weight-bold">
+                <div className="mb-3">
+                  <label htmlFor="signalkPassword" className="form-label fw-bold">
                     Password (Optional)
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     type="password"
+                    className="form-control form-control-lg"
                     id="signalkPassword"
                     placeholder="password"
                     value={formData.signalkPassword}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange('signalkPassword', e.target.value)
                     }
-                    className="form-control-lg"
                   />
                   <small className="form-text text-muted">Leave empty if no authentication required</small>
-                </FormGroup>
+                </div>
               </div>
             </div>
           </div>
@@ -419,62 +401,60 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
         {formData.type === 'serial' && (
           <div className="border rounded p-3 bg-light">
             <h6 className="text-success mb-3">Serial Port Configuration</h6>
-            <FormGroup>
-              <Label for="deviceType" className="font-weight-bold">
+            <div className="mb-3">
+              <label htmlFor="deviceType" className="form-label fw-bold">
                 Device Type
-              </Label>
-              <Input
-                type="select"
+              </label>
+              <select
                 id="deviceType"
+                className="form-select form-select-lg"
                 value={formData.deviceType}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('deviceType', e.target.value)}
-                className="form-control-lg"
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('deviceType', e.target.value)}
               >
                 <option value="Actisense">Actisense (NGT-1 Compatible)</option>
                 <option value="iKonvert">Digital Yacht iKonvert</option>
                 <option value="Yacht Devices">Yacht Devices RAW (YDNU-02)</option>
-              </Input>
+              </select>
               <small className="form-text text-muted">Select your specific NMEA 2000 gateway device</small>
-            </FormGroup>
+            </div>
 
             <div className="row">
               <div className="col-md-8">
-                <FormGroup>
-                  <Label for="serialPort" className="font-weight-bold">
+                <div className="mb-3">
+                  <label htmlFor="serialPort" className="form-label fw-bold">
                     Serial Port
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     type="text"
+                    className="form-control form-control-lg"
                     id="serialPort"
                     placeholder="/dev/ttyUSB0 or COM3"
                     value={formData.serialPort}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange('serialPort', e.target.value)
                     }
-                    className="form-control-lg"
                   />
-                </FormGroup>
+                </div>
               </div>
               <div className="col-md-4">
-                <FormGroup>
-                  <Label for="baudRate" className="font-weight-bold">
+                <div className="mb-3">
+                  <label htmlFor="baudRate" className="form-label fw-bold">
                     Baud Rate
-                  </Label>
-                  <Input
-                    type="select"
+                  </label>
+                  <select
                     id="baudRate"
+                    className="form-select form-select-lg"
                     value={formData.baudRate}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                       handleInputChange('baudRate', parseInt(e.target.value))
                     }
-                    className="form-control-lg"
                   >
                     <option value={9600}>9600</option>
                     <option value={38400}>38400</option>
                     <option value={115200}>115200</option>
                     <option value={230400}>230400</option>
-                  </Input>
-                </FormGroup>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -483,76 +463,74 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
         {formData.type === 'network' && (
           <div className="border rounded p-3 bg-light">
             <h6 className="text-info mb-3">Network Configuration</h6>
-            <FormGroup>
-              <Label for="networkDeviceType" className="font-weight-bold">
+            <div className="mb-3">
+              <label htmlFor="networkDeviceType" className="form-label fw-bold">
                 Device Type
-              </Label>
-              <Input
-                type="select"
+              </label>
+              <select
                 id="networkDeviceType"
+                className="form-select form-select-lg"
                 value={formData.deviceType}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('deviceType', e.target.value)}
-                className="form-control-lg"
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleInputChange('deviceType', e.target.value)}
               >
                 <option value="Yacht Devices RAW">Yacht Devices RAW (YDWG-02)</option>
                 <option value="NavLink2">Digital Yacht NavLink2</option>
                 <option value="Actisense ASCII">Actisense ASCII (W2K-1)</option>
-              </Input>
+              </select>
               <small className="form-text text-muted">Select your specific NMEA 2000 network gateway device</small>
-            </FormGroup>
+            </div>
             <div className="row">
               <div className="col-md-6">
-                <FormGroup>
-                  <Label for="networkHost" className="font-weight-bold">
+                <div className="mb-3">
+                  <label htmlFor="networkHost" className="form-label fw-bold">
                     Host/IP Address
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     type="text"
+                    className="form-control form-control-lg"
                     id="networkHost"
                     placeholder="192.168.1.100 or ydwg"
                     value={formData.networkHost}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange('networkHost', e.target.value)
                     }
-                    className="form-control-lg"
                   />
                   <small className="form-text text-muted">IP address or hostname of your gateway</small>
-                </FormGroup>
+                </div>
               </div>
               <div className="col-md-3">
-                <FormGroup>
-                  <Label for="networkPort" className="font-weight-bold">
+                <div className="mb-3">
+                  <label htmlFor="networkPort" className="form-label fw-bold">
                     Port
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     type="number"
+                    className="form-control form-control-lg"
                     id="networkPort"
                     value={formData.networkPort}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleInputChange('networkPort', parseInt(e.target.value))
                     }
-                    className="form-control-lg"
                   />
-                </FormGroup>
+                </div>
               </div>
               <div className="col-md-3">
-                <FormGroup>
-                  <Label for="networkProtocol" className="font-weight-bold">
+                <div className="mb-3">
+                  <label htmlFor="networkProtocol" className="form-label fw-bold">
                     Protocol
-                  </Label>
-                  <Input
-                    type="select"
+                  </label>
+                  <select
                     id="networkProtocol"
+                    className="form-select form-select-lg"
                     value={formData.networkProtocol}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                       handleInputChange('networkProtocol', e.target.value as 'tcp' | 'udp')
                     }
-                    className="form-control-lg"
                   >
                     <option value="tcp">TCP</option>
                     <option value="udp">UDP</option>
-                  </Input>
-                </FormGroup>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -566,22 +544,22 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
               with USB-CAN adapters or built-in CAN controllers.
             </div>
 
-            <FormGroup>
-              <Label for="socketcanInterface" className="font-weight-bold">
+            <div className="mb-3">
+              <label htmlFor="socketcanInterface" className="form-label fw-bold">
                 CAN Interface
-              </Label>
-              <Input
+              </label>
+              <input
                 type="text"
+                className="form-control form-control-lg"
                 id="socketcanInterface"
                 placeholder="can0"
                 value={formData.socketcanInterface}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   handleInputChange('socketcanInterface', e.target.value)
                 }
-                className="form-control-lg"
               />
               <small className="form-text text-muted">CAN interface name (e.g., can0, can1, vcan0)</small>
-            </FormGroup>
+            </div>
 
             <div className="mt-3">
               <h6 className="text-muted mb-2">Setup Commands</h6>
@@ -611,35 +589,34 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
               and analysis.
             </div>
 
-            <FormGroup>
-              <Label for="filePath" className="font-weight-bold">
+            <div className="mb-3">
+              <label htmlFor="filePath" className="form-label fw-bold">
                 File Path
-              </Label>
-              <Input
+              </label>
+              <input
                 type="text"
+                className="form-control form-control-lg"
                 id="filePath"
                 placeholder="/path/to/nmea2000.log or C:\logs\data.raw"
                 value={formData.filePath}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('filePath', e.target.value)}
-                className="form-control-lg"
               />
               <small className="form-text text-muted">Full path to the NMEA 2000 data file</small>
-            </FormGroup>
+            </div>
 
             <div className="row">
               <div className="col-md-6">
-                <FormGroup>
-                  <Label for="playbackSpeed" className="font-weight-bold">
+                <div className="mb-3">
+                  <label htmlFor="playbackSpeed" className="form-label fw-bold">
                     Playback Speed
-                  </Label>
-                  <Input
-                    type="select"
+                  </label>
+                  <select
                     id="playbackSpeed"
+                    className="form-select form-select-lg"
                     value={formData.playbackSpeed}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                       handleInputChange('playbackSpeed', parseFloat(e.target.value))
                     }
-                    className="form-control-lg"
                   >
                     <option value={0.25}>0.25x (Quarter Speed)</option>
                     <option value={0.5}>0.5x (Half Speed)</option>
@@ -647,101 +624,99 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                     <option value={2.0}>2.0x (Double Speed)</option>
                     <option value={5.0}>5.0x (Fast Forward)</option>
                     <option value={0}>Maximum (No Delay)</option>
-                  </Input>
+                  </select>
                   <small className="form-text text-muted">Speed multiplier for data playback</small>
-                </FormGroup>
+                </div>
               </div>
               <div className="col-md-6">
-                <FormGroup>
-                  <Label className="font-weight-bold">Playback Options</Label>
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Playback Options</label>
                   <div className="mt-2">
-                    <div className="custom-control custom-checkbox">
-                      <Input
+                    <div className="form-check">
+                      <input
                         type="checkbox"
+                        className="form-check-input"
                         id="loopPlayback"
                         checked={formData.loopPlayback}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleInputChange('loopPlayback', e.target.checked)
                         }
-                        className="custom-control-input"
                       />
-                      <Label className="custom-control-label" htmlFor="loopPlayback">
+                      <label className="form-check-label" htmlFor="loopPlayback">
                         Loop Playback
-                      </Label>
+                      </label>
                     </div>
                     <small className="form-text text-muted">Automatically restart playback when file ends</small>
                   </div>
-                </FormGroup>
+                </div>
               </div>
             </div>
           </div>
         )}
-      </Form>
+      </form>
     )
   }
 
   if (loading && !config) {
     return (
-      <Card>
-        <CardBody>
+      <div className="card">
+        <div className="card-body">
           <div className="text-center">
             <div className="spinner-border" role="status">
-              <span className="sr-only">Loading...</span>
+              <span className="visually-hidden">Loading...</span>
             </div>
             <p className="mt-2">Loading configuration...</p>
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardBody>
+    <div className="card">
+      <div className="card-body">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
             <h4 className="text-sk-primary mb-1">Connection Manager</h4>
             <p className="mb-0 text-muted">Manage multiple NMEA 2000 data source connections</p>
           </div>
-          <Button color="primary" onClick={openCreateModal} size="lg" className="px-4">
+          <button type="button" className="btn btn-primary btn-lg px-4" onClick={openCreateModal}>
             Add Connection
-          </Button>
+          </button>
         </div>
 
         {message && (
-          <Alert color={message.type === 'success' ? 'success' : 'danger'} className="mb-3">
+          <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-danger'} mb-3`}>
             {message.text}
-          </Alert>
+          </div>
         )}
 
         {config && (
           <>
             {/* Current Connection Status */}
-            <Card className="mb-4 border-left-primary">
-              <CardBody>
+            <div className="card mb-4 border-left-primary">
+              <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
                     <h6 className="mb-1">Current Connection</h6>
                     <div className="d-flex align-items-center">
-                      <span
-                        className={`badge badge-lg ${getCurrentConnectionStatus() ? 'badge-success' : 'badge-secondary'} mr-3`}
-                      >
+                      <span className={`badge ${getCurrentConnectionStatus() ? 'bg-success' : 'bg-secondary'} me-3`}>
                         {getCurrentConnectionStatus() ? 'Connected' : 'Disconnected'}
                       </span>
                       {config.connection.activeProfile ? (
                         <div className="text-muted">
                           <strong>{config.connection.activeProfile.name}</strong>
-                          <span className="ml-2 badge badge-outline-secondary">
+                          <span className="ms-2 badge bg-outline-secondary">
                             {config.connection.activeProfile.type.toUpperCase()}
                           </span>
                           {connectionStatus && (
-                            <small className="ml-2 text-muted">
+                            <small className="ms-2 text-muted">
                               Last update: {new Date(connectionStatus.lastUpdate).toLocaleTimeString()}
                             </small>
                           )}
                         </div>
                       ) : (
-                        <span className="text-muted font-italic">No active connection</span>
+                        <span className="text-muted fst-italic">No active connection</span>
                       )}
                     </div>
                     {/* Display connection error if present */}
@@ -755,53 +730,50 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                   </div>
                   <div className="d-flex align-items-center">
                     <div className="d-flex flex-column">
-                      <Button
-                        color="outline-primary"
-                        size="sm"
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary btn-sm mb-1"
                         onClick={restartConnection}
                         disabled={saving}
-                        className="mb-1"
                       >
                         {saving ? 'Restarting...' : 'Restart Connection'}
-                      </Button>
+                      </button>
                       {connectionStatus?.error && (
-                        <Button
-                          color="outline-secondary"
-                          size="sm"
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary btn-sm"
                           onClick={() => {
                             // Clear error by updating parent component if needed
                             setMessage(null)
                           }}
                         >
                           Clear Error
-                        </Button>
+                        </button>
                       )}
                     </div>
                   </div>
                 </div>
-              </CardBody>
-            </Card>
+              </div>
+            </div>
 
             {/* Connection Profiles List */}
-            <Card className="shadow-sm">
+            <div className="card shadow-sm">
               <div className="card-header bg-light d-flex justify-content-between align-items-center">
                 <strong>Connection Profiles</strong>
-                <span className="badge badge-secondary">
-                  {Object.keys(config.connections.profiles).length} profiles
-                </span>
+                <span className="badge bg-secondary">{Object.keys(config.connections.profiles).length} profiles</span>
               </div>
-              <CardBody className="p-0">
+              <div className="card-body p-0">
                 {Object.keys(config.connections.profiles).length === 0 ? (
                   <div className="text-center p-5">
                     <h6 className="text-muted mb-2">No connection profiles configured</h6>
                     <p className="text-muted mb-3">Create your first connection profile to get started</p>
-                    <Button color="primary" onClick={openCreateModal}>
+                    <button type="button" className="btn btn-primary" onClick={openCreateModal}>
                       Create First Profile
-                    </Button>
+                    </button>
                   </div>
                 ) : (
-                  <Table className="mb-0 table-hover">
-                    <thead className="thead-light">
+                  <table className="table mb-0 table-hover">
+                    <thead className="table-light">
                       <tr>
                         <th style={{ width: '28%' }}>Connection Name</th>
                         <th style={{ width: '12%' }}>Type</th>
@@ -823,14 +795,14 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                 <div>
                                   <strong>{profile.name}</strong>
                                   {config.connections.activeConnection === profileId && (
-                                    <span className="badge badge-primary ml-2">Active</span>
+                                    <span className="badge bg-primary ms-2">Active</span>
                                   )}
                                 </div>
                               </div>
                             </td>
                             <td>
                               <span
-                                className={`badge badge-outline-${
+                                className={`badge bg-outline-${
                                   profile.type === 'network'
                                     ? 'info'
                                     : profile.type === 'serial'
@@ -851,7 +823,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                   <>
                                     {profile.signalkUrl}
                                     {profile.signalkUsername && (
-                                      <span className="ml-2 badge badge-outline-info">Auth</span>
+                                      <span className="ms-2 badge bg-outline-info">Auth</span>
                                     )}
                                   </>
                                 )}
@@ -873,103 +845,106 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                                       ? profile.filePath.split('/').pop() || profile.filePath.split('\\').pop()
                                       : 'No file'}
                                     {profile.playbackSpeed !== 1.0 && (
-                                      <span className="ml-2 badge badge-outline-secondary">
-                                        {profile.playbackSpeed}x
-                                      </span>
+                                      <span className="ms-2 badge bg-outline-secondary">{profile.playbackSpeed}x</span>
                                     )}
-                                    {profile.loopPlayback && (
-                                      <span className="ml-2 badge badge-outline-info">Loop</span>
-                                    )}
+                                    {profile.loopPlayback && <span className="ms-2 badge bg-outline-info">Loop</span>}
                                   </>
                                 )}
                               </small>
                             </td>
                             <td>
                               {config.connections.activeConnection === profileId ? (
-                                <span
-                                  className={`badge ${getCurrentConnectionStatus() ? 'badge-success' : 'badge-warning'}`}
-                                >
+                                <span className={`badge ${getCurrentConnectionStatus() ? 'bg-success' : 'bg-warning'}`}>
                                   {getCurrentConnectionStatus() ? 'Connected' : 'Connecting...'}
                                 </span>
                               ) : (
-                                <span className="badge badge-secondary">Inactive</span>
+                                <span className="badge bg-secondary">Inactive</span>
                               )}
                             </td>
                             <td>
                               <div className="d-flex flex-row" style={{ gap: '2px' }}>
                                 {config.connections.activeConnection !== profileId && (
-                                  <Button
-                                    size="xs"
-                                    color="success"
+                                  <button
+                                    type="button"
+                                    className="btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                    style={{ minWidth: '50px', fontSize: '0.7rem', padding: '2px 4px' }}
                                     onClick={() => activateConnectionProfile(profileId)}
                                     disabled={loading}
-                                    className="d-flex align-items-center justify-content-center"
-                                    style={{ minWidth: '50px', fontSize: '0.7rem', padding: '2px 4px' }}
                                   >
                                     Activate
-                                  </Button>
+                                  </button>
                                 )}
-                                <Button
-                                  size="xs"
-                                  color="outline-primary"
-                                  onClick={() => openEditModal(profileId)}
-                                  className="d-flex align-items-center justify-content-center"
+                                <button
+                                  type="button"
+                                  className="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center"
                                   style={{ minWidth: '40px', fontSize: '0.7rem', padding: '2px 4px' }}
+                                  onClick={() => openEditModal(profileId)}
                                 >
                                   Edit
-                                </Button>
-                                <Button
-                                  size="xs"
-                                  color="outline-danger"
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center"
+                                  style={{ minWidth: '45px', fontSize: '0.7rem', padding: '2px 4px' }}
                                   onClick={() => deleteConnectionProfile(profileId)}
                                   disabled={config.connections.activeConnection === profileId}
-                                  className="d-flex align-items-center justify-content-center"
-                                  style={{ minWidth: '45px', fontSize: '0.7rem', padding: '2px 4px' }}
                                 >
                                   Delete
-                                </Button>
+                                </button>
                               </div>
                             </td>
                           </tr>
                         ))}
                     </tbody>
-                  </Table>
+                  </table>
                 )}
-              </CardBody>
-            </Card>
+              </div>
+            </div>
           </>
         )}
 
         {/* Connection Profile Modal */}
-        <Modal isOpen={showModal} toggle={() => setShowModal(false)} size="lg" className="connection-modal">
-          <ModalHeader
-            className="bg-primary text-white d-flex justify-content-between align-items-center"
-            style={{ border: 'none' }}
-          >
-            <div className="d-flex align-items-center">
-              <span>{editingProfile ? 'Edit Connection Profile' : 'Create New Connection Profile'}</span>
+        {showModal && (
+          <>
+            <div className="modal-backdrop fade show" onClick={() => setShowModal(false)}></div>
+            <div className="modal fade show d-block" tabIndex={-1} style={{ zIndex: 1055 }}>
+              <div className="modal-dialog modal-lg">
+                <div className="modal-content">
+                  <div className="modal-header bg-primary text-white">
+                    <h5 className="modal-title">
+                      {editingProfile ? 'Edit Connection Profile' : 'Create New Connection Profile'}
+                    </h5>
+                    <button
+                      type="button"
+                      className="btn-close btn-close-white"
+                      onClick={() => setShowModal(false)}
+                    ></button>
+                  </div>
+                  <div className="modal-body p-4">{renderConnectionForm()}</div>
+                  <div className="modal-footer bg-light">
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-lg px-4"
+                      onClick={saveConnectionProfile}
+                      disabled={
+                        saving || !formData.name.trim() || (formData.type === 'file' && !formData.filePath?.trim())
+                      }
+                    >
+                      {saving ? 'Saving...' : editingProfile ? 'Update Profile' : 'Create Profile'}
+                    </button>
+                    <button type="button" className="btn btn-secondary btn-lg px-4" onClick={() => setShowModal(false)}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </ModalHeader>
-          <ModalBody className="p-4">{renderConnectionForm()}</ModalBody>
-          <ModalFooter className="bg-light">
-            <Button
-              color="primary"
-              onClick={saveConnectionProfile}
-              disabled={saving || !formData.name.trim() || (formData.type === 'file' && !formData.filePath?.trim())}
-              size="lg"
-              className="px-4"
-            >
-              {saving ? <>Saving...</> : <>{editingProfile ? 'Update Profile' : 'Create Profile'}</>}
-            </Button>
-            <Button color="secondary" onClick={() => setShowModal(false)} size="lg" className="px-4">
-              Cancel
-            </Button>
-          </ModalFooter>
-        </Modal>
+          </>
+        )}
 
         <div className="mt-4">
-          <Card className="bg-light border-0">
-            <CardBody>
+          <div className="card bg-light border-0">
+            <div className="card-body">
               <h6 className="text-primary mb-3">Usage Tips</h6>
               <div className="row">
                 <div className="col-md-6">
@@ -999,10 +974,10 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
                   </ul>
                 </div>
               </div>
-            </CardBody>
-          </Card>
+            </div>
+          </div>
         </div>
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   )
 }
