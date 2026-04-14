@@ -249,13 +249,14 @@ export const SentencePanel = (props: SentencePanelProps) => {
     [],
   )
 
-  if (pgnData === undefined || pgnData === null) {
+  if (pgnData === undefined || pgnData === null || pgnData.getDefinition === undefined) {
     return <div>Select a PGN to view its data</div>
   }
 
+  //console.debug('pgnData', pgnData)
   //let definition: Definition = pgnData.getDefinition()
   let definition = props.definition || pgnData.getDefinition()
-  //console.debug('pgnData', pgnData)
+  
   return (
     <div
       style={{
