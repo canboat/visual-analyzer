@@ -181,7 +181,8 @@ const AppPanelInner = (props: any) => {
 
   // Add throttling for data processing to prevent event loop blocking
   const pendingDataUpdates = useRef<PGN[]>([])
-  const dataUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const dataUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const currentListRef = useRef<any>({})
 
   const processPendingDataUpdates = useCallback(() => {
     if (pendingDataUpdates.current.length === 0) {
@@ -191,6 +192,8 @@ const AppPanelInner = (props: any) => {
     const updates = [...pendingDataUpdates.current]
     pendingDataUpdates.current = []
 
+    let selectedPgnUpdate: { current: PGN; history: PGN[] } | null = null
+
     // Process all pending updates in a single batch
     updates.forEach((pgn) => {
       if (infoPGNS.indexOf(pgn!.pgn) === -1 || filterOptionsRef.current?.showInfoPgns) {
@@ -198,9 +201,12 @@ const AppPanelInner = (props: any) => {
           const rowKey = getRowKey(pgn!, filterOptionsRef.current || undefined)
           const maxHistorySize = filterOptionsRef.current?.maxHistorySize ?? 10
 
-          if (prev[rowKey]) {
+          // Create new object instead of mutating
+          const newList = { ...prev }
+
+          if (newList[rowKey]) {
             // Move current to history and update current
-            let newHistory = [prev[rowKey].current, ...prev[rowKey].history]
+            let newHistory = [newList[rowKey].current, ...newList[rowKey].history]
 
             // Limit history size if maxHistorySize > 0, otherwise disable history
             if (maxHistorySize === 0) {
@@ -209,13 +215,13 @@ const AppPanelInner = (props: any) => {
               newHistory = newHistory.slice(0, maxHistorySize)
             }
 
-            prev[rowKey] = {
+            newList[rowKey] = {
               current: pgn,
               history: newHistory,
             }
           } else {
             // New entry
-            prev[rowKey] = {
+            newList[rowKey] = {
               current: pgn,
               history: [],
             }
@@ -224,30 +230,35 @@ const AppPanelInner = (props: any) => {
           // Check if this update corresponds to the currently selected PGN
           if (selectedPgnKeyRef.current === rowKey) {
             selectedPgn.next(pgn!)
-            selectedPgnWithHistory.next({
+            selectedPgnUpdate = {
               current: pgn!,
-              history: prev[rowKey].history,
-            })
+              history: newList[rowKey].history,
+            }
           }
 
-          return prev
+          // Update the ref to keep it in sync
+          currentListRef.current = newList
+          return newList
         })
       }
 
-      if (currentSrcs.indexOf(pgn!.src!) === -1) {
-        setCurrentSrcs((prev) => {
-          prev.push(pgn!.src!)
-          availableSrcs.next([...prev.sort((a, b) => a - b)])
-          return prev
-        })
-      }
+      // Always check for duplicates inside state update to avoid batching issues
+      setCurrentSrcs((prev) => {
+        if (prev.indexOf(pgn!.src!) === -1) {
+          const newSrcs = [...prev, pgn!.src!]
+          availableSrcs.next([...newSrcs.sort((a, b) => a - b)])
+          return newSrcs
+        }
+        return prev
+      })
 
       if (infoPGNS.indexOf(pgn!.pgn) !== -1) {
         setCurrentInfo((prev) => {
-          prev[pgn!.src!] = prev[pgn!.src!] || { src: pgn!.src!, info: {} }
-          prev[pgn!.src!].info[pgn!.pgn! as PgnNumber] = pgn
-          deviceInfo.next({ ...prev })
-          return prev
+          const newInfo = { ...prev }
+          newInfo[pgn!.src!] = newInfo[pgn!.src!] || { src: pgn!.src!, info: {} }
+          newInfo[pgn!.src!].info[pgn!.pgn! as PgnNumber] = pgn
+          deviceInfo.next({ ...newInfo })
+          return newInfo
         })
       }
 
@@ -261,11 +272,11 @@ const AppPanelInner = (props: any) => {
       }
     })
 
-    // Trigger data update after processing all items
-    setList((prev: any) => {
-      data.next({ ...prev })
-      return prev
-    })
+    // Emit data efficiently using the current ref
+    data.next({ ...currentListRef.current })
+    if (selectedPgnUpdate) {
+      selectedPgnWithHistory.next(selectedPgnUpdate)
+    }
   }, [])
 
   // Handler for tab changes with persistence
@@ -445,7 +456,7 @@ const AppPanelInner = (props: any) => {
 
   useEffect(() => {
     let webSocket: WebSocket | any = null
-    let reconnectTimeout: NodeJS.Timeout | null = null
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
 
     const handleWebSocketMessage = (messageData: string) => {
       try {
@@ -464,26 +475,29 @@ const AppPanelInner = (props: any) => {
           // Clear all data when reconnecting
           console.log('NMEA connection established')
 
-          setList((prev: any) => {
-            data.next({})
-            deleteAllKeys(prev)
-            return prev
+          setList(() => {
+            const emptyList = {}
+            data.next(emptyList)
+            return emptyList
           })
 
-          setCurrentSrcs((prev) => {
-            availableSrcs.next([])
-            prev.length = 0
-            return prev
+          setCurrentSrcs(() => {
+            const emptySrcs: number[] = []
+            availableSrcs.next(emptySrcs)
+            return emptySrcs
           })
 
-          setCurrentInfo((prev) => {
-            deviceInfo.next([])
-            deleteAllKeys(prev)
-            return prev
+          setCurrentInfo(() => {
+            const emptyInfo = {}
+            deviceInfo.next(emptyInfo)
+            return emptyInfo
           })
 
-          // Clear selected PGN when connection resets
+          // Clear selected PGN and history when connection resets
           setSelectedPgnKey(null)
+          selectedPgnKeyRef.current = null
+          selectedPgn.next({} as PGN)
+          selectedPgnWithHistory.next({ current: {} as PGN, history: [] })
 
           sentInfoReq.length = 0
           // Reset out available when reconnecting
