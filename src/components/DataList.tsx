@@ -228,20 +228,34 @@ export const DataList = (props: DataListProps) => {
               const isExpanded = expandedRows.has(rowKey)
               const hasHistory = entry.history.length > 0
               const isEvenRow = index % 2 === 0
-
               return (
                 <React.Fragment key={rowKey}>
                   <tr style={{ backgroundColor: isEvenRow ? '#ffffff' : 'rgba(0,0,0,.05)' }}>
-                    <td>
+                    <td style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       {hasHistory && (
-                        <i
-                          className={`fas fa-chevron-${isExpanded ? 'down' : 'right'}`}
-                          style={{ cursor: 'pointer' }}
+                        <button
+                          type="button"
+                          className="btn btn-sm p-0"
+                          style={{
+                            cursor: 'pointer',
+                            border: 'none',
+                            background: 'none',
+                            fontSize: '14px',
+                            width: '20px',
+                            height: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
                           onClick={() => toggleRowExpansion(rowKey)}
-                        />
+                          title={isExpanded ? 'Collapse history' : 'Expand history'}
+                        >
+                          {isExpanded ? '▼' : '▶'}
+                        </button>
                       )}
                       {hasHistory && (
-                        <span className="badge bg-info ms-1" title={`${entry.history.length} previous entries`}>
+                        <span className="badge bg-info" title={`${entry.history.length} previous entries`}>
                           {entry.history.length}
                         </span>
                       )}
@@ -270,44 +284,49 @@ export const DataList = (props: DataListProps) => {
                   {hasHistory && (
                     <tr style={{ backgroundColor: 'transparent' }}>
                       <td colSpan={6} style={{ padding: 0, borderTop: 'none', backgroundColor: 'transparent' }}>
-                        <div className={isExpanded ? 'collapse show' : 'collapse'}>
-                          <div style={{ backgroundColor: '#f8f9fa', padding: '8px' }}>
-                            <div style={{ marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
-                              History ({entry.history.length} previous entries):
-                            </div>
-                            <table className="table table-sm table-bordered" style={{ marginBottom: 0 }}>
-                              <thead>
-                                <tr style={{ backgroundColor: '#e9ecef' }}>
-                                  <th>Timestamp</th>
-                                  <th>pgn</th>
-                                  <th>src</th>
-                                  <th>dst</th>
-                                  <th>Description</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {entry.history.map((historicalRow: PGN, index: number) => (
-                                  <tr
-                                    key={`${rowKey}-history-${index}`}
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() => handleRowClick(historicalRow)}
-                                  >
-                                    <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                                      {new Date(historicalRow.timestamp!).toLocaleTimeString([], { hour12: false })}
-                                    </td>
-                                    <td style={{ fontSize: '0.8rem' }}>{historicalRow.pgn}</td>
-                                    <td style={{ fontSize: '0.8rem' }}>{historicalRow.src}</td>
-                                    <td style={{ fontSize: '0.8rem' }}>{historicalRow.dst}</td>
-                                    <td style={{ fontSize: '0.8rem' }}>
-                                      <span style={{ fontFamily: 'monospace' }}>
-                                        {historicalRow.getDefinition().Description}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                        <div
+                          style={{
+                            display: isExpanded ? 'block' : 'none',
+                            backgroundColor: '#f8f9fa',
+                            padding: '8px',
+                            animation: isExpanded ? 'fadeIn 0.3s' : undefined,
+                          }}
+                        >
+                          <div style={{ marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                            History ({entry.history.length} previous entries):
                           </div>
+                          <table className="table table-sm table-bordered" style={{ marginBottom: 0 }}>
+                            <thead>
+                              <tr style={{ backgroundColor: '#e9ecef' }}>
+                                <th>Timestamp</th>
+                                <th>pgn</th>
+                                <th>src</th>
+                                <th>dst</th>
+                                <th>Description</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {entry.history.map((historicalRow: PGN, index: number) => (
+                                <tr
+                                  key={`${rowKey}-history-${index}`}
+                                  style={{ cursor: 'pointer' }}
+                                  onClick={() => handleRowClick(historicalRow)}
+                                >
+                                  <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                                    {new Date(historicalRow.timestamp!).toLocaleTimeString([], { hour12: false })}
+                                  </td>
+                                  <td style={{ fontSize: '0.8rem' }}>{historicalRow.pgn}</td>
+                                  <td style={{ fontSize: '0.8rem' }}>{historicalRow.src}</td>
+                                  <td style={{ fontSize: '0.8rem' }}>{historicalRow.dst}</td>
+                                  <td style={{ fontSize: '0.8rem' }}>
+                                    <span style={{ fontFamily: 'monospace' }}>
+                                      {historicalRow.getDefinition().Description}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       </td>
                     </tr>
