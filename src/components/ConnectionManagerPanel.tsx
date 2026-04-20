@@ -16,6 +16,8 @@
 
 import React, { useState, useEffect } from 'react'
 
+import { ConnectionProfile } from '@server/types'
+/*
 interface ConnectionProfile {
   id: string
   name: string
@@ -41,6 +43,7 @@ interface ConnectionProfile {
   playbackSpeed?: number
   loopPlayback?: boolean
 }
+*/
 
 interface ServerConfig {
   server: {
@@ -266,7 +269,7 @@ export const ConnectionManagerPanel: React.FC<ConnectionManagerPanelProps> = ({ 
   const openEditModal = (profileId: string) => {
     if (!config?.connections.profiles[profileId]) return
 
-    const profile = config.connections.profiles[profileId]
+    const profile: ConnectionProfile = config.connections.profiles[profileId]
     setFormData(profile)
     setEditingProfile({ id: profileId, ...profile })
     setShowModal(true)
